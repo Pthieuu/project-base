@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'main_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -252,20 +253,29 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 30),
 
-                /// REGISTER
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
 
-                    Text("Don't have an account? "),
+                    const Text("Don't have an account? "),
 
-                    Text(
-                      "Register now",
-                      style: TextStyle(
-                        color: Color(0xFF1132D4),
-                        fontWeight: FontWeight.bold,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        "Register now",
+                        style: TextStyle(
+                          color: Color(0xFF1132D4),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    )
+                    ),
                   ],
                 )
               ],
