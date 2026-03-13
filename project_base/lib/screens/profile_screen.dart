@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -154,7 +155,15 @@ class ProfileScreen extends StatelessWidget {
                         foregroundColor: Colors.red,
                         elevation: 0,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      },
                       icon: const Icon(Icons.logout),
                       label: const Text(
                         "Logout",
