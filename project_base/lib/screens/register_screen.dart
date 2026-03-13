@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -16,6 +17,55 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passController = TextEditingController();
   final TextEditingController confirmController = TextEditingController();
+
+  /// REGISTER FUNCTION
+  Future<void> register() async {
+
+    if(nameController.text.isEmpty ||
+        emailController.text.isEmpty ||
+        passController.text.isEmpty){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill all fields")),
+      );
+      return;
+    }
+
+    if(passController.text != confirmController.text){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Password does not match")),
+      );
+      return;
+    }
+
+    if(!agreeTerms){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please accept terms")),
+      );
+      return;
+    }
+
+    var result = await AuthService.register(
+      nameController.text,
+      emailController.text,
+      passController.text,
+    );
+
+    if(result["status"] == "success"){
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Register successful")),
+      );
+
+      Navigator.pop(context);
+
+    }else{
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Register failed")),
+      );
+
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +92,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            /// HEADER
             const Text(
               "Join AI Expense Manager",
               style: TextStyle(
@@ -123,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   backgroundColor: const Color(0xFF1132D4),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                onPressed: () {},
+                onPressed: register,
                 child: const Text(
                   "Register",
                   style: TextStyle(fontWeight: FontWeight.bold),
@@ -135,9 +184,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             /// DIVIDER
             Row(
-              children: [
+              children: const [
                 Expanded(child: Divider()),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Text("Or continue with"),
                 ),
