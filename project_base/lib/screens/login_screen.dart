@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'main_screen.dart';
+import '../services/auth_service.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -11,7 +12,37 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
 
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+
   bool obscurePassword = true;
+
+  Future<void> login() async {
+
+    var result = await AuthService.login(
+      emailController.text,
+      passwordController.text,
+    );
+
+    if(result["status"] == "success"){
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const MainScreen(),
+        ),
+      );
+
+    }else{
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Email or password incorrect"),
+        ),
+      );
+
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +109,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 30),
 
-                /// WELCOME TEXT
                 const Text(
                   "Welcome Back",
                   textAlign: TextAlign.center,
@@ -100,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 40),
 
-                /// EMAIL FIELD
+                /// EMAIL
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -113,6 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 8),
 
                     TextField(
+                      controller: emailController,
                       decoration: InputDecoration(
                         hintText: "name@company.com",
                         prefixIcon: const Icon(Icons.mail_outline),
@@ -126,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 20),
 
-                /// PASSWORD FIELD
+                /// PASSWORD
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -151,6 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 8),
 
                     TextField(
+                      controller: passwordController,
                       obscureText: obscurePassword,
 
                       decoration: InputDecoration(
@@ -190,14 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const MainScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: login,
                     child: const Text(
                       "Log In",
                       style: TextStyle(
@@ -227,7 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 20),
 
-                /// SOCIAL LOGIN
+                /// SOCIAL
                 Row(
                   children: [
 
@@ -253,6 +278,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 30),
 
+                /// REGISTER
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
