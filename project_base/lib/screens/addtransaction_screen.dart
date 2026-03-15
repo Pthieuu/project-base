@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({super.key});
@@ -13,11 +14,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   final description_controller = TextEditingController();
   final notes_controller = TextEditingController();
+  final amount_controller = TextEditingController();
 
   String category = "Food & Drink";
   String account = "Main Card";
-
-  String amount = "12.50";
 
   @override
   Widget build(BuildContext context) {
@@ -50,10 +50,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
                   const SizedBox(height: 20),
 
-                  /// AMOUNT
+                  /// AMOUNT INPUT
                   Center(
                     child: Column(
                       children: [
+
                         const Text(
                           "Amount",
                           style: TextStyle(
@@ -61,12 +62,25 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             fontSize: 12,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "\$$amount",
-                          style: const TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.bold,
+
+                        const SizedBox(height: 8),
+
+                        SizedBox(
+                          width: 220,
+                          child: TextField(
+                            controller: amount_controller,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 42,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1132D4),
+                            ),
+                            decoration: const InputDecoration(
+                              prefixText: "\$ ",
+                              border: InputBorder.none,
+                              hintText: "0.00",
+                            ),
                           ),
                         ),
                       ],
@@ -101,9 +115,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               child: Text(
                                 "Expense",
                                 style: TextStyle(
-                                  color: isExpense
-                                      ? const Color(0xFF1132D4)
-                                      : Colors.grey,
+                                  color: Color(0xFF1132D4),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -124,7 +136,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 "Income",
                                 style: TextStyle(
                                   color: !isExpense
-                                      ? const Color(0xFF1132D4)
+                                      ? Colors.green
                                       : Colors.grey,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -296,7 +308,27 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   backgroundColor: const Color(0xFF1132D4),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                onPressed: () {},
+                onPressed: () async {
+
+                  final data = {
+                    "description": description_controller.text,
+                    "category": category,
+                    "account": account,
+                    "amount": double.tryParse(amount_controller.text) ?? 0,
+                    "is_expense": isExpense ? 1 : 0,
+                    "notes": notes_controller.text,
+                    "date": DateTime.now().toString()
+                  };
+
+                  print(data);
+
+                  await ApiService().add_transaction(data);
+
+                  if(context.mounted){
+                    Navigator.pop(context,true);
+                  }
+
+                },
                 icon: const Icon(Icons.check_circle),
                 label: const Text(
                   "Save Transaction",
