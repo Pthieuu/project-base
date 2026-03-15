@@ -18,4 +18,17 @@ class ApiService {
 
     print("API RESPONSE: ${response.body}");
   }
+
+  Future<List> get_transactions() async {
+
+    final response = await http.get(
+      Uri.parse("${baseUrl}get_transaction.php"),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    return [];
+  }
 }
