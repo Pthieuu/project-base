@@ -1,8 +1,63 @@
 import 'package:flutter/material.dart';
 import 'addtransaction_screen.dart';
+import '../services/api_service.dart';
+import 'package:intl/intl.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+
+  List transactions = [];
+
+  double totalIncome = 0;
+  double totalExpense = 0;
+  double totalBalance = 0;
+
+  final currencyFormat = NumberFormat.currency(
+    locale: 'vi_VN',
+    symbol: '₫',
+    decimalDigits: 0,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    loadTransactions();
+  }
+
+Future loadTransactions() async {
+
+  final data = await ApiService().get_transactions();
+
+  double income = 0;
+  double expense = 0;
+
+  for (var tx in data) {
+
+    double amount = double.parse(tx["amount"].toString());
+    bool isExpense = tx["is_expense"].toString() == "1";
+
+    if (isExpense) {
+      expense += amount;
+    } else {
+      income += amount;
+    }
+
+  }
+
+  setState(() {
+    transactions = data;
+    totalIncome = income;
+    totalExpense = expense;
+    totalBalance = income - expense;
+  });
+
+}
 
   @override
   Widget build(BuildContext context) {
@@ -12,13 +67,17 @@ class DashboardScreen extends StatelessWidget {
 
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF1132D4),
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async{
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => const AddTransactionScreen(),
             ),
           );
+
+          if(result == true){
+            loadTransactions();
+          }
         },
         child: const Icon(Icons.add),
       ),
@@ -95,10 +154,10 @@ class DashboardScreen extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     Row(
-                      children: const [
+                      children: [
                         Text(
-                          "\$12,450.00",
-                          style: TextStyle(
+                          currencyFormat.format(totalBalance),
+                          style: const TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -162,7 +221,7 @@ class DashboardScreen extends StatelessWidget {
                         icon: Icons.arrow_downward,
                         color: Colors.green,
                         title: "Income",
-                        value: "\$4,200",
+                        value: currencyFormat.format(totalIncome),
                         percent: "+12%",
                       ),
                     ),
@@ -174,7 +233,7 @@ class DashboardScreen extends StatelessWidget {
                         icon: Icons.arrow_upward,
                         color: Colors.red,
                         title: "Expenses",
-                        value: "\$2,150",
+                        value: currencyFormat.format(totalExpense),
                         percent: "-5%",
                       ),
                     ),
@@ -262,25 +321,21 @@ class DashboardScreen extends StatelessWidget {
 
                     const SizedBox(height: 12),
 
-                    const TransactionItem(
-                      icon: Icons.coffee,
-                      title: "Starbucks Coffee",
-                      category: "Food & Drinks",
-                      amount: "-\$5.40",
-                    ),
+                    Column(
+                      children: transactions.map((tx){
 
-                    const TransactionItem(
-                      icon: Icons.local_gas_station,
-                      title: "Shell Gas Station",
-                      category: "Transport",
-                      amount: "-\$42.00",
-                    ),
+                        final isExpense = tx["is_expense"].toString() == "1";
 
-                    const TransactionItem(
-                      icon: Icons.shopping_cart,
-                      title: "Whole Foods Market",
-                      category: "Groceries",
-                      amount: "-\$128.50",
+                        return TransactionItem(
+                          icon: Icons.attach_money,
+                          title: tx["description"] ?? "",
+                          category: tx["category"] ?? "",
+                          amount: isExpense
+                            ? "-${currencyFormat.format(double.parse(tx["amount"].toString()))}"
+                            : "+${currencyFormat.format(double.parse(tx["amount"].toString()))}",
+                        );
+
+                      }).toList(),
                     ),
                   ],
                 ),

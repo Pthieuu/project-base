@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'package:intl/intl.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({super.key});
@@ -11,6 +12,7 @@ class AddTransactionScreen extends StatefulWidget {
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   bool isExpense = true;
+  final NumberFormat currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫', decimalDigits: 0);
 
   final description_controller = TextEditingController();
   final notes_controller = TextEditingController();
@@ -70,17 +72,20 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           child: TextField(
                             controller: amount_controller,
                             keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 42,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1132D4),
-                            ),
-                            decoration: const InputDecoration(
-                              prefixText: "\$ ",
-                              border: InputBorder.none,
-                              hintText: "0.00",
-                            ),
+                            onChanged: (value) {
+
+                              String numbers = value.replaceAll(RegExp(r'[^0-9]'), '');
+
+                              if(numbers.isEmpty) return;
+
+                              final formatted =
+                                  NumberFormat.decimalPattern('vi').format(int.parse(numbers));
+
+                              amount_controller.value = TextEditingValue(
+                                text: formatted,
+                                selection: TextSelection.collapsed(offset: formatted.length),
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -314,7 +319,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     "description": description_controller.text,
                     "category": category,
                     "account": account,
-                    "amount": double.tryParse(amount_controller.text) ?? 0,
+                    "amount": double.tryParse(
+                      amount_controller.text.replaceAll(".", "")
+                    ) ?? 0,
                     "is_expense": isExpense ? 1 : 0,
                     "notes": notes_controller.text,
                     "date": DateTime.now().toString()
