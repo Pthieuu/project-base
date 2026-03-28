@@ -6,7 +6,9 @@ import 'insights_screen.dart';
 import 'profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final String userName;
+
+  const MainScreen({super.key, required this.userName});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -16,13 +18,20 @@ class _MainScreenState extends State<MainScreen> {
 
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const DashboardScreen(),
-    const TransactionHistoryScreen(),
-    const BudgetScreen(),
-    const InsightsScreen(),
-    const ProfileScreen(),
-  ];
+  late List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _screens = [
+      DashboardScreen(userName: widget.userName),
+      const TransactionHistoryScreen(),
+      const BudgetScreen(),
+      const InsightsScreen(),
+      ProfileScreen(userName: widget.userName),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {

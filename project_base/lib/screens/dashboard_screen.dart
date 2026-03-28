@@ -4,7 +4,8 @@ import '../services/api_service.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final String userName;
+  const DashboardScreen({super.key, required this.userName});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -102,7 +103,7 @@ Future loadTransactions() async {
 
                     const SizedBox(width: 12),
 
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -114,8 +115,8 @@ Future loadTransactions() async {
                             ),
                           ),
                           Text(
-                            "Alex Rivera",
-                            style: TextStyle(
+                            widget.userName.isNotEmpty ? widget.userName : "User",
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),

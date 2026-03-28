@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final String userName;
+  const ProfileScreen({super.key, required this.userName});
 
   @override
   Widget build(BuildContext context) {
@@ -61,16 +62,18 @@ class ProfileScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  const Text(
-                    "Alex Rivera",
-                    style: TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold),
+                  Text(
+                    userName.isNotEmpty ? userName : "User",
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
 
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
 
-                  const Text(
-                    "alex.rivera@aiexpense.ai",
+                  Text(
+                    "user@email.com",
                     style: TextStyle(color: Colors.grey),
                   ),
 

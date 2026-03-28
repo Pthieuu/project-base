@@ -5,7 +5,7 @@ class AuthService {
 
   static String baseUrl = "http://127.0.0.1/expense_api";
 
-  static Future login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(String email, String password) async {
 
     var response = await http.post(
       Uri.parse("$baseUrl/login.php"),
@@ -15,24 +15,24 @@ class AuthService {
       },
     );
 
+    print("LOGIN RESPONSE: ${response.body}");
+
     return jsonDecode(response.body);
   }
 
-  static Future register(String name, String email, String password) async {
+  static Future<Map<String, dynamic>> register(String name, String email, String password) async {
 
-  var response = await http.post(
-    Uri.parse("$baseUrl/register.php"),
-    body: {
-      "name": name,
-      "email": email,
-      "password": password
-    },
-  );
+    var response = await http.post(
+      Uri.parse("$baseUrl/register.php"),
+      body: {
+        "name": name,
+        "email": email,
+        "password": password
+      },
+    );
 
-  print(response.statusCode);
-  print(response.body);
+    print("REGISTER RESPONSE: ${response.body}");
 
-  return jsonDecode(response.body);
-}
-
+    return jsonDecode(response.body);
+  }
 }

@@ -17,32 +17,43 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool obscurePassword = true;
 
-  Future<void> login() async {
+Future<void> login() async {
 
-    var result = await AuthService.login(
-      emailController.text,
-      passwordController.text,
+  if(emailController.text.isEmpty || passwordController.text.isEmpty){
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Please enter email and password")),
+    );
+    return;
+  }
+
+  var result = await AuthService.login(
+    emailController.text.trim(),
+    passwordController.text.trim(),
+  );
+
+  print("RESULT: $result");
+
+  if(result != null && result["status"] == "success"){
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MainScreen(
+          userName: result["name"] ?? "",
+        ),
+      ),
     );
 
-    if(result["status"] == "success"){
+  }else{
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const MainScreen(),
-        ),
-      );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Email or password incorrect"),
+      ),
+    );
 
-    }else{
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Email or password incorrect"),
-        ),
-      );
-
-    }
   }
+}
 
   @override
   Widget build(BuildContext context) {
