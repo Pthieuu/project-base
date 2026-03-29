@@ -12,7 +12,22 @@ class AddTransactionScreen extends StatefulWidget {
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   bool isExpense = true;
-  final NumberFormat currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫', decimalDigits: 0);
+  DateTime selected_date = DateTime.now();
+
+  Future<void> pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: selected_date,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked != null) {
+      setState(() {
+        selected_date = picked;
+      });
+    }
+  }
 
   final description_controller = TextEditingController();
   final notes_controller = TextEditingController();
@@ -45,73 +60,74 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
 
-                  const SizedBox(height: 20),
-
-                  /// AMOUNT INPUT
+                  /// 💰 AMOUNT
                   Center(
                     child: Column(
                       children: [
 
                         const Text(
-                          "Amount",
+                          "AMOUNT",
                           style: TextStyle(
                             color: Colors.grey,
+                            letterSpacing: 1,
                             fontSize: 12,
                           ),
                         ),
 
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
 
-                        SizedBox(
-                          width: 220,
-                          child: TextField(
-                            controller: amount_controller,
-                            keyboardType: TextInputType.number,
-                            onChanged: (value) {
-
-                              String numbers = value.replaceAll(RegExp(r'[^0-9]'), '');
-
-                              if(numbers.isEmpty) return;
-
-                              final formatted =
-                                  NumberFormat.decimalPattern('vi').format(int.parse(numbers));
-
-                              amount_controller.value = TextEditingValue(
-                                text: formatted,
-                                selection: TextSelection.collapsed(offset: formatted.length),
-                              );
-                            },
+                        TextField(
+                          controller: amount_controller,
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold,
                           ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: "0",
+                          ),
+                          onChanged: (value) {
+                            String numbers = value.replaceAll(RegExp(r'[^0-9]'), '');
+                            if(numbers.isEmpty) return;
+
+                            final formatted = NumberFormat.decimalPattern('vi')
+                                .format(int.parse(numbers));
+
+                            amount_controller.value = TextEditingValue(
+                              text: formatted,
+                              selection: TextSelection.collapsed(offset: formatted.length),
+                            );
+                          },
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 25),
 
-                  /// EXPENSE / INCOME TOGGLE
                   Container(
-                    height: 50,
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
+                      color: const Color(0xFFE5E7EB),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
                       children: [
 
+                        /// EXPENSE
                         Expanded(
                           child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                isExpense = true;
-                              });
-                            },
-                            child: Container(
+                            onTap: () => setState(() => isExpense = true),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: isExpense ? Colors.white : Colors.transparent,
                                 borderRadius: BorderRadius.circular(30),
@@ -120,30 +136,35 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               child: Text(
                                 "Expense",
                                 style: TextStyle(
-                                  color: Color(0xFF1132D4),
                                   fontWeight: FontWeight.bold,
+                                  color: isExpense
+                                      ? const Color(0xFF2563EB)
+                                      : Colors.grey,
                                 ),
                               ),
                             ),
                           ),
                         ),
 
+                        /// INCOME
                         Expanded(
                           child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                isExpense = false;
-                              });
-                            },
-                            child: Container(
+                            onTap: () => setState(() => isExpense = false),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: !isExpense ? Colors.white : Colors.transparent,
+                                borderRadius: BorderRadius.circular(30),
+                              ),
                               alignment: Alignment.center,
                               child: Text(
                                 "Income",
                                 style: TextStyle(
+                                  fontWeight: FontWeight.bold,
                                   color: !isExpense
                                       ? Colors.green
                                       : Colors.grey,
-                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -153,137 +174,106 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 25),
 
                   /// DESCRIPTION
-                  const Text(
-                    "Description",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-
+                  const Text("Description", style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
 
                   TextField(
                     controller: description_controller,
                     decoration: InputDecoration(
-                      hintText: "e.g. Starbucks Coffee",
-                      prefixIcon: const Icon(Icons.edit),
+                      hintText: "Enter description",
+                      filled: true,
+                      fillColor: Colors.white,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
                       ),
                     ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  /// TAG
+                  Row(
+                    children: [
+                      _tag("✨ Food & Drink", true),
+                      const SizedBox(width: 8),
+                      _tag("☕ Coffee", false),
+                    ],
                   ),
 
                   const SizedBox(height: 20),
 
                   /// CATEGORY
-                  const Text(
-                    "Category",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-
+                  const Text("Category", style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
 
-                  DropdownButtonFormField(
-                    value: category,
-                    items: const [
-                      DropdownMenuItem(value: "Food & Drink", child: Text("Food & Drink")),
-                      DropdownMenuItem(value: "Shopping", child: Text("Shopping")),
-                      DropdownMenuItem(value: "Transport", child: Text("Transport")),
-                      DropdownMenuItem(value: "Entertainment", child: Text("Entertainment")),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        category = value!;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.restaurant),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                  _card(
+                    DropdownButtonFormField(
+                      value: category,
+                      items: const [
+                        DropdownMenuItem(value: "Food & Drink", child: Text("Food & Drink")),
+                        DropdownMenuItem(value: "Shopping", child: Text("Shopping")),
+                        DropdownMenuItem(value: "Transport", child: Text("Transport")),
+                      ],
+                      onChanged: (v) => setState(() => category = v!),
+                      decoration: const InputDecoration(border: InputBorder.none),
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 15),
 
+                  /// DATE + ACCOUNT
                   Row(
                     children: [
 
-                      /// DATE
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-
-                            const Text(
-                              "Date",
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-
-                            const SizedBox(height: 8),
-
-                            TextField(
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.calendar_today),
-                                hintText: "Today",
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
+                        child: GestureDetector(
+                          onTap: pickDate,
+                          child: _card(
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.calendar_today, size: 16),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      DateFormat('dd/MM/yyyy').format(selected_date),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            )
-                          ],
+                                const Icon(Icons.arrow_drop_down)
+                              ],
+                            ),
+                          ),
                         ),
                       ),
 
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10, height: 20),
 
-                      /// ACCOUNT
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-
-                            const Text(
-                              "Account",
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-
-                            const SizedBox(height: 8),
-
-                            DropdownButtonFormField(
-                              value: account,
-                              items: const [
-                                DropdownMenuItem(value: "Main Card", child: Text("Main Card")),
-                                DropdownMenuItem(value: "Savings", child: Text("Savings")),
-                                DropdownMenuItem(value: "Cash", child: Text("Cash")),
-                              ],
-                              onChanged: (value) {
-                                setState(() {
-                                  account = value!;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.credit_card),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                            ),
-                          ],
+                        child: _card(
+                          DropdownButtonFormField(
+                            value: account,
+                            items: const [
+                              DropdownMenuItem(value: "Main Card", child: Text("Main Card")),
+                              DropdownMenuItem(value: "Cash", child: Text("Cash")),
+                            ],
+                            onChanged: (v) => setState(() => account = v!),
+                            decoration: const InputDecoration(border: InputBorder.none),
+                          ),
                         ),
-                      )
+                      ),
                     ],
                   ),
 
                   const SizedBox(height: 20),
 
                   /// NOTES
-                  const Text(
-                    "Notes",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-
+                  const Text("Notes (Optional)", style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
 
                   TextField(
@@ -291,8 +281,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     maxLines: 3,
                     decoration: InputDecoration(
                       hintText: "Add a note...",
+                      filled: true,
+                      fillColor: Colors.white,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
                       ),
                     ),
                   ),
@@ -310,8 +303,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1132D4),
+                  backgroundColor: const Color(0xFF1D4ED8),
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 onPressed: () async {
 
@@ -327,14 +323,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     "date": DateTime.now().toString()
                   };
 
-                  print(data);
-
                   await ApiService().add_transaction(data);
 
                   if(context.mounted){
-                    Navigator.pop(context,true);
+                    Navigator.pop(context, true);
                   }
-
                 },
                 icon: const Icon(Icons.check_circle),
                 label: const Text(
@@ -346,6 +339,36 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           )
         ],
       ),
+    );
+  }
+
+  /// TAG UI
+  Widget _tag(String text, bool active) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: active ? const Color(0xFFE0E7FF) : const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: active ? const Color(0xFF1D4ED8) : Colors.grey,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  /// CARD UI
+  Widget _card(Widget child) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: child,
     );
   }
 }
