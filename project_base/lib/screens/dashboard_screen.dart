@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'addtransaction_screen.dart';
 import '../services/api_service.dart';
+import '../services/user_session.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -33,7 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
 Future loadTransactions() async {
 
-  final data = await ApiService().get_transactions();
+  final data = await ApiService().get_transactions(UserSession.user_id!);
 
   double income = 0;
   double expense = 0;

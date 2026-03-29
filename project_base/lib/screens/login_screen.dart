@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'main_screen.dart';
 import '../services/auth_service.dart';
+import '../services/user_session.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -35,6 +36,9 @@ Future<void> login() async {
 
   if(result != null && result["status"] == "success"){
 
+    UserSession.user_id = result["user_id"];
+    UserSession.name = result["name"];
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -51,7 +55,6 @@ Future<void> login() async {
         content: Text("Email or password incorrect"),
       ),
     );
-
   }
 }
 
