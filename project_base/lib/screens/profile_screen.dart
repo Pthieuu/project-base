@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import 'package:provider/provider.dart';
+import '../controller/theme_controller.dart';
 
 class ProfileScreen extends StatelessWidget {
   final String userName;
@@ -7,20 +9,24 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F6F8),
+      backgroundColor: theme.scaffoldBackgroundColor, // 🔥 FIX
 
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor, // 🔥 FIX
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color), // 🔥 FIX
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           "Profile",
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(color: theme.textTheme.titleLarge?.color), // 🔥 FIX
         ),
       ),
 
@@ -37,10 +43,10 @@ class ProfileScreen extends StatelessWidget {
                   Stack(
                     children: [
 
-                      CircleAvatar(
+                      const CircleAvatar(
                         radius: 60,
                         backgroundImage: NetworkImage(
-                          "https://lh3.googleusercontent.com/aida-public/AB6AXuDYVlfdE66iMDk1qyNz48S1VGQB9MHs9ft3FTnrFAvMhY481FrRNhPtYlIEm_9qz_I66DXI-Sl4hXscYFzw5vQsVLZp2ebKU5iH1kC5Y_DsfcNPIBPFDU1FCtsD2Uwhb_OFDhlu9YfJHSr5dFbib0lvvQTkzMwTSzDmbGx1UXum8gEpvKr2OzLbBE0eUVtJJL-V5vq6CT2LP5XcdANtS-HpW3b2Vuwan9PgfDqRkL8lu7L0wsdJO6xYrnMuuJVNAFuxI3P1BWeo4Rk",
+                          "https://i.pravatar.cc/150?img=3",
                         ),
                       ),
 
@@ -64,15 +70,16 @@ class ProfileScreen extends StatelessWidget {
 
                   Text(
                     userName.isNotEmpty ? userName : "User",
-                    style: const TextStyle(
+                    style: TextStyle( // 🔥 FIX
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                   ),
 
                   const SizedBox(height: 10),
 
-                  Text(
+                  const Text(
                     "user@email.com",
                     style: TextStyle(color: Colors.grey),
                   ),
@@ -122,9 +129,15 @@ class ProfileScreen extends StatelessWidget {
                   ProfileItem(
                     icon: Icons.dark_mode,
                     title: "Dark Mode",
-                    trailing: Switch(
-                      value: true,
-                      onChanged: (value) {},
+                    trailing: Consumer<ThemeController>(
+                      builder: (context, themeCtrl, child) {
+                        return Switch(
+                          value: themeCtrl.isDark,
+                          onChanged: (value) {
+                            themeCtrl.toggleTheme(value);
+                          },
+                        );
+                      },
                     ),
                   ),
 
@@ -150,11 +163,12 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   /// LOGOUT
-                  Container(
+                  SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade50,
+                        backgroundColor:
+                            isDark ? Colors.red.shade900 : Colors.red.shade50, // 🔥 FIX
                         foregroundColor: Colors.red,
                         elevation: 0,
                       ),
@@ -202,20 +216,28 @@ class ProfileItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final theme = Theme.of(context);
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor, // 🔥 FIX (quan trọng nhất)
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
         onTap: onTap,
         leading: CircleAvatar(
           backgroundColor: const Color(0xFF1132D4).withOpacity(0.1),
-          child: Icon(icon, color: const Color(0xFF1132D4)),
+          child: Icon(icon, color: const Color(0xFF1132D4)), // ✅ GIỮ NGUYÊN ICON
         ),
-        title: Text(title),
-        subtitle: subtitle != null ? Text(subtitle!) : null,
+        title: Text(
+          title,
+          style: TextStyle(color: theme.textTheme.bodyLarge?.color), // 🔥 FIX
+        ),
+        subtitle: subtitle != null
+            ? Text(subtitle!, style: const TextStyle(color: Colors.grey))
+            : null,
         trailing: trailing ??
             const Icon(Icons.chevron_right, color: Colors.grey),
       ),

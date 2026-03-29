@@ -38,20 +38,29 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F6F8),
+      backgroundColor: isDark
+          ? const Color(0xFF121212)
+          : const Color(0xFFF6F6F8),
 
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor:
+            isDark ? const Color(0xFF1E1E1E) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black),
+          icon: Icon(Icons.close,
+              color: isDark ? Colors.white : Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           "Add Transaction",
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black,
+          ),
         ),
       ),
 
@@ -85,9 +94,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           controller: amount_controller,
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 36,
                             fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black,
                           ),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
@@ -112,10 +122,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
                   const SizedBox(height: 25),
 
+                  /// TOGGLE
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE5E7EB),
+                      color: isDark
+                          ? Colors.grey[900]
+                          : const Color(0xFFE5E7EB),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
@@ -129,7 +142,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
-                                color: isExpense ? Colors.white : Colors.transparent,
+                                color: isExpense
+                                    ? (isDark
+                                        ? Colors.grey[800]
+                                        : Colors.white)
+                                    : Colors.transparent,
                                 borderRadius: BorderRadius.circular(30),
                               ),
                               alignment: Alignment.center,
@@ -138,7 +155,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: isExpense
-                                      ? const Color(0xFF2563EB)
+                                      ? Colors.blue
                                       : Colors.grey,
                                 ),
                               ),
@@ -154,7 +171,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
-                                color: !isExpense ? Colors.white : Colors.transparent,
+                                color: !isExpense
+                                    ? (isDark
+                                        ? Colors.grey[800]
+                                        : Colors.white)
+                                    : Colors.transparent,
                                 borderRadius: BorderRadius.circular(30),
                               ),
                               alignment: Alignment.center,
@@ -177,15 +198,26 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   const SizedBox(height: 25),
 
                   /// DESCRIPTION
-                  const Text("Description", style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    "Description",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+
                   const SizedBox(height: 8),
 
                   TextField(
                     controller: description_controller,
+                    style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black),
                     decoration: InputDecoration(
                       hintText: "Enter description",
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: isDark
+                          ? const Color(0xFF1E1E1E)
+                          : Colors.white,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
@@ -198,20 +230,30 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   /// TAG
                   Row(
                     children: [
-                      _tag("✨ Food & Drink", true),
+                      _tag("✨ Food & Drink", true, isDark),
                       const SizedBox(width: 8),
-                      _tag("☕ Coffee", false),
+                      _tag("☕ Coffee", false, isDark),
                     ],
                   ),
 
                   const SizedBox(height: 20),
 
                   /// CATEGORY
-                  const Text("Category", style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    "Category",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+
                   const SizedBox(height: 8),
 
                   _card(
                     DropdownButtonFormField(
+                      dropdownColor: isDark
+                          ? const Color(0xFF1E1E1E)
+                          : Colors.white,
                       value: category,
                       items: const [
                         DropdownMenuItem(value: "Food & Drink", child: Text("Food & Drink")),
@@ -238,10 +280,18 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(Icons.calendar_today, size: 16),
+                                    Icon(Icons.calendar_today,
+                                        size: 16,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black),
                                     const SizedBox(width: 8),
                                     Text(
                                       DateFormat('dd/MM/yyyy').format(selected_date),
+                                      style: TextStyle(
+                                          color: isDark
+                                              ? Colors.white
+                                              : Colors.black),
                                     ),
                                   ],
                                 ),
@@ -252,11 +302,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         ),
                       ),
 
-                      const SizedBox(width: 10, height: 20),
+                      const SizedBox(width: 10),
 
                       Expanded(
                         child: _card(
                           DropdownButtonFormField(
+                            dropdownColor: isDark
+                                ? const Color(0xFF1E1E1E)
+                                : Colors.white,
                             value: account,
                             items: const [
                               DropdownMenuItem(value: "Main Card", child: Text("Main Card")),
@@ -273,16 +326,27 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   const SizedBox(height: 20),
 
                   /// NOTES
-                  const Text("Notes (Optional)", style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    "Notes (Optional)",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+
                   const SizedBox(height: 8),
 
                   TextField(
                     controller: notes_controller,
                     maxLines: 3,
+                    style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black),
                     decoration: InputDecoration(
                       hintText: "Add a note...",
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: isDark
+                          ? const Color(0xFF1E1E1E)
+                          : Colors.white,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
@@ -320,7 +384,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     ) ?? 0,
                     "is_expense": isExpense ? 1 : 0,
                     "notes": notes_controller.text,
-                    "date": DateTime.now().toString()
+                    "date": selected_date.toString()
                   };
 
                   await ApiService().add_transaction(data);
@@ -342,30 +406,40 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
   }
 
-  /// TAG UI
-  Widget _tag(String text, bool active) {
+  /// TAG
+  Widget _tag(String text, bool active, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: active ? const Color(0xFFE0E7FF) : const Color(0xFFF3F4F6),
+        color: active
+            ? (isDark
+                ? Colors.blue.withOpacity(0.2)
+                : const Color(0xFFE0E7FF))
+            : (isDark
+                ? Colors.grey[800]
+                : const Color(0xFFF3F4F6)),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         text,
         style: TextStyle(
-          color: active ? const Color(0xFF1D4ED8) : Colors.grey,
+          color: active ? Colors.blue : Colors.grey,
           fontWeight: FontWeight.w500,
         ),
       ),
     );
   }
 
-  /// CARD UI
+  /// CARD
   Widget _card(Widget child) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark
+            ? const Color(0xFF1E1E1E)
+            : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: child,

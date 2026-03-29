@@ -5,21 +5,32 @@ class InsightsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F6F8),
+      backgroundColor:
+          isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF6F6F8),
 
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
-        title: const Text(
+        backgroundColor:
+            isDark ? theme.appBarTheme.backgroundColor : Colors.white,
+        title: Text(
           "AI Insights",
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(
+            color: isDark ? theme.textTheme.titleLarge?.color : Colors.black,
+          ),
         ),
         centerTitle: true,
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Icon(Icons.notifications_none, color: Colors.black),
+            padding: const EdgeInsets.only(right: 12),
+            child: Icon(
+              Icons.notifications_none,
+              color: isDark ? theme.iconTheme.color : Colors.black,
+            ),
           )
         ],
       ),
@@ -32,7 +43,7 @@ class InsightsScreen extends StatelessWidget {
             /// SPENDING ALERT CARD
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? theme.cardColor : Colors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -63,29 +74,38 @@ class InsightsScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment:
                               MainAxisAlignment.spaceBetween,
-                          children: const [
-                            Text("Spending Alert",
+                          children: [
+                            const Text("Spending Alert",
                                 style: TextStyle(
                                     color: Colors.red,
                                     fontWeight: FontWeight.bold)),
                             Text("Today",
-                                style: TextStyle(color: Colors.grey)),
+                                style: TextStyle(
+                                    color: isDark
+                                        ? Colors.grey[400]
+                                        : Colors.grey)),
                           ],
                         ),
 
                         const SizedBox(height: 8),
 
-                        const Text(
+                        Text(
                           "Coffee spending is up 15%",
                           style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyLarge?.color,
+                          ),
                         ),
 
                         const SizedBox(height: 8),
 
-                        const Text(
+                        Text(
                           "You've spent \$45 more on coffee this month compared to your 3-month average.",
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(
+                            color:
+                                isDark ? Colors.grey[400] : Colors.grey,
+                          ),
                         ),
 
                         const SizedBox(height: 16),
@@ -108,7 +128,12 @@ class InsightsScreen extends StatelessWidget {
 
                             OutlinedButton(
                               onPressed: () {},
-                              child: const Text("Dismiss"),
+                              child: Text(
+                                "Dismiss",
+                                style: TextStyle(
+                                  color: theme.textTheme.bodyLarge?.color,
+                                ),
+                              ),
                             )
                           ],
                         )
@@ -125,7 +150,7 @@ class InsightsScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? theme.cardColor : Colors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -147,9 +172,11 @@ class InsightsScreen extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  const Text(
+                  Text(
                     "Move \$120 to your Japan Trip goal to reach 85% progress.",
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[400] : Colors.grey,
+                    ),
                   ),
 
                   const SizedBox(height: 16),
@@ -159,7 +186,8 @@ class InsightsScreen extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: 0.75,
                       minHeight: 10,
-                      backgroundColor: Colors.grey.shade300,
+                      backgroundColor:
+                          isDark ? Colors.grey[800] : Colors.grey.shade300,
                       color: const Color(0xFF1132D4),
                     ),
                   ),
@@ -186,24 +214,27 @@ class InsightsScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? theme.cardColor : Colors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
 
-                  const Text(
+                  Text(
                     "Monthly Forecast",
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
                   ),
 
                   const SizedBox(height: 20),
 
-                  Row(
+                  const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
+                    children: [
                       ForecastBar(height: 80, label: "W1"),
                       ForecastBar(height: 110, label: "W2"),
                       ForecastBar(height: 140, label: "W3", active: true),
@@ -215,20 +246,24 @@ class InsightsScreen extends StatelessWidget {
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: const [
+                    children: [
 
                       Column(
                         children: [
                           Text("Actual Spend",
-                              style: TextStyle(color: Colors.grey)),
+                              style: TextStyle(
+                                  color: isDark
+                                      ? Colors.grey[400]
+                                      : Colors.grey)),
                           Text("\$2,140",
                               style: TextStyle(
                                   fontSize: 18,
-                                  fontWeight: FontWeight.bold)),
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.textTheme.bodyLarge?.color)),
                         ],
                       ),
 
-                      Column(
+                      const Column(
                         children: [
                           Text("Predicted",
                               style: TextStyle(color: Colors.grey)),
@@ -273,7 +308,7 @@ class InsightsScreen extends StatelessWidget {
   }
 }
 
-/// FORECAST BAR
+/// FORECAST BAR (giữ nguyên gần như 100%)
 class ForecastBar extends StatelessWidget {
   final double height;
   final String label;
@@ -288,6 +323,9 @@ class ForecastBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final theme = Theme.of(context);
+
     return Column(
       children: [
 
@@ -304,9 +342,13 @@ class ForecastBar extends StatelessWidget {
 
         const SizedBox(height: 6),
 
-        Text(label,
-            style: TextStyle(
-                fontWeight: active ? FontWeight.bold : FontWeight.normal))
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: active ? FontWeight.bold : FontWeight.normal,
+            color: theme.textTheme.bodySmall?.color,
+          ),
+        )
       ],
     );
   }

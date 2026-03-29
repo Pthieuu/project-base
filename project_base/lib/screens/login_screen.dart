@@ -18,51 +18,54 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool obscurePassword = true;
 
-Future<void> login() async {
+  Future<void> login() async {
 
-  if(emailController.text.isEmpty || passwordController.text.isEmpty){
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Please enter email and password")),
+    if(emailController.text.isEmpty || passwordController.text.isEmpty){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter email and password")),
+      );
+      return;
+    }
+
+    var result = await AuthService.login(
+      emailController.text.trim(),
+      passwordController.text.trim(),
     );
-    return;
-  }
 
-  var result = await AuthService.login(
-    emailController.text.trim(),
-    passwordController.text.trim(),
-  );
+    if(result != null && result["status"] == "success"){
 
-  print("RESULT: $result");
+      UserSession.user_id = result["user_id"];
+      UserSession.name = result["name"];
 
-  if(result != null && result["status"] == "success"){
-
-    UserSession.user_id = result["user_id"];
-    UserSession.name = result["name"];
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MainScreen(
-          userName: result["name"] ?? "",
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MainScreen(
+            userName: result["name"] ?? "",
+          ),
         ),
-      ),
-    );
+      );
 
-  }else{
+    }else{
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Email or password incorrect"),
-      ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Email or password incorrect"),
+        ),
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F6F8),
+      backgroundColor: isDark
+          ? const Color(0xFF0F172A) // nền dark
+          : const Color(0xFFF6F6F8),
 
       body: Center(
         child: SingleChildScrollView(
@@ -73,15 +76,32 @@ Future<void> login() async {
             padding: const EdgeInsets.all(28),
 
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark
+                  ? const Color(0xFF1E293B) // card nổi lên
+                  : Colors.white,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blue.withOpacity(0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                )
-              ],
+
+              // 👉 border nhẹ để tách nền
+              border: isDark
+                  ? Border.all(color: Colors.white.withOpacity(0.05))
+                  : null,
+
+              // 👉 shadow
+              boxShadow: isDark
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      )
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.blue.withOpacity(0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      )
+                    ],
             ),
 
             child: Column(
@@ -105,13 +125,14 @@ Future<void> login() async {
                       ),
                     ),
 
-                    const Expanded(
+                    Expanded(
                       child: Center(
                         child: Text(
                           "AI Expense Manager",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyLarge?.color,
                           ),
                         ),
                       ),
@@ -123,12 +144,13 @@ Future<void> login() async {
 
                 const SizedBox(height: 30),
 
-                const Text(
+                Text(
                   "Welcome Back",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
 
@@ -149,18 +171,26 @@ Future<void> login() async {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
 
-                    const Text(
+                    Text(
                       "Email Address",
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
                     ),
 
                     const SizedBox(height: 8),
 
                     TextField(
                       controller: emailController,
+                      style: TextStyle(color: theme.textTheme.bodyLarge?.color),
                       decoration: InputDecoration(
                         hintText: "name@company.com",
-                        prefixIcon: const Icon(Icons.mail_outline),
+                        prefixIcon: Icon(Icons.mail_outline, color: theme.iconTheme.color),
+                        filled: true,
+                        fillColor: isDark
+                            ? const Color(0xFF0F172A) // input tối hơn card
+                            : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -178,12 +208,15 @@ Future<void> login() async {
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
+                      children: [
                         Text(
                           "Password",
-                          style: TextStyle(fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: theme.textTheme.bodyLarge?.color,
+                          ),
                         ),
-                        Text(
+                        const Text(
                           "Forgot password?",
                           style: TextStyle(
                             color: Color(0xFF1132D4),
@@ -198,16 +231,18 @@ Future<void> login() async {
                     TextField(
                       controller: passwordController,
                       obscureText: obscurePassword,
+                      style: TextStyle(color: theme.textTheme.bodyLarge?.color),
 
                       decoration: InputDecoration(
                         hintText: "Enter your password",
-                        prefixIcon: const Icon(Icons.lock_outline),
+                        prefixIcon: Icon(Icons.lock_outline, color: theme.iconTheme.color),
 
                         suffixIcon: IconButton(
                           icon: Icon(
                             obscurePassword
                                 ? Icons.visibility
                                 : Icons.visibility_off,
+                            color: theme.iconTheme.color,
                           ),
                           onPressed: () {
                             setState(() {
@@ -215,6 +250,11 @@ Future<void> login() async {
                             });
                           },
                         ),
+
+                        filled: true,
+                        fillColor: isDark
+                            ? const Color(0xFF0F172A)
+                            : Colors.white,
 
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -297,7 +337,10 @@ Future<void> login() async {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
 
-                    const Text("Don't have an account? "),
+                    Text(
+                      "Don't have an account? ",
+                      style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                    ),
 
                     GestureDetector(
                       onTap: () {

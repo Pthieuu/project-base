@@ -5,25 +5,33 @@ class TransactionHistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F6F8),
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF6F6F8),
 
       /// HEADER
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? theme.appBarTheme.backgroundColor : Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back,
+              color: isDark ? theme.iconTheme.color : Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Transaction History",
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(
+            color: isDark ? theme.textTheme.titleLarge?.color : Colors.black,
+          ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.black),
+            icon: Icon(Icons.search,
+                color: isDark ? theme.iconTheme.color : Colors.black),
             onPressed: () {},
           )
         ],
@@ -39,7 +47,7 @@ class TransactionHistoryScreen extends StatelessWidget {
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF1132D4),
+                color: const Color(0xFF1132D4), // giữ nguyên
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -91,7 +99,7 @@ class TransactionHistoryScreen extends StatelessWidget {
             ),
 
             /// TODAY
-            sectionTitle("Today, Oct 24"),
+            sectionTitle("Today, Oct 24", isDark),
 
             const TransactionTile(
               icon: Icons.coffee,
@@ -118,7 +126,7 @@ class TransactionHistoryScreen extends StatelessWidget {
             ),
 
             /// YESTERDAY
-            sectionTitle("Yesterday, Oct 23"),
+            sectionTitle("Yesterday, Oct 23", isDark),
 
             const TransactionTile(
               icon: Icons.shopping_bag,
@@ -150,17 +158,17 @@ class TransactionHistoryScreen extends StatelessWidget {
   }
 
   /// SECTION TITLE
-  static Widget sectionTitle(String text) {
+  static Widget sectionTitle(String text, bool isDark) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: Colors.grey.shade200,
+      color: isDark ? Colors.grey[850] : Colors.grey.shade200,
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 12,
-          color: Colors.grey,
+          color: isDark ? Colors.grey[400] : Colors.grey,
         ),
       ),
     );
@@ -182,10 +190,13 @@ class CardStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white24,
+        color: Colors.white24, // giữ nguyên để không phá UI
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -224,15 +235,19 @@ class TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      color: Colors.white,
+      color: isDark ? theme.cardColor : Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
 
           CircleAvatar(
             backgroundColor: Colors.blue.withOpacity(0.1),
-            child: Icon(icon, color: Colors.blue),
+            child: Icon(icon, color: Colors.blue), // giữ nguyên icon
           ),
 
           const SizedBox(width: 12),
@@ -241,10 +256,19 @@ class TransactionTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
+                ),
                 Text(
                   category,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.grey[400] : Colors.grey,
+                  ),
                 ),
               ],
             ),
