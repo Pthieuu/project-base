@@ -5,22 +5,36 @@ class BudgetScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F6F8),
+      backgroundColor:
+          isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF6F6F8),
 
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor:
+            isDark ? theme.appBarTheme.backgroundColor : Colors.white,
         elevation: 0,
-        leading: const Icon(Icons.arrow_back, color: Colors.black),
-        title: const Text(
+        leading: Icon(
+          Icons.arrow_back,
+          color: isDark ? theme.iconTheme.color : Colors.black,
+        ),
+        title: Text(
           "Monthly Budget",
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(
+            color: isDark ? theme.textTheme.titleLarge?.color : Colors.black,
+          ),
         ),
         centerTitle: true,
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Icon(Icons.more_vert, color: Colors.black),
+            padding: const EdgeInsets.only(right: 12),
+            child: Icon(
+              Icons.more_vert,
+              color: isDark ? theme.iconTheme.color : Colors.black,
+            ),
           )
         ],
       ),
@@ -34,27 +48,30 @@ class BudgetScreen extends StatelessWidget {
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF1132D4).withOpacity(0.05),
+                color: isDark
+                    ? const Color(0xFF1132D4).withOpacity(0.15)
+                    : const Color(0xFF1132D4).withOpacity(0.05),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 children: [
 
-                  const Text(
+                  Text(
                     "Total Spent",
                     style: TextStyle(
-                      color: Colors.grey,
+                      color: isDark ? Colors.grey[400] : Colors.grey,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
 
                   const SizedBox(height: 6),
 
-                  const Text(
+                  Text(
                     "\$2,450.00",
                     style: TextStyle(
                       fontSize: 36,
                       fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                   ),
 
@@ -70,12 +87,15 @@ class BudgetScreen extends StatelessWidget {
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
+                    children: [
                       Text(
                         "Overall Progress",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: theme.textTheme.bodyLarge?.color,
+                        ),
                       ),
-                      Text(
+                      const Text(
                         "82%",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
@@ -92,7 +112,8 @@ class BudgetScreen extends StatelessWidget {
                     minHeight: 10,
                     borderRadius: BorderRadius.circular(20),
                     color: const Color(0xFF1132D4),
-                    backgroundColor: Colors.grey.shade300,
+                    backgroundColor:
+                        isDark ? Colors.grey[800] : Colors.grey.shade300,
                   ),
 
                   const SizedBox(height: 8),
@@ -101,9 +122,11 @@ class BudgetScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
 
-                      const Text(
+                      Text(
                         "\$550.00 remaining",
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(
+                          color: isDark ? Colors.grey[400] : Colors.grey,
+                        ),
                       ),
 
                       Container(
@@ -137,20 +160,21 @@ class BudgetScreen extends StatelessWidget {
               ),
             ),
 
-            /// CATEGORY BUDGET TITLE
+            /// CATEGORY TITLE
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   Text(
                     "Category Budgets",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                   ),
-                  Text(
+                  const Text(
                     "Edit All",
                     style: TextStyle(
                       color: Color(0xFF1132D4),
@@ -163,8 +187,8 @@ class BudgetScreen extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            /// CATEGORY LIST
-            budgetItem(
+            /// LIST
+            budgetItem(context,
               icon: Icons.restaurant,
               title: "Food & Dining",
               spent: "\$828 spent of \$900",
@@ -172,7 +196,7 @@ class BudgetScreen extends StatelessWidget {
               color: Colors.orange,
             ),
 
-            budgetItem(
+            budgetItem(context,
               icon: Icons.home,
               title: "Housing",
               spent: "\$1,200 spent of \$1,600",
@@ -180,7 +204,7 @@ class BudgetScreen extends StatelessWidget {
               color: const Color(0xFF1132D4),
             ),
 
-            budgetItem(
+            budgetItem(context,
               icon: Icons.movie,
               title: "Entertainment",
               spent: "\$176 spent of \$200",
@@ -188,7 +212,7 @@ class BudgetScreen extends StatelessWidget {
               color: Colors.red,
             ),
 
-            budgetItem(
+            budgetItem(context,
               icon: Icons.shopping_bag,
               title: "Shopping",
               spent: "\$126 spent of \$300",
@@ -203,19 +227,24 @@ class BudgetScreen extends StatelessWidget {
     );
   }
 
-  /// BUDGET CATEGORY ITEM
-  static Widget budgetItem({
+  /// ITEM
+  static Widget budgetItem(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String spent,
     required double percent,
     required Color color,
   }) {
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? theme.cardColor : Colors.white,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -226,7 +255,7 @@ class BudgetScreen extends StatelessWidget {
 
               CircleAvatar(
                 backgroundColor: color.withOpacity(0.1),
-                child: Icon(icon, color: color),
+                child: Icon(icon, color: color), // giữ nguyên icon
               ),
 
               const SizedBox(width: 10),
@@ -241,7 +270,10 @@ class BudgetScreen extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyLarge?.color,
+                          ),
                         ),
                         Text(
                           "${(percent * 100).toInt()}%",
@@ -255,9 +287,9 @@ class BudgetScreen extends StatelessWidget {
 
                     Text(
                       spent,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey,
+                        color: isDark ? Colors.grey[400] : Colors.grey,
                       ),
                     ),
                   ],
@@ -273,7 +305,8 @@ class BudgetScreen extends StatelessWidget {
             minHeight: 6,
             borderRadius: BorderRadius.circular(20),
             color: color,
-            backgroundColor: Colors.grey.shade300,
+            backgroundColor:
+                isDark ? Colors.grey[800] : Colors.grey.shade300,
           )
         ],
       ),

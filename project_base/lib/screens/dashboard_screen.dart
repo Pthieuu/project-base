@@ -32,43 +32,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
     loadTransactions();
   }
 
-Future loadTransactions() async {
+  Future loadTransactions() async {
 
-  final data = await ApiService().get_transactions(UserSession.user_id!);
+    final data = await ApiService().get_transactions(UserSession.user_id!);
 
-  double income = 0;
-  double expense = 0;
+    double income = 0;
+    double expense = 0;
 
-  for (var tx in data) {
+    for (var tx in data) {
+      double amount = double.parse(tx["amount"].toString());
+      bool isExpense = tx["is_expense"].toString() == "1";
 
-    double amount = double.parse(tx["amount"].toString());
-    bool isExpense = tx["is_expense"].toString() == "1";
-
-    if (isExpense) {
-      expense += amount;
-    } else {
-      income += amount;
+      if (isExpense) {
+        expense += amount;
+      } else {
+        income += amount;
+      }
     }
 
+    setState(() {
+      transactions = data;
+      totalIncome = income;
+      totalExpense = expense;
+      totalBalance = income - expense;
+    });
   }
-
-  setState(() {
-    transactions = data;
-    totalIncome = income;
-    totalExpense = expense;
-    totalBalance = income - expense;
-  });
-
-}
 
   @override
   Widget build(BuildContext context) {
 
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F6F8),
+      backgroundColor: theme.scaffoldBackgroundColor,
 
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF1132D4),
+        backgroundColor: theme.primaryColor,
         onPressed: () async{
           final result = await Navigator.push(
             context,
@@ -92,7 +91,7 @@ Future loadTransactions() async {
               /// HEADER
               Container(
                 padding: const EdgeInsets.all(16),
-                color: Colors.white,
+                color: theme.cardColor,
                 child: Row(
                   children: [
 
@@ -112,14 +111,15 @@ Future loadTransactions() async {
                             "Welcome back,",
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey,
+                              color: theme.hintColor,
                             ),
                           ),
                           Text(
                             widget.userName.isNotEmpty ? widget.userName : "User",
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
+                              color: theme.textTheme.bodyLarge?.color,
                             ),
                           ),
                         ],
@@ -127,7 +127,9 @@ Future loadTransactions() async {
                     ),
 
                     IconButton(
-                      icon: const Icon(Icons.notifications),
+                      icon: Icon(Icons.notifications,
+                        color: theme.iconTheme.color,
+                      ),
                       onPressed: () {},
                     )
                   ],
@@ -136,7 +138,7 @@ Future loadTransactions() async {
 
               const SizedBox(height: 16),
 
-              /// BALANCE CARD
+              /// BALANCE CARD (GIỮ NGUYÊN)
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(20),
@@ -165,9 +167,9 @@ Future loadTransactions() async {
                             color: Colors.white,
                           ),
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Chip(
-                          label: Text("+2.4%"),
+                          label: const Text("+2.4%"),
                           backgroundColor: Colors.white24,
                         )
                       ],
@@ -220,6 +222,7 @@ Future loadTransactions() async {
 
                     Expanded(
                       child: statCard(
+                        context: context,
                         icon: Icons.arrow_downward,
                         color: Colors.green,
                         title: "Income",
@@ -232,6 +235,7 @@ Future loadTransactions() async {
 
                     Expanded(
                       child: statCard(
+                        context: context,
                         icon: Icons.arrow_upward,
                         color: Colors.red,
                         title: "Expenses",
@@ -250,7 +254,7 @@ Future loadTransactions() async {
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
@@ -259,17 +263,18 @@ Future loadTransactions() async {
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
+                      children: [
                         Text(
                           "Spending Summary",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyLarge?.color,
                           ),
                         ),
                         Chip(
-                          label: Text("This Week"),
-                          backgroundColor: Color(0x221132D4),
+                          label: const Text("This Week"),
+                          backgroundColor: const Color(0x221132D4),
                         )
                       ],
                     ),
@@ -303,15 +308,16 @@ Future loadTransactions() async {
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
+                      children: [
                         Text(
                           "Recent Transactions",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyLarge?.color,
                           ),
                         ),
-                        Text(
+                        const Text(
                           "See All",
                           style: TextStyle(
                             color: Color(0xFF1132D4),
@@ -353,16 +359,20 @@ Future loadTransactions() async {
 
   /// STAT CARD
   static Widget statCard({
+    required BuildContext context,
     required IconData icon,
     required Color color,
     required String title,
     required String value,
     required String percent,
   }) {
+
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -373,15 +383,16 @@ Future loadTransactions() async {
 
           const SizedBox(height: 8),
 
-          Text(title, style: const TextStyle(color: Colors.grey)),
+          Text(title, style: TextStyle(color: theme.hintColor)),
 
           const SizedBox(height: 4),
 
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18,
+              color: theme.textTheme.bodyLarge?.color,
             ),
           ),
 
@@ -394,7 +405,7 @@ Future loadTransactions() async {
     );
   }
 
-  /// CHART BAR
+  /// CHART BAR (GIỮ NGUYÊN)
   static Widget chartBar(double height) {
     return Expanded(
       child: Container(
@@ -426,19 +437,21 @@ class TransactionItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
+    final theme = Theme.of(context);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
 
           CircleAvatar(
-            backgroundColor: Colors.blue.withOpacity(0.1),
-            child: Icon(icon, color: Colors.blue),
+            backgroundColor: theme.primaryColor.withOpacity(0.1),
+            child: Icon(icon, color: theme.primaryColor),
           ),
 
           const SizedBox(width: 12),
@@ -450,14 +463,17 @@ class TransactionItem extends StatelessWidget {
 
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
                 ),
 
                 Text(
                   category,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey,
+                    color: theme.hintColor,
                   ),
                 )
               ],
@@ -466,8 +482,9 @@ class TransactionItem extends StatelessWidget {
 
           Text(
             amount,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
+              color: theme.textTheme.bodyLarge?.color,
             ),
           )
         ],
