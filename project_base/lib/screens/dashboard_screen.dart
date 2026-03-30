@@ -344,24 +344,79 @@ class TransactionItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // 🔥 xác định income / expense
+    final isExpense = amount.startsWith('-');
+
+    // 🎨 màu icon đẹp hơn cho dark mode
+    final iconColor = isExpense
+        ? (isDark ? Colors.red[300]! : Colors.red)
+        : (isDark ? Colors.green[300]! : Colors.green);
+
+    // 🎨 background icon
+    final bgColor = iconColor.withOpacity(isDark ? 0.2 : 0.1);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: theme.cardColor, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: isDark ? theme.cardColor : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+
+        // ✨ shadow cho light mode
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                )
+              ],
+      ),
       child: Row(
         children: [
-          CircleAvatar(backgroundColor: theme.primaryColor.withOpacity(0.1), child: Icon(icon, color: theme.primaryColor)),
+          /// ICON
+          CircleAvatar(
+            backgroundColor: bgColor,
+            child: Icon(icon, color: iconColor),
+          ),
+
           const SizedBox(width: 12),
+
+          /// TEXT
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-                Text(category, style: TextStyle(fontSize: 12, color: theme.hintColor)),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  category,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.hintColor,
+                  ),
+                ),
               ],
             ),
           ),
-          Text(amount, style: TextStyle(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+
+          /// AMOUNT (màu theo income/expense)
+          Text(
+            amount,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: iconColor,
+            ),
+          ),
         ],
       ),
     );
