@@ -1,5 +1,4 @@
 class TransactionModel {
-
   int? id;
   String description;
   String category;
@@ -20,16 +19,31 @@ class TransactionModel {
     required this.date,
   });
 
-  Map<String,dynamic> toJson(){
+  /// 🔹 Từ JSON -> Object
+  factory TransactionModel.fromJson(Map<String, dynamic> json) {
+    return TransactionModel(
+      id: json['id'],
+      description: json['description'] ?? "",
+      category: json['category'] ?? "",
+      account: json['account'] ?? "",
+      amount: double.tryParse(json['amount'].toString()) ?? 0.0,
+      isExpense: json['is_expense'] == 1, // convert int -> bool
+      notes: json['notes'] ?? "",
+      date: json['date'] ?? "",
+    );
+  }
+
+  /// 🔹 Object -> JSON
+  Map<String, dynamic> toJson() {
     return {
+      "id": id,
       "description": description,
       "category": category,
       "account": account,
       "amount": amount,
       "is_expense": isExpense ? 1 : 0,
       "notes": notes,
-      "date": date
+      "date": date,
     };
   }
-
 }

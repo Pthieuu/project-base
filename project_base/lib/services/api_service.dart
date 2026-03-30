@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/services/user_session.dart';
+import 'package:project_base/services/api_service.dart';
 
 class ApiService {
 
@@ -31,28 +33,28 @@ class ApiService {
   print("API RESPONSE: ${response.body}");
 }
 
-  Future<List<dynamic>> get_transactions(int user_id) async {
-    final response = await http.post(
-      Uri.parse("${baseUrl}get_transaction.php"),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: jsonEncode({
-        "user_id": UserSession.user_id,
-      }),
-    );
+  Future<List<TransactionModel>> get_transactions(int user_id) async {
+  final response = await http.post(
+    Uri.parse("${baseUrl}get_transaction.php"),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({"user_id": user_id}),
+  );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
 
-      if (data is Map && data['status'] == 'success') {
-        return data['data']; 
-      } else {
-        print("API ERROR: $data");
-        return [];
+    if (data is Map && data['status'] == 'success') {
+      final List transactions = data['data'];
+      return transactions
+          .map((item) => TransactionModel.fromJson(item))
+          .toList();
+    } else {
+      print("API ERROR: $data");
+      return [];
     }
+  } else {
+    print("HTTP ERROR: ${response.statusCode}");
+    return [];
   }
-
-    throw Exception("Failed to load transactions");
-  }
+}
 } 
