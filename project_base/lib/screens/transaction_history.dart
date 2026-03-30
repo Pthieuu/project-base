@@ -183,13 +183,11 @@ class CardStat extends StatelessWidget {
   }
 }
 
-/// Transaction tile
 class TransactionTile extends StatelessWidget {
   final IconData icon;
   final String name;
   final String category;
   final String amount;
-  final Color color;
 
   const TransactionTile({
     super.key,
@@ -197,17 +195,16 @@ class TransactionTile extends StatelessWidget {
     required this.name,
     required this.category,
     required this.amount,
-    required this.color,
   });
 
   factory TransactionTile.fromModel(TransactionModel tx) {
     final formatter = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
+
     return TransactionTile(
-      icon: Icons.payment, // có thể customize theo category
+      icon: Icons.payment,
       name: tx.description,
       category: "${tx.category} • ${tx.date.substring(11, 16)}",
       amount: "${tx.isExpense ? '-' : '+'}${formatter.format(tx.amount)}",
-      color: tx.isExpense ? Colors.red : Colors.green,
     );
   }
 
@@ -216,26 +213,77 @@ class TransactionTile extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    /// 🔥 xác định income / expense
+    final isExpense = amount.startsWith('-');
+
+    /// 🎨 màu icon đẹp hơn
+    final iconColor = isExpense
+        ? (isDark ? Colors.red[300]! : Colors.red)
+        : (isDark ? Colors.green[300]! : Colors.green);
+
+    /// 🎨 background icon
+    final bgColor = iconColor.withOpacity(isDark ? 0.2 : 0.1);
+
     return Container(
-      color: isDark ? theme.cardColor : Colors.white,
+      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: isDark ? theme.cardColor : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+
+        /// ✨ shadow nhẹ cho light mode
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                )
+              ],
+      ),
       child: Row(
         children: [
+          /// ICON
           CircleAvatar(
-            backgroundColor: Colors.blue.withOpacity(0.1),
-            child: Icon(icon, color: Colors.blue),
+            backgroundColor: bgColor,
+            child: Icon(icon, color: iconColor),
           ),
+
           const SizedBox(width: 12),
+
+          /// TEXT
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: TextStyle(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-                Text(category, style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : Colors.grey)),
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  category,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.hintColor,
+                  ),
+                ),
               ],
             ),
           ),
-          Text(amount, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+
+          /// AMOUNT
+          Text(
+            amount,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: iconColor,
+            ),
+          ),
         ],
       ),
     );
