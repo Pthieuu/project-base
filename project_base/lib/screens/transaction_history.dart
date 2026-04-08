@@ -185,6 +185,7 @@ class CardStat extends StatelessWidget {
 
 class TransactionTile extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
   final String name;
   final String category;
   final String amount;
@@ -192,6 +193,7 @@ class TransactionTile extends StatelessWidget {
   const TransactionTile({
     super.key,
     required this.icon,
+    required this.iconColor,
     required this.name,
     required this.category,
     required this.amount,
@@ -199,13 +201,63 @@ class TransactionTile extends StatelessWidget {
 
   factory TransactionTile.fromModel(TransactionModel tx) {
     final formatter = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
+    final categoryStyle = _categoryStyle(tx.category);
+    final displayCategory = _displayCategory(tx.category);
+    final displayName = displayCategory == "Food & Dining"
+        ? "Food & Dining"
+        : tx.description;
 
     return TransactionTile(
-      icon: Icons.payment,
-      name: tx.description,
-      category: "${tx.category} • ${tx.date.substring(11, 16)}",
+      icon: categoryStyle.icon,
+      iconColor: categoryStyle.color,
+      name: displayName,
+      category: "$displayCategory • ${tx.date.substring(11, 16)}",
       amount: "${tx.isExpense ? '-' : '+'}${formatter.format(tx.amount)}",
     );
+  }
+
+  static String _displayCategory(String category) {
+    switch (category.trim().toLowerCase()) {
+      case 'food':
+      case 'food & drink':
+      case 'food & dining':
+        return 'Food & Dining';
+      default:
+        return category;
+    }
+  }
+
+  static _CategoryStyle _categoryStyle(String category) {
+    switch (category.trim().toLowerCase()) {
+      case 'food':
+      case 'food & drink':
+      case 'food & dining':
+        return const _CategoryStyle(
+          icon: Icons.restaurant,
+          color: Colors.orange,
+        );
+      case 'housing':
+      case 'home':
+        return const _CategoryStyle(
+          icon: Icons.home,
+          color: Color(0xFF1132D4),
+        );
+      case 'entertainment':
+        return const _CategoryStyle(
+          icon: Icons.movie,
+          color: Colors.red,
+        );
+      case 'shopping':
+        return const _CategoryStyle(
+          icon: Icons.shopping_bag,
+          color: Colors.green,
+        );
+      default:
+        return const _CategoryStyle(
+          icon: Icons.payment,
+          color: Color(0xFF1132D4),
+        );
+    }
   }
 
   @override
@@ -216,8 +268,8 @@ class TransactionTile extends StatelessWidget {
     /// 🔥 xác định income / expense
     final isExpense = amount.startsWith('-');
 
-    /// 🎨 màu icon đẹp hơn
-    final iconColor = isExpense
+    /// 🎨 màu số tiền theo income / expense
+    final amountColor = isExpense
         ? (isDark ? Colors.red[300]! : Colors.red)
         : (isDark ? Colors.green[300]! : Colors.green);
 
@@ -281,11 +333,21 @@ class TransactionTile extends StatelessWidget {
             amount,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: iconColor,
+              color: amountColor,
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _CategoryStyle {
+  final IconData icon;
+  final Color color;
+
+  const _CategoryStyle({
+    required this.icon,
+    required this.color,
+  });
 }

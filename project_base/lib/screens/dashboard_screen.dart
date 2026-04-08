@@ -55,18 +55,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  _CategoryStyle _categoryStyle(String category) {
+    switch (category.trim().toLowerCase()) {
+      case 'food':
+      case 'food & drink':
+      case 'food & dining':
+        return const _CategoryStyle(
+          title: 'Food & Dining',
+          icon: Icons.restaurant,
+          color: Colors.orange,
+        );
+      case 'housing':
+      case 'home':
+        return const _CategoryStyle(
+          title: 'Housing',
+          icon: Icons.home,
+          color: Color(0xFF1132D4),
+        );
+      case 'entertainment':
+        return const _CategoryStyle(
+          title: 'Entertainment',
+          icon: Icons.movie,
+          color: Colors.red,
+        );
+      case 'shopping':
+        return const _CategoryStyle(
+          title: 'Shopping',
+          icon: Icons.shopping_bag,
+          color: Colors.green,
+        );
+      default:
+        return const _CategoryStyle(
+          title: '',
+          icon: Icons.attach_money,
+          color: Color(0xFF1132D4),
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     /// 🎯 COLOR SYSTEM (match Tailwind)
     const primary = Color(0xFF1132D4);
-    final bg = isDark ? const Color(0xFF101322) : const Color(0xFFF6F6F8);
-    final card = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final bg = isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF6F6F8);
+    final card = isDark ? theme.cardColor : Colors.white;
     final border = isDark ? Colors.white10 : const Color(0xFFE5E7EB);
     final text = isDark ? Colors.white : const Color(0xFF0F172A);
-    final subText = Colors.grey;
+    final subText = isDark ? Colors.white70 : Colors.grey;
 
     return Scaffold(
       backgroundColor: bg,
@@ -289,7 +327,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     ...transactions.map((tx) {
                       final isExpense = tx.isExpense;
-                      final color = isExpense ? Colors.red : Colors.green;
+                      final amountColor = isExpense ? Colors.red : Colors.green;
+                      final categoryStyle = _categoryStyle(tx.category);
+                      final categoryLabel = categoryStyle.title.isEmpty
+                          ? tx.category
+                          : categoryStyle.title;
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 10),
@@ -303,8 +345,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           children: [
 
                             CircleAvatar(
-                              backgroundColor: color.withOpacity(0.1),
-                              child: Icon(Icons.attach_money, color: color),
+                              backgroundColor: categoryStyle.color.withOpacity(0.1),
+                              child: Icon(categoryStyle.icon, color: categoryStyle.color),
                             ),
 
                             const SizedBox(width: 12),
@@ -315,7 +357,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 children: [
                                   Text(tx.description,
                                       style: TextStyle(fontWeight: FontWeight.bold, color: text)),
-                                  Text(tx.category,
+                                  Text(categoryLabel,
                                       style: TextStyle(fontSize: 12, color: subText)),
                                 ],
                               ),
@@ -323,7 +365,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                             Text(
                               (isExpense ? "-" : "+") + currencyFormat.format(tx.amount),
-                              style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: amountColor, fontWeight: FontWeight.bold),
                             )
                           ],
                         ),
@@ -383,4 +425,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+}
+
+class _CategoryStyle {
+  final String title;
+  final IconData icon;
+  final Color color;
+
+  const _CategoryStyle({
+    required this.title,
+    required this.icon,
+    required this.color,
+  });
 }

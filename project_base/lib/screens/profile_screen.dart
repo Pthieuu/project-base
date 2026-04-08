@@ -12,21 +12,24 @@ class ProfileScreen extends StatelessWidget {
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final bg = isDark ? Colors.black : Colors.white;
+    final text = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subText = isDark ? Colors.white70 : Colors.grey;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, // 🔥 FIX
+      backgroundColor: bg,
 
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: theme.appBarTheme.backgroundColor, // 🔥 FIX
+        backgroundColor: bg,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color), // 🔥 FIX
+          icon: Icon(Icons.arrow_back, color: text),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
         title: Text(
           "Profile",
-          style: TextStyle(color: theme.textTheme.titleLarge?.color), // 🔥 FIX
+          style: TextStyle(color: text),
         ),
       ),
 
@@ -37,6 +40,7 @@ class ProfileScreen extends StatelessWidget {
             /// USER PROFILE
             Container(
               padding: const EdgeInsets.all(24),
+              color: bg,
               child: Column(
                 children: [
 
@@ -70,18 +74,18 @@ class ProfileScreen extends StatelessWidget {
 
                   Text(
                     userName.isNotEmpty ? userName : "User",
-                    style: TextStyle( // 🔥 FIX
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: theme.textTheme.bodyLarge?.color,
+                      color: text,
                     ),
                   ),
 
                   const SizedBox(height: 10),
 
-                  const Text(
+                  Text(
                     "user@email.com",
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: subText),
                   ),
 
                   const SizedBox(height: 10),
@@ -168,9 +172,13 @@ class ProfileScreen extends StatelessWidget {
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
-                            isDark ? Colors.red.shade900 : Colors.red.shade50, // 🔥 FIX
+                            isDark ? const Color(0xFF2A1111) : Colors.red.shade50,
                         foregroundColor: Colors.red,
                         elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                       onPressed: () {
                         Navigator.pushAndRemoveUntil(
@@ -218,12 +226,17 @@ class ProfileItem extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final card = isDark ? const Color(0xFF111111) : Colors.white;
+    final text = isDark ? Colors.white : const Color(0xFF0F172A);
+    final border = isDark ? Colors.white10 : const Color(0xFFE2E8F0);
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
-        color: theme.cardColor, // 🔥 FIX (quan trọng nhất)
+        color: card,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
       ),
       child: ListTile(
         onTap: onTap,
@@ -233,7 +246,7 @@ class ProfileItem extends StatelessWidget {
         ),
         title: Text(
           title,
-          style: TextStyle(color: theme.textTheme.bodyLarge?.color), // 🔥 FIX
+          style: TextStyle(color: text),
         ),
         subtitle: subtitle != null
             ? Text(subtitle!, style: const TextStyle(color: Colors.grey))

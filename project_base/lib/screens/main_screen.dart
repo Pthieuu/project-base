@@ -41,15 +41,17 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       body: _screens[_selectedIndex],
 
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? const Color(0xFF111111) : Colors.white,
         selectedItemColor: const Color(0xFF1132D4),
-        unselectedItemColor: Colors.grey,
+        unselectedItemColor: isDark ? Colors.white60 : Colors.grey,
         type: BottomNavigationBarType.fixed,
         onTap: _onItemTapped,
 
