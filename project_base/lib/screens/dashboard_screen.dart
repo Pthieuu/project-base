@@ -14,6 +14,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+
   List<TransactionModel> transactions = [];
 
   double totalIncome = 0;
@@ -54,154 +55,163 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  /// Map category name to icon
-  IconData getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'food':
-        return Icons.fastfood;
-      case 'shopping':
-        return Icons.shopping_cart;
-      case 'transport':
-        return Icons.directions_car;
-      case 'entertainment':
-        return Icons.movie;
-      case 'salary':
-        return Icons.attach_money;
-      case 'health':
-        return Icons.medical_services;
-      case 'education':
-        return Icons.school;
-      default:
-        return Icons.receipt_long;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    /// 🎯 COLOR SYSTEM (match Tailwind)
+    const primary = Color(0xFF1132D4);
+    final bg = isDark ? const Color(0xFF101322) : const Color(0xFFF6F6F8);
+    final card = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final border = isDark ? Colors.white10 : const Color(0xFFE5E7EB);
+    final text = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subText = Colors.grey;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: bg,
+
       floatingActionButton: FloatingActionButton(
-        backgroundColor: theme.primaryColor,
+        backgroundColor: primary,
         onPressed: () async {
           final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddTransactionScreen()),
           );
-          if (result == true) {
-            loadTransactions();
-          }
+          if (result == true) loadTransactions();
         },
         child: const Icon(Icons.add),
       ),
+
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              /// HEADER
+
+              /// ================= HEADER =================
               Container(
                 padding: const EdgeInsets.all(16),
-                color: theme.cardColor,
+                decoration: BoxDecoration(
+                  color: card,
+                  border: Border(bottom: BorderSide(color: border)),
+                ),
                 child: Row(
                   children: [
+
                     const CircleAvatar(
-                      radius: 22,
-                      backgroundImage: NetworkImage("https://i.pravatar.cc/150?img=3"),
+                      radius: 20,
+                      backgroundImage: NetworkImage("https://i.pravatar.cc/150"),
                     ),
+
                     const SizedBox(width: 12),
+
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Welcome back,", style: TextStyle(fontSize: 12, color: theme.hintColor)),
-                          Text(widget.userName.isNotEmpty ? widget.userName : "User",
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                          Text("Welcome back,", style: TextStyle(fontSize: 12, color: subText)),
+                          Text(widget.userName,
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: text)),
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(Icons.notifications, color: theme.iconTheme.color),
-                      onPressed: () {},
-                    )
+
+                    Icon(Icons.notifications, color: text)
                   ],
                 ),
               ),
 
-              const SizedBox(height: 16),
+              /// ================= BALANCE =================
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: primary,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
 
-              /// BALANCE CARD
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1132D4),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("Total Balance", style: TextStyle(color: Colors.white70)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(currencyFormat.format(totalBalance),
-                            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white)),
-                        const SizedBox(width: 10),
-                        Chip(label: const Text("+2.4%"), backgroundColor: Colors.white24)
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("AI Insight", style: TextStyle(color: Colors.white70)),
-                              SizedBox(height: 4),
-                              Text("You're on track to save ₫500,000 more this month.", style: TextStyle(color: Colors.white)),
-                            ],
+                      const Text("Total Balance", style: TextStyle(color: Colors.white70)),
+
+                      const SizedBox(height: 6),
+
+                      Row(
+                        children: [
+                          Text(currencyFormat.format(totalBalance),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold)),
+
+                          const SizedBox(width: 8),
+
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white24,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text("+2.4%", style: TextStyle(fontSize: 10)),
+                          )
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              "You're on track to save ₫500,000 more this month.",
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF1132D4)),
-                          onPressed: () {},
-                          child: const Text("Details"),
-                        )
-                      ],
-                    )
-                  ],
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: primary,
+                            ),
+                            onPressed: () {},
+                            child: const Text("Details"),
+                          )
+                        ],
+                      )
+                    ],
+                  ),
                 ),
               ),
 
-              const SizedBox(height: 20),
-
-              /// INCOME / EXPENSE
+              /// ================= STATS =================
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
+
                     Expanded(
                       child: statCard(
-                        context: context,
-                        icon: Icons.arrow_downward,
-                        color: Colors.green,
                         title: "Income",
                         value: currencyFormat.format(totalIncome),
-                        percent: "+12%",
+                        icon: Icons.arrow_downward,
+                        color: Colors.green,
+                        card: card,
+                        text: text,
+                        subText: subText,
                       ),
                     ),
+
                     const SizedBox(width: 12),
+
                     Expanded(
                       child: statCard(
-                        context: context,
-                        icon: Icons.arrow_upward,
-                        color: Colors.red,
                         title: "Expenses",
                         value: currencyFormat.format(totalExpense),
-                        percent: "-5%",
+                        icon: Icons.arrow_upward,
+                        color: Colors.red,
+                        card: card,
+                        text: text,
+                        subText: subText,
                       ),
                     ),
                   ],
@@ -210,77 +220,120 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SizedBox(height: 20),
 
-              /// SPENDING SUMMARY
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: theme.cardColor, borderRadius: BorderRadius.circular(16)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Spending Summary", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-                        Chip(label: const Text("This Week"), backgroundColor: const Color(0x221132D4))
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        chartBar(40),
-                        chartBar(65),
-                        chartBar(35),
-                        chartBar(85),
-                        chartBar(50),
-                        chartBar(75),
-                        chartBar(95),
-                      ],
-                    )
-                  ],
+              /// ================= CHART =================
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: card,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Spending Summary",
+                              style: TextStyle(fontWeight: FontWeight.bold, color: text)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text("This Week",
+                                style: TextStyle(fontSize: 10, color: primary)),
+                          )
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          chartBar(40),
+                          chartBar(65),
+                          chartBar(35),
+                          chartBar(85),
+                          chartBar(50),
+                          chartBar(75),
+                          chartBar(95),
+                        ],
+                      )
+                    ],
+                  ),
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              /// RECENT TRANSACTIONS
+              /// ================= TRANSACTIONS =================
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Recent Transactions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-                        const Text("See All", style: TextStyle(color: Color(0xFF1132D4), fontWeight: FontWeight.bold)),
+                        Text("Recent Transactions",
+                            style: TextStyle(fontWeight: FontWeight.bold, color: text)),
+                        const Text("See All",
+                            style: TextStyle(color: primary, fontWeight: FontWeight.bold)),
                       ],
                     ),
+
                     const SizedBox(height: 12),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: transactions.length,
-                      itemBuilder: (context, index) {
-                        final tx = transactions[index];
-                        final isExpense = tx.isExpense;
-                        final icon = getCategoryIcon(tx.category);
-                        return TransactionItem(
-                          icon: icon,
-                          title: tx.description,
-                          category: tx.category.isNotEmpty ? tx.category : "No Category",
-                          amount: isExpense
-                              ? "-${currencyFormat.format(tx.amount)}"
-                              : "+${currencyFormat.format(tx.amount)}",
-                        );
-                      },
-                    ),
+
+                    ...transactions.map((tx) {
+                      final isExpense = tx.isExpense;
+                      final color = isExpense ? Colors.red : Colors.green;
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: card,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: border),
+                        ),
+                        child: Row(
+                          children: [
+
+                            CircleAvatar(
+                              backgroundColor: color.withOpacity(0.1),
+                              child: Icon(Icons.attach_money, color: color),
+                            ),
+
+                            const SizedBox(width: 12),
+
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(tx.description,
+                                      style: TextStyle(fontWeight: FontWeight.bold, color: text)),
+                                  Text(tx.category,
+                                      style: TextStyle(fontSize: 12, color: subText)),
+                                ],
+                              ),
+                            ),
+
+                            Text(
+                              (isExpense ? "-" : "+") + currencyFormat.format(tx.amount),
+                              style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                            )
+                          ],
+                        ),
+                      );
+                    }).toList()
                   ],
                 ),
               ),
 
-              const SizedBox(height: 80),
+              const SizedBox(height: 100),
             ],
           ),
         ),
@@ -288,136 +341,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  /// STAT CARD
+  /// ================= COMPONENT =================
+
   static Widget statCard({
-    required BuildContext context,
-    required IconData icon,
-    required Color color,
     required String title,
     required String value,
-    required String percent,
+    required IconData icon,
+    required Color color,
+    required Color card,
+    required Color text,
+    required Color subText,
   }) {
-    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: theme.cardColor, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color),
-          const SizedBox(height: 8),
-          Text(title, style: TextStyle(color: theme.hintColor)),
+          const SizedBox(height: 6),
+          Text(title, style: TextStyle(color: subText, fontSize: 12)),
           const SizedBox(height: 4),
-          Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.textTheme.bodyLarge?.color)),
-          Text(percent, style: TextStyle(color: color, fontSize: 12)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: text)),
         ],
       ),
     );
   }
 
-  /// CHART BAR
   static Widget chartBar(double height) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 3),
         height: height,
-        decoration: BoxDecoration(color: const Color(0xFF1132D4).withOpacity(0.6), borderRadius: BorderRadius.circular(4)),
-      ),
-    );
-  }
-}
-
-class TransactionItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String category;
-  final String amount;
-
-  const TransactionItem({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.category,
-    required this.amount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    // 🔥 xác định income / expense
-    final isExpense = amount.startsWith('-');
-
-    // 🎨 màu icon đẹp hơn cho dark mode
-    final iconColor = isExpense
-        ? (isDark ? Colors.red[300]! : Colors.red)
-        : (isDark ? Colors.green[300]! : Colors.green);
-
-    // 🎨 background icon
-    final bgColor = iconColor.withOpacity(isDark ? 0.2 : 0.1);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? theme.cardColor : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-
-        // ✨ shadow cho light mode
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                )
-              ],
-      ),
-      child: Row(
-        children: [
-          /// ICON
-          CircleAvatar(
-            backgroundColor: bgColor,
-            child: Icon(icon, color: iconColor),
-          ),
-
-          const SizedBox(width: 12),
-
-          /// TEXT
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: theme.textTheme.bodyLarge?.color,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  category,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.hintColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          /// AMOUNT (màu theo income/expense)
-          Text(
-            amount,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: iconColor,
-            ),
-          ),
-        ],
+        decoration: BoxDecoration(
+          color: const Color(0xFF1132D4),
+          borderRadius: BorderRadius.circular(4),
+        ),
       ),
     );
   }

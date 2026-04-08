@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import 'account_created_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -49,12 +50,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       pass_controller.text,
     );
 
-    if(result["status"] == "success"){
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Register successful")),
+    if (result["status"] == "success") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const AccountCreatedScreen(),
+        ),
       );
-      Navigator.pop(context);
-    }else{
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Register failed")),
       );
