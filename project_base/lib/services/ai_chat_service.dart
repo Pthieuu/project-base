@@ -12,6 +12,8 @@ class AiChatService {
     'gemini-2.5-flash',
     'gemini-2.0-flash',
   ];
+  static const int _maxOutputTokens = 1024;
+  static const int _maxContinuationRequests = 2;
 
   bool get isConfigured => _apiKey.isNotEmpty;
 
@@ -67,6 +69,55 @@ class AiChatService {
     required List<AiChatTurn> history,
     required List<TransactionModel> transactions,
   }) async {
+    final contents = <Map<String, Object>>[
+      ...history.map(_turnToContent),
+      _textContent('user', userMessage),
+    ];
+
+    final result = await _generateContent(
+      model: model,
+      transactions: transactions,
+      contents: contents,
+    );
+
+    if (result.text.isEmpty) {
+      throw const AiChatException('Gemini không trả về nội dung hợp lệ.');
+    }
+
+    var combinedText = result.text;
+    var finishReason = result.finishReason;
+
+    for (var attempt = 0; attempt < _maxContinuationRequests; attempt++) {
+      if (finishReason != 'MAX_TOKENS') break;
+
+      contents.add(_textContent('model', combinedText));
+      contents.add(
+        _textContent(
+          'user',
+          'Tiếp tục đúng phần trả lời trước đang dang dở. Không lặp lại ý đã nói.',
+        ),
+      );
+
+      final continuation = await _generateContent(
+        model: model,
+        transactions: transactions,
+        contents: contents,
+      );
+
+      if (continuation.text.isEmpty) break;
+
+      combinedText = _mergeText(combinedText, continuation.text);
+      finishReason = continuation.finishReason;
+    }
+
+    return combinedText;
+  }
+
+  Future<_GeminiResponse> _generateContent({
+    required String model,
+    required List<TransactionModel> transactions,
+    required List<Map<String, Object>> contents,
+  }) async {
     final response = await http.post(
       Uri.parse(
         'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$_apiKey',
@@ -82,23 +133,10 @@ class AiChatService {
             }
           ],
         },
-        'contents': [
-          ...history.map((message) => {
-                'role': message.isUser ? 'user' : 'model',
-                'parts': [
-                  {'text': message.text}
-                ],
-              }),
-          {
-            'role': 'user',
-            'parts': [
-              {'text': userMessage}
-            ],
-          },
-        ],
+        'contents': contents,
         'generationConfig': {
           'temperature': 0.5,
-          'maxOutputTokens': 220,
+          'maxOutputTokens': _maxOutputTokens,
         },
       }),
     );
@@ -112,11 +150,7 @@ class AiChatService {
     }
 
     final data = jsonDecode(response.body);
-    final outputText = _extractOutputText(data);
-    if (outputText.isEmpty) {
-      throw const AiChatException('Gemini không trả về nội dung hợp lệ.');
-    }
-    return outputText;
+    return _extractResponse(data);
   }
 
   String _buildInstructions(List<TransactionModel> transactions) {
@@ -169,12 +203,13 @@ $recent
 ''';
   }
 
-  String _extractOutputText(dynamic data) {
+  _GeminiResponse _extractResponse(dynamic data) {
     if (data is Map<String, dynamic>) {
       final candidates = data['candidates'];
       if (candidates is List && candidates.isNotEmpty) {
         final first = candidates.first;
         if (first is Map<String, dynamic>) {
+          final finishReason = first['finishReason'] as String?;
           final content = first['content'];
           if (content is Map<String, dynamic>) {
             final parts = content['parts'];
@@ -186,13 +221,16 @@ $recent
                   .map((text) => text.trim())
                   .where((text) => text.isNotEmpty)
                   .toList();
-              return texts.join('\n').trim();
+              return _GeminiResponse(
+                text: texts.join('\n').trim(),
+                finishReason: finishReason,
+              );
             }
           }
         }
       }
     }
-    return '';
+    return const _GeminiResponse(text: '');
   }
 
   String _extractErrorMessage(String body) {
@@ -211,6 +249,40 @@ $recent
       // Fallback to raw body.
     }
     return body;
+  }
+
+  Map<String, Object> _turnToContent(AiChatTurn turn) {
+    return _textContent(turn.isUser ? 'user' : 'model', turn.text);
+  }
+
+  Map<String, Object> _textContent(String role, String text) {
+    return {
+      'role': role,
+      'parts': [
+        {'text': text}
+      ],
+    };
+  }
+
+  String _mergeText(String previous, String next) {
+    final trimmedPrevious = previous.trimRight();
+    final trimmedNext = next.trimLeft();
+    if (trimmedPrevious.isEmpty) return trimmedNext;
+    if (trimmedNext.isEmpty) return trimmedPrevious;
+
+    final needsSpace =
+        !trimmedPrevious.endsWith('\n') &&
+        !trimmedNext.startsWith('\n') &&
+        !_isPunctuation(trimmedNext[0]);
+
+    return needsSpace
+        ? '$trimmedPrevious $trimmedNext'
+        : '$trimmedPrevious$trimmedNext';
+  }
+
+  bool _isPunctuation(String char) {
+    const punctuation = '.,!?;:)]}';
+    return punctuation.contains(char);
   }
 }
 
@@ -232,4 +304,14 @@ class AiChatException implements Exception {
 
   @override
   String toString() => message;
+}
+
+class _GeminiResponse {
+  final String text;
+  final String? finishReason;
+
+  const _GeminiResponse({
+    required this.text,
+    this.finishReason,
+  });
 }
