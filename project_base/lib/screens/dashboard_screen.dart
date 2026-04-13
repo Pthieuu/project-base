@@ -14,6 +14,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  static const double _chartMaxBarHeight = 95;
 
   List<TransactionModel> transactions = [];
 
@@ -93,10 +94,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  DateTime? _parseTransactionDate(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+
+    final direct = DateTime.tryParse(trimmed);
+    if (direct != null) return direct;
+
+    for (final pattern in ['dd/MM/yyyy', 'MM/dd/yyyy', 'yyyy/MM/dd']) {
+      try {
+        return DateFormat(pattern).parseStrict(trimmed);
+      } catch (_) {
+        continue;
+      }
+    }
+
+    return null;
+  }
+
+  List<_ChartDayData> _buildWeeklyExpenseData() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final startDay = today.subtract(const Duration(days: 6));
+    final expenseByDay = <DateTime, double>{};
+
+    for (var i = 0; i < 7; i++) {
+      final day = startDay.add(Duration(days: i));
+      expenseByDay[day] = 0;
+    }
+
+    for (final tx in transactions) {
+      if (!tx.isExpense) continue;
+
+      final parsedDate = _parseTransactionDate(tx.date);
+      if (parsedDate == null) continue;
+
+      final txDay = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+      if (txDay.isBefore(startDay) || txDay.isAfter(today)) continue;
+
+      expenseByDay.update(txDay, (value) => value + tx.amount);
+    }
+
+    final maxAmount = expenseByDay.values.fold<double>(
+      0,
+      (current, value) => value > current ? value : current,
+    );
+
+    return expenseByDay.entries.map((entry) {
+      final normalizedHeight = maxAmount == 0
+          ? 8.0
+          : (entry.value / maxAmount) * _chartMaxBarHeight;
+
+      return _ChartDayData(
+        label: DateFormat('E', 'en_US').format(entry.key),
+        amount: entry.value,
+        height: normalizedHeight.clamp(8.0, _chartMaxBarHeight).toDouble(),
+      );
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final weeklyExpenseData = _buildWeeklyExpenseData();
 
     /// 🎯 COLOR SYSTEM (match Tailwind)
     const primary = Color(0xFF1132D4);
@@ -114,7 +175,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onPressed: () async {
           final result = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddTransactionScreen()),
+            MaterialPageRoute(
+              builder: (context) => const AddTransactionScreen(),
+            ),
           );
           if (result == true) loadTransactions();
         },
@@ -125,7 +188,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-
               /// ================= HEADER =================
               Container(
                 padding: const EdgeInsets.all(16),
@@ -135,10 +197,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 child: Row(
                   children: [
-
                     const CircleAvatar(
                       radius: 20,
-                      backgroundImage: NetworkImage("https://i.pravatar.cc/150"),
+                      backgroundImage: NetworkImage(
+                        "https://i.pravatar.cc/150",
+                      ),
                     ),
 
                     const SizedBox(width: 12),
@@ -146,14 +209,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Expanded(
                       child: Column(
                         children: [
-                          Text("Welcome back,", style: TextStyle(fontSize: 12, color: subText)),
-                          Text(widget.userName,
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: text)),
+                          Text(
+                            "Welcome back,",
+                            style: TextStyle(fontSize: 12, color: subText),
+                          ),
+                          Text(
+                            widget.userName,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: text,
+                            ),
+                          ),
                         ],
                       ),
                     ),
 
-                    Icon(Icons.notifications, color: text)
+                    Icon(Icons.notifications, color: text),
                   ],
                 ),
               ),
@@ -170,29 +242,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
-                      const Text("Total Balance", style: TextStyle(color: Colors.white70)),
+                      const Text(
+                        "Total Balance",
+                        style: TextStyle(color: Colors.white70),
+                      ),
 
                       const SizedBox(height: 6),
 
                       Row(
                         children: [
-                          Text(currencyFormat.format(totalBalance),
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold)),
+                          Text(
+                            currencyFormat.format(totalBalance),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
 
                           const SizedBox(width: 8),
 
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white24,
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text("+2.4%", style: TextStyle(fontSize: 10)),
-                          )
+                            child: const Text(
+                              "+2.4%",
+                              style: TextStyle(fontSize: 10),
+                            ),
+                          ),
                         ],
                       ),
 
@@ -213,9 +296,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             onPressed: () {},
                             child: const Text("Details"),
-                          )
+                          ),
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -226,7 +309,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-
                     Expanded(
                       child: statCard(
                         title: "Income",
@@ -272,17 +354,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Spending Summary",
-                              style: TextStyle(fontWeight: FontWeight.bold, color: text)),
+                          Text(
+                            "Spending Summary",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: text,
+                            ),
+                          ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text("This Week",
-                                style: TextStyle(fontSize: 10, color: primary)),
-                          )
+                            child: const Text(
+                              "Last 7 Days",
+                              style: TextStyle(fontSize: 10, color: primary),
+                            ),
+                          ),
                         ],
                       ),
 
@@ -290,16 +382,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          chartBar(40),
-                          chartBar(65),
-                          chartBar(35),
-                          chartBar(85),
-                          chartBar(50),
-                          chartBar(75),
-                          chartBar(95),
-                        ],
-                      )
+                        children: weeklyExpenseData
+                            .map(
+                              (day) => chartBar(
+                                height: day.height,
+                                label: day.label,
+                                amount: currencyFormat.format(day.amount),
+                                textColor: subText,
+                              ),
+                            )
+                            .toList(),
+                      ),
                     ],
                   ),
                 ),
@@ -312,14 +405,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Recent Transactions",
-                            style: TextStyle(fontWeight: FontWeight.bold, color: text)),
-                        const Text("See All",
-                            style: TextStyle(color: primary, fontWeight: FontWeight.bold)),
+                        Text(
+                          "Recent Transactions",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: text,
+                          ),
+                        ),
+                        const Text(
+                          "See All",
+                          style: TextStyle(
+                            color: primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
 
@@ -343,10 +445,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         child: Row(
                           children: [
-
                             CircleAvatar(
-                              backgroundColor: categoryStyle.color.withOpacity(0.1),
-                              child: Icon(categoryStyle.icon, color: categoryStyle.color),
+                              backgroundColor: categoryStyle.color.withOpacity(
+                                0.1,
+                              ),
+                              child: Icon(
+                                categoryStyle.icon,
+                                color: categoryStyle.color,
+                              ),
                             ),
 
                             const SizedBox(width: 12),
@@ -355,22 +461,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(tx.description,
-                                      style: TextStyle(fontWeight: FontWeight.bold, color: text)),
-                                  Text(categoryLabel,
-                                      style: TextStyle(fontSize: 12, color: subText)),
+                                  Text(
+                                    tx.description,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: text,
+                                    ),
+                                  ),
+                                  Text(
+                                    categoryLabel,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: subText,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
 
                             Text(
-                              (isExpense ? "-" : "+") + currencyFormat.format(tx.amount),
-                              style: TextStyle(color: amountColor, fontWeight: FontWeight.bold),
-                            )
+                              (isExpense ? "-" : "+") +
+                                  currencyFormat.format(tx.amount),
+                              style: TextStyle(
+                                color: amountColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
                       );
-                    }).toList()
+                    }).toList(),
                   ],
                 ),
               ),
@@ -407,24 +527,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 6),
           Text(title, style: TextStyle(color: subText, fontSize: 12)),
           const SizedBox(height: 4),
-          Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: text)),
+          Text(
+            value,
+            style: TextStyle(fontWeight: FontWeight.bold, color: text),
+          ),
         ],
       ),
     );
   }
 
-  static Widget chartBar(double height) {
+  static Widget chartBar({
+    required double height,
+    required String label,
+    required String amount,
+    required Color textColor,
+  }) {
     return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 3),
-        height: height,
-        decoration: BoxDecoration(
-          color: const Color(0xFF1132D4),
-          borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              amount,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 9, color: textColor),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              height: height,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1132D4),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(label, style: TextStyle(fontSize: 11, color: textColor)),
+          ],
         ),
       ),
     );
   }
+}
+
+class _ChartDayData {
+  final String label;
+  final double amount;
+  final double height;
+
+  const _ChartDayData({
+    required this.label,
+    required this.amount,
+    required this.height,
+  });
 }
 
 class _CategoryStyle {
