@@ -48,7 +48,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
       throw Exception("Người dùng chưa đăng nhập");
     }
 
-    final transactions = await ApiService().get_transactions(UserSession.user_id!);
+    final transactions = await ApiService().getTransactions(
+      UserSession.user_id!,
+    );
     currentTransactions = transactions;
     final data = _buildInsights(transactions);
 
@@ -60,7 +62,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
           isUser: false,
         ),
         _ChatMessage(
-          text: "Bạn có thể hỏi mình về việc chi quá tay, danh mục chi tiêu, dự đoán cuối tháng hoặc cách tiết kiệm.",
+          text:
+              "Bạn có thể hỏi mình về việc chi quá tay, danh mục chi tiêu, dự đoán cuối tháng hoặc cách tiết kiệm.",
           isUser: false,
         ),
       ]);
@@ -88,8 +91,14 @@ class _InsightsScreenState extends State<InsightsScreen> {
     final currentExpenses = currentMonth.where((tx) => tx.isExpense).toList();
     final previousExpenses = previousMonth.where((tx) => tx.isExpense).toList();
 
-    final currentSpent = currentExpenses.fold<double>(0, (sum, tx) => sum + tx.amount);
-    final previousSpent = previousExpenses.fold<double>(0, (sum, tx) => sum + tx.amount);
+    final currentSpent = currentExpenses.fold<double>(
+      0,
+      (sum, tx) => sum + tx.amount,
+    );
+    final previousSpent = previousExpenses.fold<double>(
+      0,
+      (sum, tx) => sum + tx.amount,
+    );
 
     final currentByCategory = _groupCategoryTotals(currentExpenses);
     final previousByCategory = _groupCategoryTotals(previousExpenses);
@@ -103,19 +112,25 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
     final topCategoryName = _displayCategory(topCategoryEntry.key);
     final topCategorySpend = topCategoryEntry.value;
-    final previousTopCategorySpend = previousByCategory[topCategoryEntry.key] ?? 0.0;
+    final previousTopCategorySpend =
+        previousByCategory[topCategoryEntry.key] ?? 0.0;
     final topCategoryChange = previousTopCategorySpend == 0
         ? (topCategorySpend > 0 ? 1.0 : 0.0)
-        : ((topCategorySpend - previousTopCategorySpend) / previousTopCategorySpend);
+        : ((topCategorySpend - previousTopCategorySpend) /
+              previousTopCategorySpend);
 
     final dayOfMonth = now.day;
     final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
-    final predictedSpend = dayOfMonth == 0 ? currentSpent : currentSpent / dayOfMonth * daysInMonth;
+    final predictedSpend = dayOfMonth == 0
+        ? currentSpent
+        : currentSpent / dayOfMonth * daysInMonth;
     final suggestedCut = topCategorySpend * 0.1;
 
     final weeklySpend = List<double>.generate(4, (index) {
       final startDay = (index * 7) + 1;
-      final endDay = index == 3 ? daysInMonth : math.min(startDay + 6, daysInMonth);
+      final endDay = index == 3
+          ? daysInMonth
+          : math.min(startDay + 6, daysInMonth);
       final total = currentExpenses.fold<double>(0, (sum, tx) {
         final date = DateTime.tryParse(tx.date);
         if (date == null) return sum;
@@ -154,7 +169,11 @@ class _InsightsScreenState extends State<InsightsScreen> {
     final grouped = <String, double>{};
     for (final tx in expenses) {
       final key = _displayCategory(tx.category);
-      grouped.update(key, (value) => value + tx.amount, ifAbsent: () => tx.amount);
+      grouped.update(
+        key,
+        (value) => value + tx.amount,
+        ifAbsent: () => tx.amount,
+      );
     }
     return grouped;
   }
@@ -175,13 +194,22 @@ class _InsightsScreenState extends State<InsightsScreen> {
   _CategoryVisual _categoryVisual(String category) {
     switch (category.trim().toLowerCase()) {
       case 'food & dining':
-        return const _CategoryVisual(icon: Icons.restaurant, color: Colors.orange);
+        return const _CategoryVisual(
+          icon: Icons.restaurant,
+          color: Colors.orange,
+        );
       case 'housing':
-        return const _CategoryVisual(icon: Icons.home, color: Color(0xFF1132D4));
+        return const _CategoryVisual(
+          icon: Icons.home,
+          color: Color(0xFF1132D4),
+        );
       case 'entertainment':
         return const _CategoryVisual(icon: Icons.movie, color: Colors.red);
       case 'shopping':
-        return const _CategoryVisual(icon: Icons.shopping_bag, color: Colors.green);
+        return const _CategoryVisual(
+          icon: Icons.shopping_bag,
+          color: Colors.green,
+        );
       default:
         return const _CategoryVisual(
           icon: Icons.account_balance_wallet,
@@ -205,8 +233,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
     final monthTrend = previousSpent == 0
         ? "Đây là tháng đầu tiên có dữ liệu để theo dõi."
         : currentSpent > previousSpent
-            ? "Bạn đang chi nhiều hơn tháng trước."
-            : "Bạn đang chi ít hơn tháng trước.";
+        ? "Bạn đang chi nhiều hơn tháng trước."
+        : "Bạn đang chi ít hơn tháng trước.";
 
     final categoryTrend = topCategoryChange > 0
         ? "$topCategoryName đang có xu hướng tăng."
@@ -234,10 +262,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
         final history = aiChatService.trimHistory(
           previousMessages
-              .map((message) => AiChatTurn(
-                    text: message.text,
-                    isUser: message.isUser,
-                  ))
+              .map(
+                (message) =>
+                    AiChatTurn(text: message.text, isUser: message.isUser),
+              )
               .toList(),
         );
 
@@ -247,10 +275,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
           transactions: currentTransactions,
         );
       } else {
-        reply = "${_generateReply(text, currentInsights!)}\n\nĐể trả lời tự do bằng AI thật, hãy cấu hình `GEMINI_API_KEY` cho app.";
+        reply = _buildAiUnavailableReply();
       }
-    } catch (e) {
-      reply = "${_generateReply(text, currentInsights!)}\n\nKhông gọi được AI API: $e";
+    } on AiChatException catch (e) {
+      reply = _buildAiUnavailableReply(e);
+    } catch (_) {
+      reply = _buildAiUnavailableReply();
     }
 
     if (!mounted) return;
@@ -271,36 +301,28 @@ class _InsightsScreenState extends State<InsightsScreen> {
     });
   }
 
-  String _generateReply(String question, _InsightsData data) {
-    final q = question.toLowerCase();
+  String _buildAiUnavailableReply([AiChatException? error]) {
+    final message = error?.message ?? '';
 
-    if (q.contains('overspend') || q.contains('too much') || q.contains('vượt')) {
-      final changePct = (data.topCategoryChange * 100).round();
-      return "${data.topCategoryName} đang là điểm cần chú ý nhất tháng này với mức chi ${currencyFormat.format(data.topCategorySpend)}. So với tháng trước, danh mục này thay đổi $changePct%. Bạn nên bắt đầu kiểm soát từ đây.";
+    if (message.contains('Ollama')) {
+      return message;
     }
 
-    if (q.contains('save') || q.contains('cut') || q.contains('tiết kiệm')) {
-      return "Danh mục dễ cắt giảm nhất là ${data.topCategoryName}. Nếu giảm khoảng 10%, bạn có thể tiết kiệm được ${currencyFormat.format(data.suggestedCut)} trong tháng mà không cần động tới mọi danh mục.";
+    if (error?.statusCode == 429) {
+      final retryAfter = error?.retryAfter;
+      final retryText = retryAfter == null
+          ? 'một lát'
+          : '${math.max(1, retryAfter.inSeconds)} giây';
+      return "Mình chưa gọi được AI thật lúc này vì model local đang bận. Bạn thử lại sau $retryText.";
     }
 
-    if (q.contains('forecast') || q.contains('predict') || q.contains('dự đoán')) {
-      return "Theo tốc độ chi tiêu hiện tại, nhiều khả năng bạn sẽ kết thúc tháng với khoảng ${currencyFormat.format(data.predictedSpend)} tiền chi tiêu.";
+    if (!aiChatService.isConfigured) {
+      return "Mình chưa kết nối được AI thật. Hãy kiểm tra backend PHP và Ollama local.";
     }
 
-    if (q.contains('category') || q.contains('danh mục')) {
-      final topThree = data.categoryTotals.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-      final summary = topThree.take(3).map((e) {
-        return "${_displayCategory(e.key)}: ${currencyFormat.format(e.value)}";
-      }).join(", ");
-      return "Ba danh mục chi nhiều nhất tháng này là $summary.";
-    }
-
-    if (q.contains('what should i do') || q.contains('nên làm gì') || q.contains('advice')) {
-      return "Hãy tập trung vào ${data.topCategoryName} trước, hạn chế các khoản mua phát sinh trong tuần này, rồi kiểm tra lại dự đoán sau khi có thêm 3-4 giao dịch mới. Đây là cách nhanh nhất để cải thiện xu hướng chi tiêu.";
-    }
-
-    return data.insightText;
+    return message.isEmpty
+        ? "Mình chưa gọi được AI thật lúc này. Bạn thử lại sau một lát nhé."
+        : message;
   }
 
   @override
@@ -311,10 +333,14 @@ class _InsightsScreenState extends State<InsightsScreen> {
     final subText = isDark ? Colors.white70 : Colors.grey;
 
     return Scaffold(
-      backgroundColor: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF6F6F8),
+      backgroundColor: isDark
+          ? theme.scaffoldBackgroundColor
+          : const Color(0xFFF6F6F8),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: isDark ? theme.appBarTheme.backgroundColor : Colors.white,
+        backgroundColor: isDark
+            ? theme.appBarTheme.backgroundColor
+            : Colors.white,
         title: Text(
           "Phân tích AI",
           style: TextStyle(
@@ -344,12 +370,16 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   return Center(child: Text("Lỗi: ${snapshot.error}"));
                 }
                 if (!snapshot.hasData) {
-                  return const Center(child: Text("Không có dữ liệu phân tích."));
+                  return const Center(
+                    child: Text("Không có dữ liệu phân tích."),
+                  );
                 }
 
                 final insights = snapshot.data!;
                 final visual = _categoryVisual(insights.topCategoryName);
-                final changePercent = (insights.topCategoryChange * 100).abs().round();
+                final changePercent = (insights.topCategoryChange * 100)
+                    .abs()
+                    .round();
                 final isUp = insights.topCategoryChange >= 0;
                 final maxWeek = insights.weeklySpend.fold<double>(0, math.max);
 
@@ -372,7 +402,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        visual.color.withOpacity(0.75),
+                                        visual.color.withValues(alpha: 0.75),
                                         visual.color,
                                       ],
                                     ),
@@ -381,16 +411,22 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                     ),
                                   ),
                                   child: Center(
-                                    child: Icon(visual.icon, size: 50, color: Colors.white),
+                                    child: Icon(
+                                      visual.icon,
+                                      size: 50,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
                                             "Cảnh báo chi tiêu",
@@ -425,12 +461,16 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                           Expanded(
                                             child: ElevatedButton(
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF1132D4),
+                                                backgroundColor: const Color(
+                                                  0xFF1132D4,
+                                                ),
                                               ),
                                               onPressed: () => _sendMessage(
                                                 "Làm sao để giảm chi tiêu ở ${insights.topCategoryName}?",
                                               ),
-                                              child: const Text("Phân tích thói quen"),
+                                              child: const Text(
+                                                "Phân tích thói quen",
+                                              ),
                                             ),
                                           ),
                                           const SizedBox(width: 10),
@@ -465,7 +505,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                   children: const [
                                     CircleAvatar(
                                       backgroundColor: Color(0xFFDFF5E1),
-                                      child: Icon(Icons.savings, color: Colors.green),
+                                      child: Icon(
+                                        Icons.savings,
+                                        color: Colors.green,
+                                      ),
                                     ),
                                     SizedBox(width: 10),
                                     Text(
@@ -488,10 +531,13 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                   child: LinearProgressIndicator(
                                     value: insights.currentSpent == 0
                                         ? 0
-                                        : (insights.suggestedCut / insights.currentSpent).clamp(0.0, 1.0),
+                                        : (insights.suggestedCut /
+                                                  insights.currentSpent)
+                                              .clamp(0.0, 1.0),
                                     minHeight: 10,
-                                    backgroundColor:
-                                        isDark ? Colors.grey[800] : Colors.grey.shade300,
+                                    backgroundColor: isDark
+                                        ? Colors.grey[800]
+                                        : Colors.grey.shade300,
                                     color: const Color(0xFF1132D4),
                                   ),
                                 ),
@@ -502,7 +548,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF1132D4),
                                     ),
-                                    onPressed: () => _sendMessage("Hãy gợi ý cho tôi một kế hoạch tiết kiệm."),
+                                    onPressed: () => _sendMessage(
+                                      "Hãy gợi ý cho tôi một kế hoạch tiết kiệm.",
+                                    ),
                                     child: const Text("Tạo kế hoạch tiết kiệm"),
                                   ),
                                 ),
@@ -529,10 +577,13 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 ),
                                 const SizedBox(height: 20),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: List.generate(4, (index) {
                                     final value = insights.weeklySpend[index];
-                                    final normalized = maxWeek == 0 ? 0.15 : (value / maxWeek).clamp(0.15, 1.0);
+                                    final normalized = maxWeek == 0
+                                        ? 0.15
+                                        : (value / maxWeek).clamp(0.15, 1.0);
                                     return ForecastBar(
                                       height: 50 + (90 * normalized),
                                       label: "W${index + 1}",
@@ -542,13 +593,19 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 ),
                                 const SizedBox(height: 20),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
                                   children: [
                                     Column(
                                       children: [
-                                        Text("Đã chi", style: TextStyle(color: subText)),
                                         Text(
-                                          currencyFormat.format(insights.currentSpent),
+                                          "Đã chi",
+                                          style: TextStyle(color: subText),
+                                        ),
+                                        Text(
+                                          currencyFormat.format(
+                                            insights.currentSpent,
+                                          ),
                                           style: TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
@@ -559,9 +616,14 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                     ),
                                     Column(
                                       children: [
-                                        Text("Dự đoán", style: TextStyle(color: subText)),
                                         Text(
-                                          currencyFormat.format(insights.predictedSpend),
+                                          "Dự đoán",
+                                          style: TextStyle(color: subText),
+                                        ),
+                                        Text(
+                                          currencyFormat.format(
+                                            insights.predictedSpend,
+                                          ),
                                           style: const TextStyle(
                                             fontSize: 18,
                                             color: Color(0xFF1132D4),
@@ -576,12 +638,17 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF1132D4).withOpacity(0.1),
+                                    color: const Color(
+                                      0xFF1132D4,
+                                    ).withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.info, color: Color(0xFF1132D4)),
+                                      const Icon(
+                                        Icons.info,
+                                        color: Color(0xFF1132D4),
+                                      ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
@@ -607,7 +674,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(Icons.smart_toy, color: Color(0xFF1132D4)),
+                                    const Icon(
+                                      Icons.smart_toy,
+                                      color: Color(0xFF1132D4),
+                                    ),
                                     const SizedBox(width: 8),
                                     Text(
                                       "Trợ lý AI",
@@ -626,15 +696,20 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                   children: [
                                     _PromptChip(
                                       label: "Tôi có đang chi quá tay không?",
-                                      onTap: () => _sendMessage("Tôi có đang chi quá tay không?"),
+                                      onTap: () => _sendMessage(
+                                        "Tôi có đang chi quá tay không?",
+                                      ),
                                     ),
                                     _PromptChip(
                                       label: "Nên cắt giảm danh mục nào?",
-                                      onTap: () => _sendMessage("Nên cắt giảm danh mục nào?"),
+                                      onTap: () => _sendMessage(
+                                        "Nên cắt giảm danh mục nào?",
+                                      ),
                                     ),
                                     _PromptChip(
                                       label: "Dự đoán tháng này",
-                                      onTap: () => _sendMessage("Dự đoán tháng này"),
+                                      onTap: () =>
+                                          _sendMessage("Dự đoán tháng này"),
                                     ),
                                   ],
                                 ),
@@ -650,17 +725,23 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                         horizontal: 14,
                                         vertical: 12,
                                       ),
-                                      constraints: const BoxConstraints(maxWidth: 300),
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 300,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: message.isUser
                                             ? const Color(0xFF1132D4)
-                                            : (isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF1F5F9)),
+                                            : (isDark
+                                                  ? const Color(0xFF1A1A1A)
+                                                  : const Color(0xFFF1F5F9)),
                                         borderRadius: BorderRadius.circular(14),
                                       ),
                                       child: Text(
                                         message.text,
                                         style: TextStyle(
-                                          color: message.isUser ? Colors.white : text,
+                                          color: message.isUser
+                                              ? Colors.white
+                                              : text,
                                         ),
                                       ),
                                     ),
@@ -679,7 +760,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
                         color: isDark ? theme.cardColor : Colors.white,
                         border: Border(
                           top: BorderSide(
-                            color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                            color: isDark
+                                ? Colors.white10
+                                : const Color(0xFFE2E8F0),
                           ),
                         ),
                       ),
@@ -690,9 +773,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
                               controller: messageController,
                               onSubmitted: (_) => _sendMessage(),
                               decoration: InputDecoration(
-                                hintText: "Hỏi về chi tiêu, dự đoán hoặc tiết kiệm...",
+                                hintText:
+                                    "Hỏi về chi tiêu, dự đoán hoặc tiết kiệm...",
                                 filled: true,
-                                fillColor: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF8FAFC),
+                                fillColor: isDark
+                                    ? const Color(0xFF1A1A1A)
+                                    : const Color(0xFFF8FAFC),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   borderSide: BorderSide.none,
@@ -760,7 +846,7 @@ class ForecastBar extends StatelessWidget {
           decoration: BoxDecoration(
             color: active
                 ? const Color(0xFF1132D4)
-                : const Color(0xFF1132D4).withOpacity(0.3),
+                : const Color(0xFF1132D4).withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(6),
           ),
         ),
@@ -781,17 +867,14 @@ class _PromptChip extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _PromptChip({
-    required this.label,
-    required this.onTap,
-  });
+  const _PromptChip({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return ActionChip(
       label: Text(label),
       onPressed: onTap,
-      backgroundColor: const Color(0xFF1132D4).withOpacity(0.08),
+      backgroundColor: const Color(0xFF1132D4).withValues(alpha: 0.08),
       labelStyle: const TextStyle(
         color: Color(0xFF1132D4),
         fontWeight: FontWeight.w600,
@@ -805,20 +888,14 @@ class _ChatMessage {
   final String text;
   final bool isUser;
 
-  const _ChatMessage({
-    required this.text,
-    required this.isUser,
-  });
+  const _ChatMessage({required this.text, required this.isUser});
 }
 
 class _CategoryVisual {
   final IconData icon;
   final Color color;
 
-  const _CategoryVisual({
-    required this.icon,
-    required this.color,
-  });
+  const _CategoryVisual({required this.icon, required this.color});
 }
 
 class _InsightsData {

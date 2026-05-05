@@ -19,7 +19,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   void initState() {
     super.initState();
     if (UserSession.user_id != null) {
-      futureTransactions = ApiService().get_transactions(UserSession.user_id!);
+      futureTransactions = ApiService().getTransactions(UserSession.user_id!);
     }
   }
 
@@ -29,17 +29,26 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF6F6F8),
+      backgroundColor: isDark
+          ? theme.scaffoldBackgroundColor
+          : const Color(0xFFF6F6F8),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: isDark ? theme.appBarTheme.backgroundColor : Colors.white,
+        backgroundColor: isDark
+            ? theme.appBarTheme.backgroundColor
+            : Colors.white,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDark ? theme.iconTheme.color : Colors.black),
+          icon: Icon(
+            Icons.arrow_back,
+            color: isDark ? theme.iconTheme.color : Colors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           "Transaction History",
-          style: TextStyle(color: isDark ? theme.textTheme.titleLarge?.color : Colors.black),
+          style: TextStyle(
+            color: isDark ? theme.textTheme.titleLarge?.color : Colors.black,
+          ),
         ),
         centerTitle: true,
       ),
@@ -59,19 +68,30 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 final transactions = snapshot.data!;
                 final now = DateTime.now();
                 final today = DateFormat('yyyy-MM-dd').format(now);
-                final yesterday = DateFormat('yyyy-MM-dd').format(now.subtract(const Duration(days: 1)));
+                final yesterday = DateFormat(
+                  'yyyy-MM-dd',
+                ).format(now.subtract(const Duration(days: 1)));
 
-                final todayList = transactions.where((tx) => tx.date.startsWith(today)).toList();
-                final yesterdayList = transactions.where((tx) => tx.date.startsWith(yesterday)).toList();
+                final todayList = transactions
+                    .where((tx) => tx.date.startsWith(today))
+                    .toList();
+                final yesterdayList = transactions
+                    .where((tx) => tx.date.startsWith(yesterday))
+                    .toList();
 
                 return SingleChildScrollView(
                   child: Column(
                     children: [
                       buildSummaryCard(transactions),
                       if (todayList.isNotEmpty) sectionTitle("Today", isDark),
-                      ...todayList.map((tx) => TransactionTile.fromModel(tx)).toList(),
-                      if (yesterdayList.isNotEmpty) sectionTitle("Yesterday", isDark),
-                      ...yesterdayList.map((tx) => TransactionTile.fromModel(tx)).toList(),
+                      ...todayList
+                          .map((tx) => TransactionTile.fromModel(tx))
+                          .toList(),
+                      if (yesterdayList.isNotEmpty)
+                        sectionTitle("Yesterday", isDark),
+                      ...yesterdayList
+                          .map((tx) => TransactionTile.fromModel(tx))
+                          .toList(),
                     ],
                   ),
                 );
@@ -112,7 +132,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           const SizedBox(height: 6),
           Text(
             formatter.format(totalBalance),
-            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white),
+            style: const TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(height: 20),
           Row(
@@ -133,7 +157,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -162,7 +186,12 @@ class CardStat extends StatelessWidget {
   final String value;
   final Color color;
 
-  const CardStat({super.key, required this.title, required this.value, required this.color});
+  const CardStat({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +205,10 @@ class CardStat extends StatelessWidget {
         children: [
           Text(title, style: const TextStyle(color: Colors.white70)),
           const SizedBox(height: 4),
-          Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+          Text(
+            value,
+            style: TextStyle(fontWeight: FontWeight.bold, color: color),
+          ),
         ],
       ),
     );
@@ -238,15 +270,9 @@ class TransactionTile extends StatelessWidget {
         );
       case 'housing':
       case 'home':
-        return const _CategoryStyle(
-          icon: Icons.home,
-          color: Color(0xFF1132D4),
-        );
+        return const _CategoryStyle(icon: Icons.home, color: Color(0xFF1132D4));
       case 'entertainment':
-        return const _CategoryStyle(
-          icon: Icons.movie,
-          color: Colors.red,
-        );
+        return const _CategoryStyle(icon: Icons.movie, color: Colors.red);
       case 'shopping':
         return const _CategoryStyle(
           icon: Icons.shopping_bag,
@@ -291,7 +317,7 @@ class TransactionTile extends StatelessWidget {
                   color: Colors.black12,
                   blurRadius: 4,
                   offset: const Offset(0, 2),
-                )
+                ),
               ],
       ),
       child: Row(
@@ -319,10 +345,7 @@ class TransactionTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   category,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.hintColor,
-                  ),
+                  style: TextStyle(fontSize: 12, color: theme.hintColor),
                 ),
               ],
             ),
@@ -331,10 +354,7 @@ class TransactionTile extends StatelessWidget {
           /// AMOUNT
           Text(
             amount,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: amountColor,
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, color: amountColor),
           ),
         ],
       ),
@@ -346,8 +366,5 @@ class _CategoryStyle {
   final IconData icon;
   final Color color;
 
-  const _CategoryStyle({
-    required this.icon,
-    required this.color,
-  });
+  const _CategoryStyle({required this.icon, required this.color});
 }

@@ -31,7 +31,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
       throw Exception("User not logged in");
     }
 
-    final transactions = await ApiService().get_transactions(UserSession.user_id!);
+    final transactions = await ApiService().getTransactions(
+      UserSession.user_id!,
+    );
     final now = DateTime.now();
 
     final monthlyTransactions = transactions.where((tx) {
@@ -39,13 +41,25 @@ class _BudgetScreenState extends State<BudgetScreen> {
       return date != null && date.year == now.year && date.month == now.month;
     }).toList();
 
-    final expenseTransactions = monthlyTransactions.where((tx) => tx.isExpense).toList();
-    final incomeTransactions = monthlyTransactions.where((tx) => !tx.isExpense).toList();
+    final expenseTransactions = monthlyTransactions
+        .where((tx) => tx.isExpense)
+        .toList();
+    final incomeTransactions = monthlyTransactions
+        .where((tx) => !tx.isExpense)
+        .toList();
 
-    final totalSpent = expenseTransactions.fold<double>(0, (sum, tx) => sum + tx.amount);
-    final totalIncome = incomeTransactions.fold<double>(0, (sum, tx) => sum + tx.amount);
+    final totalSpent = expenseTransactions.fold<double>(
+      0,
+      (sum, tx) => sum + tx.amount,
+    );
+    final totalIncome = incomeTransactions.fold<double>(
+      0,
+      (sum, tx) => sum + tx.amount,
+    );
     final totalFlow = totalSpent + totalIncome;
-    final spendingRatio = totalFlow == 0 ? 0.0 : (totalSpent / totalFlow).clamp(0.0, 1.0);
+    final spendingRatio = totalFlow == 0
+        ? 0.0
+        : (totalSpent / totalFlow).clamp(0.0, 1.0);
 
     final grouped = <String, List<TransactionModel>>{};
     for (final tx in expenseTransactions) {
@@ -56,7 +70,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
     final categories = grouped.entries.map((entry) {
       final spent = entry.value.fold<double>(0, (sum, tx) => sum + tx.amount);
       final style = _categoryStyle(entry.key);
-      final percent = totalSpent == 0 ? 0.0 : (spent / totalSpent).clamp(0.0, 1.0);
+      final percent = totalSpent == 0
+          ? 0.0
+          : (spent / totalSpent).clamp(0.0, 1.0);
       return _BudgetCategory(
         title: entry.key,
         spent: spent,
@@ -64,8 +80,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
         color: style.color,
         icon: style.icon,
       );
-    }).toList()
-      ..sort((a, b) => b.spent.compareTo(a.spent));
+    }).toList()..sort((a, b) => b.spent.compareTo(a.spent));
 
     return _BudgetSummary(
       totalSpent: totalSpent,
@@ -99,15 +114,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
         );
       case 'housing':
       case 'home':
-        return const _CategoryStyle(
-          icon: Icons.home,
-          color: Color(0xFF1132D4),
-        );
+        return const _CategoryStyle(icon: Icons.home, color: Color(0xFF1132D4));
       case 'entertainment':
-        return const _CategoryStyle(
-          icon: Icons.movie,
-          color: Colors.red,
-        );
+        return const _CategoryStyle(icon: Icons.movie, color: Colors.red);
       case 'shopping':
         return const _CategoryStyle(
           icon: Icons.shopping_bag,
@@ -127,9 +136,13 @@ class _BudgetScreenState extends State<BudgetScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF6F6F8),
+      backgroundColor: isDark
+          ? theme.scaffoldBackgroundColor
+          : const Color(0xFFF6F6F8),
       appBar: AppBar(
-        backgroundColor: isDark ? theme.appBarTheme.backgroundColor : Colors.white,
+        backgroundColor: isDark
+            ? theme.appBarTheme.backgroundColor
+            : Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
@@ -171,13 +184,16 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 }
 
                 final summary = snapshot.data!;
-                final topCategory = summary.categories.isEmpty ? null : summary.categories.first;
+                final topCategory = summary.categories.isEmpty
+                    ? null
+                    : summary.categories.first;
                 final isNearLimit = summary.spendingRatio >= 0.8;
-                final remaining =
-                    (summary.referenceAmount - summary.totalSpent).clamp(0.0, double.infinity);
+                final remaining = (summary.referenceAmount - summary.totalSpent)
+                    .clamp(0.0, double.infinity);
                 final statusColor = isNearLimit ? Colors.orange : Colors.green;
-                final statusIcon =
-                    isNearLimit ? Icons.warning : Icons.check_circle;
+                final statusIcon = isNearLimit
+                    ? Icons.warning
+                    : Icons.check_circle;
                 final statusText = isNearLimit ? "Near limit" : "On track";
 
                 return SingleChildScrollView(
@@ -243,7 +259,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
                               minHeight: 10,
                               borderRadius: BorderRadius.circular(20),
                               color: const Color(0xFF1132D4),
-                              backgroundColor: isDark ? Colors.grey[800] : Colors.grey.shade300,
+                              backgroundColor: isDark
+                                  ? Colors.grey[800]
+                                  : Colors.grey.shade300,
                             ),
                             const SizedBox(height: 8),
                             Row(
@@ -252,19 +270,28 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                 Text(
                                   "${currencyFormat.format(remaining)} remaining",
                                   style: TextStyle(
-                                    color: isDark ? Colors.grey[400] : Colors.grey,
+                                    color: isDark
+                                        ? Colors.grey[400]
+                                        : Colors.grey,
                                   ),
                                 ),
                                 if (topCategory != null)
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: statusColor.withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Row(
                                       children: [
-                                        Icon(statusIcon, size: 14, color: statusColor),
+                                        Icon(
+                                          statusIcon,
+                                          size: 14,
+                                          color: statusColor,
+                                        ),
                                         const SizedBox(width: 4),
                                         Text(
                                           statusText,
@@ -447,8 +474,5 @@ class _CategoryStyle {
   final IconData icon;
   final Color color;
 
-  const _CategoryStyle({
-    required this.icon,
-    required this.color,
-  });
+  const _CategoryStyle({required this.icon, required this.color});
 }

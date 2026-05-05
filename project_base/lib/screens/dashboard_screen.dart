@@ -35,7 +35,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future loadTransactions() async {
-    final txList = await ApiService().get_transactions(UserSession.user_id!);
+    final txList = await ApiService().getTransactions(UserSession.user_id!);
 
     double income = 0;
     double expense = 0;

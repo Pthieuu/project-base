@@ -10,7 +10,6 @@ class AddTransactionScreen extends StatefulWidget {
 }
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
-
   bool isExpense = true;
   DateTime selected_date = DateTime.now();
 
@@ -38,7 +37,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -47,38 +45,31 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           : const Color(0xFFF6F6F8),
 
       appBar: AppBar(
-        backgroundColor:
-            isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.close,
-              color: isDark ? Colors.white : Colors.black),
+          icon: Icon(Icons.close, color: isDark ? Colors.white : Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
         title: Text(
           "Add Transaction",
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.black,
-          ),
+          style: TextStyle(color: isDark ? Colors.white : Colors.black),
         ),
       ),
 
       body: Column(
         children: [
-
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   /// 💰 AMOUNT
                   Center(
                     child: Column(
                       children: [
-
                         const Text(
                           "AMOUNT",
                           style: TextStyle(
@@ -104,15 +95,21 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             hintText: "0",
                           ),
                           onChanged: (value) {
-                            String numbers = value.replaceAll(RegExp(r'[^0-9]'), '');
-                            if(numbers.isEmpty) return;
+                            String numbers = value.replaceAll(
+                              RegExp(r'[^0-9]'),
+                              '',
+                            );
+                            if (numbers.isEmpty) return;
 
-                            final formatted = NumberFormat.decimalPattern('vi')
-                                .format(int.parse(numbers));
+                            final formatted = NumberFormat.decimalPattern(
+                              'vi',
+                            ).format(int.parse(numbers));
 
                             amount_controller.value = TextEditingValue(
                               text: formatted,
-                              selection: TextSelection.collapsed(offset: formatted.length),
+                              selection: TextSelection.collapsed(
+                                offset: formatted.length,
+                              ),
                             );
                           },
                         ),
@@ -133,7 +130,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     ),
                     child: Row(
                       children: [
-
                         /// EXPENSE
                         Expanded(
                           child: GestureDetector(
@@ -143,9 +139,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: isExpense
-                                    ? (isDark
-                                        ? Colors.grey[800]
-                                        : Colors.white)
+                                    ? (isDark ? Colors.grey[800] : Colors.white)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(30),
                               ),
@@ -154,9 +148,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 "Expense",
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: isExpense
-                                      ? Colors.blue
-                                      : Colors.grey,
+                                  color: isExpense ? Colors.blue : Colors.grey,
                                 ),
                               ),
                             ),
@@ -172,9 +164,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: !isExpense
-                                    ? (isDark
-                                        ? Colors.grey[800]
-                                        : Colors.white)
+                                    ? (isDark ? Colors.grey[800] : Colors.white)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(30),
                               ),
@@ -211,7 +201,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   TextField(
                     controller: description_controller,
                     style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black),
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
                     decoration: InputDecoration(
                       hintText: "Enter description",
                       filled: true,
@@ -256,12 +247,23 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           : Colors.white,
                       value: category,
                       items: const [
-                        DropdownMenuItem(value: "Food & Drink", child: Text("Food & Drink")),
-                        DropdownMenuItem(value: "Shopping", child: Text("Shopping")),
-                        DropdownMenuItem(value: "Transport", child: Text("Transport")),
+                        DropdownMenuItem(
+                          value: "Food & Drink",
+                          child: Text("Food & Drink"),
+                        ),
+                        DropdownMenuItem(
+                          value: "Shopping",
+                          child: Text("Shopping"),
+                        ),
+                        DropdownMenuItem(
+                          value: "Transport",
+                          child: Text("Transport"),
+                        ),
                       ],
                       onChanged: (v) => setState(() => category = v!),
-                      decoration: const InputDecoration(border: InputBorder.none),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                      ),
                     ),
                   ),
 
@@ -270,7 +272,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   /// DATE + ACCOUNT
                   Row(
                     children: [
-
                       Expanded(
                         child: GestureDetector(
                           onTap: pickDate,
@@ -280,22 +281,27 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    Icon(Icons.calendar_today,
-                                        size: 16,
-                                        color: isDark
-                                            ? Colors.white
-                                            : Colors.black),
+                                    Icon(
+                                      Icons.calendar_today,
+                                      size: 16,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      DateFormat('dd/MM/yyyy').format(selected_date),
+                                      DateFormat(
+                                        'dd/MM/yyyy',
+                                      ).format(selected_date),
                                       style: TextStyle(
-                                          color: isDark
-                                              ? Colors.white
-                                              : Colors.black),
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
                                     ),
                                   ],
                                 ),
-                                const Icon(Icons.arrow_drop_down)
+                                const Icon(Icons.arrow_drop_down),
                               ],
                             ),
                           ),
@@ -312,11 +318,19 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 : Colors.white,
                             value: account,
                             items: const [
-                              DropdownMenuItem(value: "Main Card", child: Text("Main Card")),
-                              DropdownMenuItem(value: "Cash", child: Text("Cash")),
+                              DropdownMenuItem(
+                                value: "Main Card",
+                                child: Text("Main Card"),
+                              ),
+                              DropdownMenuItem(
+                                value: "Cash",
+                                child: Text("Cash"),
+                              ),
                             ],
                             onChanged: (v) => setState(() => account = v!),
-                            decoration: const InputDecoration(border: InputBorder.none),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                            ),
                           ),
                         ),
                       ),
@@ -340,7 +354,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     controller: notes_controller,
                     maxLines: 3,
                     style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black),
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
                     decoration: InputDecoration(
                       hintText: "Add a note...",
                       filled: true,
@@ -374,22 +389,23 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   ),
                 ),
                 onPressed: () async {
-
                   final data = {
                     "description": description_controller.text,
                     "category": category,
                     "account": account,
-                    "amount": double.tryParse(
-                      amount_controller.text.replaceAll(".", "")
-                    ) ?? 0,
+                    "amount":
+                        double.tryParse(
+                          amount_controller.text.replaceAll(".", ""),
+                        ) ??
+                        0,
                     "is_expense": isExpense ? 1 : 0,
                     "notes": notes_controller.text,
-                    "date": selected_date.toString()
+                    "date": selected_date.toString(),
                   };
 
-                  await ApiService().add_transaction(data);
+                  await ApiService().addTransaction(data);
 
-                  if(context.mounted){
+                  if (context.mounted) {
                     Navigator.pop(context, true);
                   }
                 },
@@ -400,7 +416,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -412,12 +428,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: active
-            ? (isDark
-                ? Colors.blue.withOpacity(0.2)
-                : const Color(0xFFE0E7FF))
-            : (isDark
-                ? Colors.grey[800]
-                : const Color(0xFFF3F4F6)),
+            ? (isDark ? Colors.blue.withOpacity(0.2) : const Color(0xFFE0E7FF))
+            : (isDark ? Colors.grey[800] : const Color(0xFFF3F4F6)),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -437,9 +449,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF1E1E1E)
-            : Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: child,
