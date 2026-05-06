@@ -65,39 +65,62 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   return const Center(child: Text("No transactions found."));
                 }
 
-                final transactions = snapshot.data!;
-                final now = DateTime.now();
-                final today = DateFormat('yyyy-MM-dd').format(now);
-                final yesterday = DateFormat(
-                  'yyyy-MM-dd',
-                ).format(now.subtract(const Duration(days: 1)));
-
-                final todayList = transactions
-                    .where((tx) => tx.date.startsWith(today))
-                    .toList();
-                final yesterdayList = transactions
-                    .where((tx) => tx.date.startsWith(yesterday))
-                    .toList();
+                final transactions = [...snapshot.data!]
+                  ..sort(
+                    (a, b) => _parseDate(b.date).compareTo(_parseDate(a.date)),
+                  );
+                final groupedTransactions = _groupTransactionsByDate(
+                  transactions,
+                );
 
                 return SingleChildScrollView(
                   child: Column(
                     children: [
                       buildSummaryCard(transactions),
-                      if (todayList.isNotEmpty) sectionTitle("Today", isDark),
-                      ...todayList
-                          .map((tx) => TransactionTile.fromModel(tx))
-                          .toList(),
-                      if (yesterdayList.isNotEmpty)
-                        sectionTitle("Yesterday", isDark),
-                      ...yesterdayList
-                          .map((tx) => TransactionTile.fromModel(tx))
-                          .toList(),
+                      for (final group in groupedTransactions.entries) ...[
+                        sectionTitle(_sectionLabel(group.key), isDark),
+                        ...group.value.map(
+                          (tx) => TransactionTile.fromModel(tx),
+                        ),
+                      ],
                     ],
                   ),
                 );
               },
             ),
     );
+  }
+
+  Map<String, List<TransactionModel>> _groupTransactionsByDate(
+    List<TransactionModel> transactions,
+  ) {
+    final grouped = <String, List<TransactionModel>>{};
+    for (final tx in transactions) {
+      final date = _parseDate(tx.date);
+      final key = DateFormat('yyyy-MM-dd').format(date);
+      grouped.putIfAbsent(key, () => []).add(tx);
+    }
+    return grouped;
+  }
+
+  String _sectionLabel(String dateKey) {
+    final date = DateTime.tryParse(dateKey);
+    if (date == null) return dateKey;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(date.year, date.month, date.day);
+
+    if (day == today) return "Today";
+    if (day == today.subtract(const Duration(days: 1))) {
+      return "Yesterday";
+    }
+
+    return DateFormat('dd/MM/yyyy').format(day);
+  }
+
+  static DateTime _parseDate(String value) {
+    return DateTime.tryParse(value) ?? DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   // Build summary card
@@ -300,7 +323,7 @@ class TransactionTile extends StatelessWidget {
         : (isDark ? Colors.green[300]! : Colors.green);
 
     /// 🎨 background icon
-    final bgColor = iconColor.withOpacity(isDark ? 0.2 : 0.1);
+    final bgColor = iconColor.withValues(alpha: isDark ? 0.2 : 0.1);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
