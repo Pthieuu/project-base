@@ -28,7 +28,8 @@ if($result->num_rows > 0){
         echo json_encode([
             "status"=>"success",
             "user_id"=>$user['id'],
-            "name"=>$user['name']
+            "name"=>$user['name'],
+            "email"=>$user['email']
         ]);
     }else{
         echo json_encode(["status"=>"wrong_password"]);

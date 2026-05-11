@@ -36,6 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (result["status"] == "success") {
       UserSession.user_id = result["user_id"];
       UserSession.name = result["name"];
+      UserSession.email = result["email"];
 
       Navigator.pushReplacement(
         context,
