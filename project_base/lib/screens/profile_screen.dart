@@ -1,7 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../controller/theme_controller.dart';
+import '../services/user_session.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -24,62 +30,142 @@ class _ProfileScreenState extends State<ProfileScreen> {
   ];
 
   String _avatarUrl = _avatarOptions.first;
+  String? _avatarFilePath;
+  final ImagePicker _imagePicker = ImagePicker();
+
+  String get _avatarFileKey =>
+      'profile_avatar_file_${UserSession.user_id ?? 'local'}';
+  String get _avatarUrlKey =>
+      'profile_avatar_url_${UserSession.user_id ?? 'local'}';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedAvatar();
+  }
+
+  Future<void> _loadSavedAvatar() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedFilePath = prefs.getString(_avatarFileKey);
+    final savedAvatarUrl = prefs.getString(_avatarUrlKey);
+
+    if (!mounted) return;
+
+    if (savedFilePath != null && File(savedFilePath).existsSync()) {
+      setState(() {
+        _avatarFilePath = savedFilePath;
+      });
+      return;
+    }
+
+    if (savedAvatarUrl != null && savedAvatarUrl.isNotEmpty) {
+      setState(() {
+        _avatarUrl = savedAvatarUrl;
+        _avatarFilePath = null;
+      });
+    }
+  }
+
+  ImageProvider<Object> get _avatarImageProvider {
+    final filePath = _avatarFilePath;
+    if (filePath != null && File(filePath).existsSync()) {
+      return FileImage(File(filePath));
+    }
+
+    return NetworkImage(_avatarUrl);
+  }
 
   Future<void> _showAvatarPicker() async {
     final selectedAvatar = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      builder: (context) {
+      builder: (sheetContext) {
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Chọn avatar',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.75,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Chọn avatar',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                ),
-                const SizedBox(height: 16),
-                GridView.builder(
-                  shrinkWrap: true,
-                  itemCount: _avatarOptions.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                  ),
-                  itemBuilder: (context, index) {
-                    final avatarUrl = _avatarOptions[index];
-                    final isSelected = avatarUrl == _avatarUrl;
-
-                    return GestureDetector(
-                      onTap: () => Navigator.pop(context, avatarUrl),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected
-                                ? const Color(0xFF1132D4)
-                                : Colors.transparent,
-                            width: 3,
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(3),
-                        child: CircleAvatar(
-                          radius: 34,
-                          backgroundImage: NetworkImage(avatarUrl),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _AvatarActionButton(
+                          icon: Icons.photo_library,
+                          label: 'Thư viện',
+                          onTap: () {
+                            Navigator.pop(sheetContext);
+                            _pickAvatar(ImageSource.gallery);
+                          },
                         ),
                       ),
-                    );
-                  },
-                ),
-              ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _AvatarActionButton(
+                          icon: Icons.photo_camera,
+                          label: 'Camera',
+                          onTap: () {
+                            Navigator.pop(sheetContext);
+                            _pickAvatar(ImageSource.camera);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Hoặc chọn ảnh mẫu',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _avatarOptions.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                        ),
+                    itemBuilder: (context, index) {
+                      final avatarUrl = _avatarOptions[index];
+                      final isSelected =
+                          _avatarFilePath == null && avatarUrl == _avatarUrl;
+
+                      return GestureDetector(
+                        onTap: () => Navigator.pop(sheetContext, avatarUrl),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFF1132D4)
+                                  : Colors.transparent,
+                              width: 3,
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(3),
+                          child: CircleAvatar(
+                            radius: 34,
+                            backgroundImage: NetworkImage(avatarUrl),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -88,8 +174,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (!mounted || selectedAvatar == null) return;
 
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_avatarUrlKey, selectedAvatar);
+    await prefs.remove(_avatarFileKey);
+
     setState(() {
       _avatarUrl = selectedAvatar;
+      _avatarFilePath = null;
+    });
+  }
+
+  Future<void> _pickAvatar(ImageSource source) async {
+    final pickedImage = await _imagePicker.pickImage(
+      source: source,
+      maxWidth: 800,
+      imageQuality: 85,
+    );
+    if (pickedImage == null) return;
+
+    final directory = await getApplicationDocumentsDirectory();
+    final extension = pickedImage.path.split('.').last;
+    final fileName =
+        'profile_avatar_${UserSession.user_id ?? 'local'}_${DateTime.now().millisecondsSinceEpoch}.$extension';
+    final savedImage = await File(
+      pickedImage.path,
+    ).copy('${directory.path}/$fileName');
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_avatarFileKey, savedImage.path);
+    await prefs.remove(_avatarUrlKey);
+
+    if (!mounted) return;
+
+    setState(() {
+      _avatarFilePath = savedImage.path;
     });
   }
 
@@ -111,10 +229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: Text(
-          "Profile",
-          style: TextStyle(color: text),
-        ),
+        title: Text("Profile", style: TextStyle(color: text)),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -128,7 +243,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 60,
-                        backgroundImage: NetworkImage(_avatarUrl),
+                        backgroundImage: _avatarImageProvider,
                       ),
                       Positioned(
                         bottom: 0,
@@ -149,7 +264,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ),
-                      )
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -167,10 +282,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    "user@email.com",
-                    style: TextStyle(color: subText),
-                  ),
+                  Text("user@email.com", style: TextStyle(color: subText)),
                   const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -244,9 +356,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            isDark ? const Color(0xFF2A1111) : Colors.red.shade50,
-                        foregroundColor: Colors.red,
+                        backgroundColor: isDark
+                            ? const Color(0xFF7F1D1D)
+                            : const Color(0xFFDC2626),
+                        foregroundColor: Colors.white,
+                        iconColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -268,10 +382,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -316,15 +430,58 @@ class ProfileItem extends StatelessWidget {
           backgroundColor: const Color(0xFF1132D4).withValues(alpha: 0.1),
           child: Icon(icon, color: const Color(0xFF1132D4)),
         ),
-        title: Text(
-          title,
-          style: TextStyle(color: text),
-        ),
+        title: Text(title, style: TextStyle(color: text)),
         subtitle: subtitle != null
             ? Text(subtitle!, style: const TextStyle(color: Colors.grey))
             : null,
-        trailing: trailing ??
-            const Icon(Icons.chevron_right, color: Colors.grey),
+        trailing:
+            trailing ?? const Icon(Icons.chevron_right, color: Colors.grey),
+      ),
+    );
+  }
+}
+
+class _AvatarActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _AvatarActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF111111) : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: const Color(0xFF1132D4)),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

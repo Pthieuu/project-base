@@ -464,6 +464,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                                 backgroundColor: const Color(
                                                   0xFF1132D4,
                                                 ),
+                                                foregroundColor: Colors.white,
                                               ),
                                               onPressed: () => _sendMessage(
                                                 "Làm sao để giảm chi tiêu ở ${insights.topCategoryName}?",
@@ -475,6 +476,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                           ),
                                           const SizedBox(width: 10),
                                           OutlinedButton(
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: text,
+                                            ),
                                             onPressed: () => _sendMessage(
                                               "Tuần này tôi nên làm gì?",
                                             ),
@@ -547,6 +551,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF1132D4),
+                                      foregroundColor: Colors.white,
                                     ),
                                     onPressed: () => _sendMessage(
                                       "Hãy gợi ý cho tôi một kế hoạch tiết kiệm.",
@@ -794,6 +799,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
                               style: ElevatedButton.styleFrom(
                                 padding: EdgeInsets.zero,
                                 backgroundColor: const Color(0xFF1132D4),
+                                foregroundColor: Colors.white,
+                                iconColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),

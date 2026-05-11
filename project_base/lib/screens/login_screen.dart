@@ -13,15 +13,13 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
   bool obscurePassword = true;
 
   Future<void> login() async {
-
-    if(emailController.text.isEmpty || passwordController.text.isEmpty){
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please enter email and password")),
       );
@@ -33,300 +31,295 @@ class _LoginScreenState extends State<LoginScreen> {
       passwordController.text.trim(),
     );
 
-    if(result != null && result["status"] == "success"){
+    if (!mounted) return;
 
+    if (result["status"] == "success") {
       UserSession.user_id = result["user_id"];
       UserSession.name = result["name"];
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => MainScreen(
-            userName: result["name"] ?? "",
-          ),
+          builder: (context) => MainScreen(userName: result["name"] ?? ""),
         ),
       );
-
-    }else{
-
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Email or password incorrect"),
-        ),
+        const SnackBar(content: Text("Email or password incorrect")),
       );
     }
   }
 
-@override
-Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-  final isDark = Theme.of(context).brightness == Brightness.dark;
+    /// 🎯 COLOR SYSTEM
+    final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9);
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final inputColor = isDark
+        ? const Color(0xFF0B1220)
+        : const Color(0xFFF8FAFC);
+    final borderColor = isDark ? Colors.white10 : const Color(0xFFE2E8F0);
+    const primaryColor = Color(0xFF1132D4);
 
-  /// 🎯 COLOR SYSTEM
-  final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9);
-  final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
-  final inputColor = isDark ? const Color(0xFF0B1220) : const Color(0xFFF8FAFC);
-  final borderColor = isDark ? Colors.white10 : const Color(0xFFE2E8F0);
-  const primaryColor = Color(0xFF1132D4);
+    return Scaffold(
+      backgroundColor: bgColor,
 
-  return Scaffold(
-    backgroundColor: bgColor,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
 
-    body: Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+          child: Container(
+            width: 420,
+            padding: const EdgeInsets.all(28),
 
-        child: Container(
-          width: 420,
-          padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(20),
 
-          decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: borderColor),
 
-            border: Border.all(color: borderColor),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.4)
+                      : Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
 
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withOpacity(0.4)
-                    : Colors.black.withOpacity(0.05),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              )
-            ],
-          ),
-
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-
-              /// HEADER
-              Row(
-                children: [
-
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.payments, color: primaryColor),
-                  ),
-
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        "AI Expense Manager",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
-                        ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                /// HEADER
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      child: const Icon(Icons.payments, color: primaryColor),
                     ),
-                  ),
 
-                  const SizedBox(width: 40)
-                ],
-              ),
-
-              const SizedBox(height: 30),
-
-              Text(
-                "Welcome Back",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              const Text(
-                "Log in to manage your finances with AI",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
-              ),
-
-              const SizedBox(height: 40),
-
-              /// EMAIL
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  hintText: "name@company.com",
-                  prefixIcon: const Icon(Icons.mail_outline),
-                  filled: true,
-                  fillColor: inputColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: borderColor),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              /// PASSWORD
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Password"),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ResetPasswordScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          "Forgot password?",
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          "AI Expense Manager",
                           style: TextStyle(
-                            color: primaryColor,
-                            fontSize: 12,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                           ),
                         ),
                       ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  TextField(
-                    controller: passwordController,
-                    obscureText: obscurePassword,
-                    decoration: InputDecoration(
-                      hintText: "Enter your password",
-                      prefixIcon: const Icon(Icons.lock_outline),
-
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            obscurePassword = !obscurePassword;
-                          });
-                        },
-                      ),
-
-                      filled: true,
-                      fillColor: inputColor,
-
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: borderColor),
-                      ),
                     ),
-                  ),
-                ],
-              ),
 
-              const SizedBox(height: 30),
+                    const SizedBox(width: 40),
+                  ],
+                ),
 
-              /// LOGIN BUTTON
-              SizedBox(
-                height: 56,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  onPressed: login,
-                  child: const Text(
-                    "Log In",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                const SizedBox(height: 30),
+
+                Text(
+                  "Welcome Back",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 30),
+                const SizedBox(height: 8),
 
-              /// DIVIDER
-              Row(
-                children: const [
-                  Expanded(child: Divider()),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text("Or continue with"),
-                  ),
-                  Expanded(child: Divider()),
-                ],
-              ),
+                const Text(
+                  "Log in to manage your finances with AI",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 40),
 
-              /// SOCIAL
-              Row(
-                children: [
-
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.g_mobiledata),
-                      label: const Text("Google"),
-                      onPressed: () {},
+                /// EMAIL
+                TextField(
+                  controller: emailController,
+                  decoration: InputDecoration(
+                    hintText: "name@company.com",
+                    prefixIcon: const Icon(Icons.mail_outline),
+                    filled: true,
+                    fillColor: inputColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: borderColor),
                     ),
                   ),
+                ),
 
-                  const SizedBox(width: 10),
+                const SizedBox(height: 20),
 
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.apple),
-                      label: const Text("Apple"),
-                      onPressed: () {},
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 30),
-
-              /// REGISTER
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-
-                  const Text("Don't have an account? "),
-
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RegisterScreen(),
+                /// PASSWORD
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Password"),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ResetPasswordScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            "Forgot password?",
+                            style: TextStyle(color: primaryColor, fontSize: 12),
+                          ),
                         ),
-                      );
-                    },
-                    child: const Text(
-                      "Register now",
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.bold,
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    TextField(
+                      controller: passwordController,
+                      obscureText: obscurePassword,
+                      decoration: InputDecoration(
+                        hintText: "Enter your password",
+                        prefixIcon: const Icon(Icons.lock_outline),
+
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscurePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              obscurePassword = !obscurePassword;
+                            });
+                          },
+                        ),
+
+                        filled: true,
+                        fillColor: inputColor,
+
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: borderColor),
+                        ),
                       ),
                     ),
+                  ],
+                ),
+
+                const SizedBox(height: 30),
+
+                /// LOGIN BUTTON
+                SizedBox(
+                  height: 56,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: login,
+                    child: const Text(
+                      "Log In",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ],
-              )
-            ],
+                ),
+
+                const SizedBox(height: 30),
+
+                /// DIVIDER
+                Row(
+                  children: const [
+                    Expanded(child: Divider()),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Text("Or continue with"),
+                    ),
+                    Expanded(child: Divider()),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                /// SOCIAL
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.g_mobiledata),
+                        label: const Text("Google"),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDark ? Colors.white : primaryColor,
+                        ),
+                        onPressed: () {},
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.apple),
+                        label: const Text("Apple"),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDark ? Colors.white : primaryColor,
+                        ),
+                        onPressed: () {},
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 30),
+
+                /// REGISTER
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("Don't have an account? "),
+
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        "Register now",
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
