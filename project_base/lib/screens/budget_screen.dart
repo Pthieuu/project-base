@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:project_base/models/transaction_model.dart';
+import 'package:project_base/screens/recurring_transactions_screen.dart';
+import 'package:project_base/screens/saving_goals_screen.dart';
 import 'package:project_base/services/api_service.dart';
 import 'package:project_base/services/user_session.dart';
 
@@ -12,6 +13,7 @@ class BudgetScreen extends StatefulWidget {
 }
 
 class _BudgetScreenState extends State<BudgetScreen> {
+  static const Color _primary = Color(0xFF1132D4);
   late Future<_BudgetSummary> futureBudget;
 
   final currencyFormat = NumberFormat.currency(
@@ -26,68 +28,102 @@ class _BudgetScreenState extends State<BudgetScreen> {
     futureBudget = _loadBudgetSummary();
   }
 
+  String get _currentMonthKey {
+    final now = DateTime.now();
+    return DateFormat('yyyy-MM').format(now);
+  }
+
+  void _reload() {
+    setState(() {
+      futureBudget = _loadBudgetSummary();
+    });
+  }
+
   Future<_BudgetSummary> _loadBudgetSummary() async {
     if (UserSession.user_id == null) {
       throw Exception("User not logged in");
     }
 
-    final transactions = await ApiService().getTransactions(
-      UserSession.user_id!,
-    );
+    final api = ApiService();
+    final transactions = await api.getTransactions(UserSession.user_id!);
+    final categories = await api.getCategories();
+    final budgets = await api.getBudgets(_currentMonthKey);
     final now = DateTime.now();
 
-    final monthlyTransactions = transactions.where((tx) {
+    final monthlyExpenses = transactions.where((tx) {
       final date = DateTime.tryParse(tx.date);
-      return date != null && date.year == now.year && date.month == now.month;
+      return tx.isExpense &&
+          date != null &&
+          date.year == now.year &&
+          date.month == now.month;
     }).toList();
 
-    final expenseTransactions = monthlyTransactions
-        .where((tx) => tx.isExpense)
-        .toList();
-    final incomeTransactions = monthlyTransactions
-        .where((tx) => !tx.isExpense)
-        .toList();
-
-    final totalSpent = expenseTransactions.fold<double>(
-      0,
-      (sum, tx) => sum + tx.amount,
-    );
-    final totalIncome = incomeTransactions.fold<double>(
-      0,
-      (sum, tx) => sum + tx.amount,
-    );
-    final totalFlow = totalSpent + totalIncome;
-    final spendingRatio = totalFlow == 0
-        ? 0.0
-        : (totalSpent / totalFlow).clamp(0.0, 1.0);
-
-    final grouped = <String, List<TransactionModel>>{};
-    for (final tx in expenseTransactions) {
+    final spentByCategory = <String, double>{};
+    for (final tx in monthlyExpenses) {
       final label = _displayCategory(tx.category);
-      grouped.putIfAbsent(label, () => []).add(tx);
+      spentByCategory[label] = (spentByCategory[label] ?? 0) + tx.amount;
     }
 
-    final categories = grouped.entries.map((entry) {
-      final spent = entry.value.fold<double>(0, (sum, tx) => sum + tx.amount);
-      final style = _categoryStyle(entry.key);
-      final percent = totalSpent == 0
-          ? 0.0
-          : (spent / totalSpent).clamp(0.0, 1.0);
-      return _BudgetCategory(
-        title: entry.key,
-        spent: spent,
-        percent: percent,
-        color: style.color,
-        icon: style.icon,
-      );
-    }).toList()..sort((a, b) => b.spent.compareTo(a.spent));
+    final budgetByCategory = {
+      for (final item in budgets)
+        _displayCategory(item.category): item.monthlyLimit,
+    };
+
+    final categoryNames = <String>{
+      ...categories
+          .where((item) => item.type == 'expense' || item.type == 'both')
+          .map((item) => _displayCategory(item.name)),
+      ...spentByCategory.keys,
+      ...budgetByCategory.keys,
+    }.toList()..sort();
+
+    final budgetCategories =
+        categoryNames.map((name) {
+          final spent = spentByCategory[name] ?? 0;
+          final limit = budgetByCategory[name] ?? 0;
+          final style = _categoryStyle(name);
+          final percent = limit <= 0 ? 0.0 : (spent / limit).clamp(0.0, 1.0);
+
+          return _BudgetCategory(
+            title: name,
+            spent: spent,
+            monthlyLimit: limit,
+            percent: percent,
+            color: _statusColor(percent, limit),
+            icon: style.icon,
+          );
+        }).toList()..sort((a, b) {
+          if (a.monthlyLimit == 0 && b.monthlyLimit > 0) return 1;
+          if (a.monthlyLimit > 0 && b.monthlyLimit == 0) return -1;
+          return b.spent.compareTo(a.spent);
+        });
+
+    final totalSpent = budgetCategories.fold<double>(
+      0,
+      (sum, item) => sum + item.spent,
+    );
+    final totalBudget = budgetCategories.fold<double>(
+      0,
+      (sum, item) => sum + item.monthlyLimit,
+    );
+    final overallProgress = totalBudget <= 0
+        ? 0.0
+        : (totalSpent / totalBudget).clamp(0.0, 1.0);
 
     return _BudgetSummary(
+      monthLabel: DateFormat('MM/yyyy').format(now),
       totalSpent: totalSpent,
-      referenceAmount: totalFlow == 0 ? totalSpent : totalFlow,
-      spendingRatio: spendingRatio,
-      categories: categories,
+      totalBudget: totalBudget,
+      overallProgress: overallProgress,
+      categories: budgetCategories,
     );
+  }
+
+  static Color _statusColor(double percent, double limit) {
+    if (limit <= 0) return _primary;
+    if (percent >= 1) return const Color(0xFFDC2626);
+    if (percent >= 0.8) return Colors.orange;
+    return Colors.green;
   }
 
   static String _displayCategory(String category) {
@@ -114,7 +150,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
         );
       case 'housing':
       case 'home':
-        return const _CategoryStyle(icon: Icons.home, color: Color(0xFF1132D4));
+        return const _CategoryStyle(icon: Icons.home, color: _primary);
       case 'entertainment':
         return const _CategoryStyle(icon: Icons.movie, color: Colors.red);
       case 'shopping':
@@ -122,49 +158,313 @@ class _BudgetScreenState extends State<BudgetScreen> {
           icon: Icons.shopping_bag,
           color: Colors.green,
         );
+      case 'transport':
+        return const _CategoryStyle(
+          icon: Icons.directions_car,
+          color: Colors.teal,
+        );
       default:
         return const _CategoryStyle(
           icon: Icons.account_balance_wallet,
-          color: Color(0xFF1132D4),
+          color: _primary,
         );
     }
+  }
+
+  Future<void> _editBudget(_BudgetCategory item) async {
+    final controller = TextEditingController(
+      text: item.monthlyLimit <= 0 ? '' : item.monthlyLimit.toStringAsFixed(0),
+    );
+
+    final result = await showModalBottomSheet<double>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        final isDark = theme.brightness == Brightness.dark;
+        final card = isDark ? theme.cardColor : Colors.white;
+        final text = isDark ? Colors.white : const Color(0xFF0F172A);
+
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              4,
+              16,
+              MediaQuery.viewInsetsOf(sheetContext).bottom + 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sheetHeader(
+                  icon: item.icon,
+                  title: item.title,
+                  subtitle: "Monthly spending limit",
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: card,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    autofocus: true,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(
+                      color: text,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: "Monthly limit",
+                      prefixIcon: const Icon(Icons.savings),
+                      suffixText: "VND",
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0xFF1E1E1E)
+                          : const Color(0xFFF6F6F8),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        child: const Text("Cancel"),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          final amount =
+                              double.tryParse(
+                                controller.text
+                                    .replaceAll(".", "")
+                                    .replaceAll(",", ""),
+                              ) ??
+                              0;
+                          Navigator.pop(sheetContext, amount);
+                        },
+                        icon: const Icon(Icons.check),
+                        label: const Text("Save"),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (result == null) return;
+
+    await ApiService().saveBudget(
+      category: item.title,
+      month: _currentMonthKey,
+      monthlyLimit: result,
+    );
+    _reload();
+  }
+
+  Widget _sheetHeader({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: _primary,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: Colors.white),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(subtitle, style: const TextStyle(color: Colors.white70)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showBudgetTools() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _sheetHeader(
+                  icon: Icons.tune,
+                  title: "Budget tools",
+                  subtitle: "Manage plans beyond monthly limits",
+                ),
+                const SizedBox(height: 14),
+                _toolOption(
+                  sheetContext,
+                  icon: Icons.savings,
+                  title: "Saving Goals",
+                  subtitle: "Track targets like trips, laptop, emergency fund.",
+                  color: Colors.green,
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const SavingGoalsScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                _toolOption(
+                  sheetContext,
+                  icon: Icons.event_repeat,
+                  title: "Recurring Transactions",
+                  subtitle:
+                      "Plan salary, rent, subscriptions, and fixed bills.",
+                  color: Colors.orange,
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RecurringTransactionsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _toolOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? theme.cardColor : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: color.withValues(alpha: 0.1),
+              child: Icon(icon, color: color),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: theme.textTheme.bodyLarge?.color,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[400] : Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final bg = isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF6F6F8);
+    final card = isDark ? theme.cardColor : Colors.white;
+    final text = isDark ? Colors.white : const Color(0xFF0F172A);
 
     return Scaffold(
-      backgroundColor: isDark
-          ? theme.scaffoldBackgroundColor
-          : const Color(0xFFF6F6F8),
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: isDark
-            ? theme.appBarTheme.backgroundColor
-            : Colors.white,
+        backgroundColor: card,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: isDark ? theme.iconTheme.color : Colors.black,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: Text(
           "Monthly Budget",
-          style: TextStyle(
-            color: isDark ? theme.textTheme.titleLarge?.color : Colors.black,
-          ),
+          style: TextStyle(color: text, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Icon(
-              Icons.more_vert,
-              color: isDark ? theme.iconTheme.color : Colors.black,
-            ),
+          IconButton(
+            tooltip: "Budget tools",
+            icon: Icon(Icons.more_vert, color: text),
+            onPressed: _showBudgetTools,
           ),
         ],
       ),
@@ -184,133 +484,17 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 }
 
                 final summary = snapshot.data!;
-                final topCategory = summary.categories.isEmpty
-                    ? null
-                    : summary.categories.first;
-                final isNearLimit = summary.spendingRatio >= 0.8;
-                final remaining = (summary.referenceAmount - summary.totalSpent)
+                final remaining = (summary.totalBudget - summary.totalSpent)
                     .clamp(0.0, double.infinity);
-                final statusColor = isNearLimit ? Colors.orange : Colors.green;
-                final statusIcon = isNearLimit
-                    ? Icons.warning
-                    : Icons.check_circle;
-                final statusText = isNearLimit ? "Near limit" : "On track";
 
-                return SingleChildScrollView(
-                  child: Column(
+                return RefreshIndicator(
+                  onRefresh: () async => _reload(),
+                  child: ListView(
+                    padding: const EdgeInsets.only(bottom: 80),
                     children: [
-                      Container(
-                        margin: const EdgeInsets.all(16),
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF1132D4).withOpacity(0.15)
-                              : const Color(0xFF1132D4).withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              "Total Spent",
-                              style: TextStyle(
-                                color: isDark ? Colors.grey[400] : Colors.grey,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              currencyFormat.format(summary.totalSpent),
-                              style: TextStyle(
-                                fontSize: 36,
-                                fontWeight: FontWeight.bold,
-                                color: theme.textTheme.bodyLarge?.color,
-                              ),
-                            ),
-                            Text(
-                              "of ${currencyFormat.format(summary.referenceAmount)} budget",
-                              style: const TextStyle(
-                                color: Color(0xFF1132D4),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "Overall Progress",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.textTheme.bodyLarge?.color,
-                                  ),
-                                ),
-                                Text(
-                                  "${(summary.spendingRatio * 100).toInt()}%",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1132D4),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            LinearProgressIndicator(
-                              value: summary.spendingRatio,
-                              minHeight: 10,
-                              borderRadius: BorderRadius.circular(20),
-                              color: const Color(0xFF1132D4),
-                              backgroundColor: isDark
-                                  ? Colors.grey[800]
-                                  : Colors.grey.shade300,
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "${currencyFormat.format(remaining)} remaining",
-                                  style: TextStyle(
-                                    color: isDark
-                                        ? Colors.grey[400]
-                                        : Colors.grey,
-                                  ),
-                                ),
-                                if (topCategory != null)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          statusIcon,
-                                          size: 14,
-                                          color: statusColor,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          statusText,
-                                          style: TextStyle(
-                                            color: statusColor,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                      _summaryCard(context, summary, remaining),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -322,40 +506,28 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                 color: theme.textTheme.bodyLarge?.color,
                               ),
                             ),
-                            const Text(
-                              "Edit All",
+                            Text(
+                              summary.monthLabel,
                               style: TextStyle(
-                                color: Color(0xFF1132D4),
-                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.grey[400] : Colors.grey,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 12),
                       if (summary.categories.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Text(
-                            "No expense data for this month.",
-                            style: TextStyle(
-                              color: isDark ? Colors.grey[400] : Colors.grey,
-                            ),
-                          ),
+                        _emptyCard(
+                          context,
+                          icon: Icons.category,
+                          title: "No categories yet",
+                          message:
+                              "Add categories from Add Transaction to set monthly limits.",
                         )
                       else
                         ...summary.categories.map(
-                          (item) => budgetItem(
-                            context,
-                            icon: item.icon,
-                            title: item.title,
-                            spent:
-                                "${currencyFormat.format(item.spent)} spent of ${currencyFormat.format(summary.referenceAmount)}",
-                            percent: item.percent,
-                            color: item.color,
-                          ),
+                          (item) => _budgetItem(context, item),
                         ),
-                      const SizedBox(height: 80),
                     ],
                   ),
                 );
@@ -364,16 +536,104 @@ class _BudgetScreenState extends State<BudgetScreen> {
     );
   }
 
-  static Widget budgetItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String spent,
-    required double percent,
-    required Color color,
-  }) {
+  Widget _summaryCard(
+    BuildContext context,
+    _BudgetSummary summary,
+    double remaining,
+  ) {
+    final hasBudget = summary.totalBudget > 0;
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _primary,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Spent this month",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      summary.monthLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Text(
+            currencyFormat.format(summary.totalSpent),
+            style: const TextStyle(
+              fontSize: 34,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            hasBudget
+                ? "of ${currencyFormat.format(summary.totalBudget)} planned"
+                : "Set category budgets to track limits",
+            style: const TextStyle(
+              color: Colors.white70,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 20),
+          LinearProgressIndicator(
+            value: summary.overallProgress,
+            minHeight: 10,
+            borderRadius: BorderRadius.circular(20),
+            color: Colors.white,
+            backgroundColor: Colors.white.withValues(alpha: 0.22),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            hasBudget
+                ? "${currencyFormat.format(remaining)} remaining"
+                : "No monthly limits yet",
+            style: const TextStyle(color: Colors.white70),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _budgetItem(BuildContext context, _BudgetCategory item) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final subtitle = item.monthlyLimit <= 0
+        ? "${currencyFormat.format(item.spent)} spent - no limit"
+        : "${currencyFormat.format(item.spent)} spent of ${currencyFormat.format(item.monthlyLimit)}";
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -387,35 +647,27 @@ class _BudgetScreenState extends State<BudgetScreen> {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: color.withOpacity(0.1),
-                child: Icon(icon, color: color),
+                backgroundColor: item.color.withValues(alpha: 0.1),
+                child: Icon(item.icon, color: item.color),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: theme.textTheme.bodyLarge?.color,
-                          ),
-                        ),
-                        Text(
-                          "${(percent * 100).toInt()}%",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: color,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
                     ),
                     Text(
-                      spent,
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? Colors.grey[400] : Colors.grey,
@@ -424,15 +676,71 @@ class _BudgetScreenState extends State<BudgetScreen> {
                   ],
                 ),
               ),
+              TextButton(
+                onPressed: () => _editBudget(item),
+                child: const Text(
+                  "Edit",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
           LinearProgressIndicator(
-            value: percent,
+            value: item.percent,
             minHeight: 6,
             borderRadius: BorderRadius.circular(20),
-            color: color,
+            color: item.color,
             backgroundColor: isDark ? Colors.grey[800] : Colors.grey.shade300,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String message,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? theme.cardColor : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: _primary.withValues(alpha: 0.1),
+            child: Icon(icon, color: _primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  message,
+                  style: TextStyle(
+                    color: isDark ? Colors.grey[400] : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -441,15 +749,17 @@ class _BudgetScreenState extends State<BudgetScreen> {
 }
 
 class _BudgetSummary {
+  final String monthLabel;
   final double totalSpent;
-  final double referenceAmount;
-  final double spendingRatio;
+  final double totalBudget;
+  final double overallProgress;
   final List<_BudgetCategory> categories;
 
   const _BudgetSummary({
+    required this.monthLabel,
     required this.totalSpent,
-    required this.referenceAmount,
-    required this.spendingRatio,
+    required this.totalBudget,
+    required this.overallProgress,
     required this.categories,
   });
 }
@@ -457,6 +767,7 @@ class _BudgetSummary {
 class _BudgetCategory {
   final String title;
   final double spent;
+  final double monthlyLimit;
   final double percent;
   final Color color;
   final IconData icon;
@@ -464,6 +775,7 @@ class _BudgetCategory {
   const _BudgetCategory({
     required this.title,
     required this.spent,
+    required this.monthlyLimit,
     required this.percent,
     required this.color,
     required this.icon,

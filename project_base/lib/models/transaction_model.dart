@@ -22,7 +22,7 @@ class TransactionModel {
   /// 🔹 Từ JSON -> Object
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
     return TransactionModel(
-      id: json['id'],
+      id: int.tryParse(json['id'].toString()),
       description: json['description'] ?? "",
       category: json['category'] ?? "",
       account: json['account'] ?? "",

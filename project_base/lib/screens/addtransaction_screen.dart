@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import '../services/user_session.dart';
 import 'package:intl/intl.dart';
 
 class AddTransactionScreen extends StatefulWidget {
@@ -63,16 +62,19 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   Future<void> _loadExistingCategories() async {
-    final userId = UserSession.user_id;
-    if (userId == null) return;
-
     try {
-      final transactions = await ApiService().getTransactions(userId);
+      final loadedCategories = await ApiService().getCategories();
       if (!mounted) return;
 
       setState(() {
-        for (final tx in transactions) {
-          _addCategoryIfMissing(tx.category);
+        for (final item in loadedCategories) {
+          final matchesType =
+              item.type == 'both' ||
+              (isExpense && item.type == 'expense') ||
+              (!isExpense && item.type == 'income');
+          if (matchesType) {
+            _addCategoryIfMissing(item.name);
+          }
         }
       });
     } catch (_) {
@@ -92,10 +94,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     }
   }
 
-  void _addCustomCategory() {
+  Future<void> _addCustomCategory() async {
     final value = customCategoryController.text.trim();
     if (value.isEmpty) return;
 
+    await ApiService().saveCategory(
+      name: value,
+      type: isExpense ? 'expense' : 'income',
+    );
+
+    if (!mounted) return;
     setState(() {
       _addCategoryIfMissing(value);
       category = categories.firstWhere(
