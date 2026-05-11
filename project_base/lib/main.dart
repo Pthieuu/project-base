@@ -19,7 +19,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final theme = Provider.of<ThemeController>(context);
     const primary = Color(0xFF1132D4);
 
@@ -44,6 +43,19 @@ class MyApp extends StatelessWidget {
           bodyLarge: TextStyle(color: Color(0xFF0F172A)),
           bodyMedium: TextStyle(color: Color(0xFF475569)),
         ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primary,
+            foregroundColor: Colors.white,
+            iconColor: Colors.white,
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(foregroundColor: primary),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(foregroundColor: primary),
+        ),
         switchTheme: SwitchThemeData(
           thumbColor: WidgetStateProperty.resolveWith((states) {
             return states.contains(WidgetState.selected)
@@ -52,7 +64,7 @@ class MyApp extends StatelessWidget {
           }),
           trackColor: WidgetStateProperty.resolveWith((states) {
             return states.contains(WidgetState.selected)
-                ? primary.withOpacity(0.35)
+                ? primary.withValues(alpha: 0.35)
                 : const Color(0xFFE2E8F0);
           }),
         ),
@@ -73,6 +85,19 @@ class MyApp extends StatelessWidget {
           bodyLarge: TextStyle(color: Colors.white),
           bodyMedium: TextStyle(color: Color(0xFF94A3B8)),
         ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primary,
+            foregroundColor: Colors.white,
+            iconColor: Colors.white,
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(foregroundColor: Colors.white),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(foregroundColor: Colors.white),
+        ),
         switchTheme: SwitchThemeData(
           thumbColor: WidgetStateProperty.resolveWith((states) {
             return states.contains(WidgetState.selected)
@@ -81,14 +106,12 @@ class MyApp extends StatelessWidget {
           }),
           trackColor: WidgetStateProperty.resolveWith((states) {
             return states.contains(WidgetState.selected)
-                ? primary.withOpacity(0.45)
+                ? primary.withValues(alpha: 0.45)
                 : Colors.white24;
           }),
         ),
       ),
-      themeMode: theme.isDark
-          ? ThemeMode.dark
-          : ThemeMode.light,
+      themeMode: theme.isDark ? ThemeMode.dark : ThemeMode.light,
 
       initialRoute: "/",
 

@@ -10,7 +10,6 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-
   bool agree_terms = false;
   bool hide_password = true;
 
@@ -20,27 +19,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final confirm_controller = TextEditingController();
 
   Future<void> register() async {
-
-    if(name_controller.text.isEmpty ||
+    if (name_controller.text.isEmpty ||
         email_controller.text.isEmpty ||
-        pass_controller.text.isEmpty){
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields")),
-      );
+        pass_controller.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
       return;
     }
 
-    if(pass_controller.text != confirm_controller.text){
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Password does not match")),
-      );
+    if (pass_controller.text != confirm_controller.text) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Password does not match")));
       return;
     }
 
-    if(!agree_terms){
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please accept terms")),
-      );
+    if (!agree_terms) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please accept terms")));
       return;
     }
 
@@ -53,20 +51,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (result["status"] == "success") {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => const AccountCreatedScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const AccountCreatedScreen()),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Register failed")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Register failed")));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-
     final theme = Theme.of(context);
     final is_dark = theme.brightness == Brightness.dark;
 
@@ -77,7 +72,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: is_dark ? theme.scaffoldBackgroundColor : Colors.transparent,
+        backgroundColor: is_dark
+            ? theme.scaffoldBackgroundColor
+            : Colors.transparent,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
           onPressed: () => Navigator.pop(context),
@@ -108,21 +105,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         color: Colors.black.withOpacity(0.4),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
-                      )
+                      ),
                     ]
                   : [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.05),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
-                      )
+                      ),
                     ],
             ),
 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 Text(
                   "Join AI Expense Manager",
                   style: TextStyle(
@@ -172,7 +168,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 Row(
                   children: [
-
                     Checkbox(
                       value: agree_terms,
                       activeColor: const Color(0xFF1132D4),
@@ -188,7 +183,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         "By registering, you agree to our Terms of Service and Privacy Policy.",
                         style: TextStyle(fontSize: 12),
                       ),
-                    )
+                    ),
                   ],
                 ),
 
@@ -199,6 +194,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1132D4),
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     onPressed: register,
@@ -226,13 +222,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 Row(
                   children: [
-
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {},
                         icon: Image.network(
                           "https://cdn-icons-png.flaticon.com/512/300/300221.png",
                           width: 20,
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: is_dark
+                              ? Colors.white
+                              : const Color(0xFF1132D4),
                         ),
                         label: const Text("Google"),
                       ),
@@ -244,6 +244,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () {},
                         icon: const Icon(Icons.apple),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: is_dark
+                              ? Colors.white
+                              : const Color(0xFF1132D4),
+                        ),
                         label: const Text("Apple"),
                       ),
                     ),
@@ -263,7 +268,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -274,13 +279,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   /// TEXT FIELD
   Widget build_text_field(
-      String label,
-      String hint,
-      TextEditingController controller,
-      IconData icon,
-      bool is_dark,
-      {bool obscure = false}) {
-
+    String label,
+    String hint,
+    TextEditingController controller,
+    IconData icon,
+    bool is_dark, {
+    bool obscure = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
@@ -295,9 +300,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           filled: true,
           fillColor: is_dark ? Colors.grey[900] : Colors.white,
 
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
     );
@@ -317,9 +320,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           prefixIcon: const Icon(Icons.lock),
 
           suffixIcon: IconButton(
-            icon: Icon(
-              hide_password ? Icons.visibility : Icons.visibility_off,
-            ),
+            icon: Icon(hide_password ? Icons.visibility : Icons.visibility_off),
             onPressed: () {
               setState(() {
                 hide_password = !hide_password;
@@ -330,9 +331,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           filled: true,
           fillColor: is_dark ? Colors.grey[900] : Colors.white,
 
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
     );

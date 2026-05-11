@@ -172,6 +172,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       floatingActionButton: FloatingActionButton(
         backgroundColor: primary,
+        foregroundColor: Colors.white,
         onPressed: () async {
           final result = await Navigator.push(
             context,
@@ -181,7 +182,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
           if (result == true) loadTransactions();
         },
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
 
       body: SafeArea(

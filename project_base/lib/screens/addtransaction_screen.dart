@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/user_session.dart';
 import 'package:intl/intl.dart';
 
 class AddTransactionScreen extends StatefulWidget {
@@ -11,29 +12,99 @@ class AddTransactionScreen extends StatefulWidget {
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
   bool isExpense = true;
-  DateTime selected_date = DateTime.now();
+  DateTime selectedDate = DateTime.now();
 
   Future<void> pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: selected_date,
+      initialDate: selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
 
     if (picked != null) {
       setState(() {
-        selected_date = picked;
+        selectedDate = picked;
       });
     }
   }
 
-  final description_controller = TextEditingController();
-  final notes_controller = TextEditingController();
-  final amount_controller = TextEditingController();
+  final descriptionController = TextEditingController();
+  final notesController = TextEditingController();
+  final amountController = TextEditingController();
+  final customCategoryController = TextEditingController();
 
+  final List<String> categories = [
+    "Food & Drink",
+    "Shopping",
+    "Transport",
+    "Coffee",
+    "Housing",
+    "Entertainment",
+    "Salary",
+    "Other",
+  ];
   String category = "Food & Drink";
   String account = "Main Card";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingCategories();
+  }
+
+  @override
+  void dispose() {
+    descriptionController.dispose();
+    notesController.dispose();
+    amountController.dispose();
+    customCategoryController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadExistingCategories() async {
+    final userId = UserSession.user_id;
+    if (userId == null) return;
+
+    try {
+      final transactions = await ApiService().getTransactions(userId);
+      if (!mounted) return;
+
+      setState(() {
+        for (final tx in transactions) {
+          _addCategoryIfMissing(tx.category);
+        }
+      });
+    } catch (_) {
+      // The add form still works with default categories if loading fails.
+    }
+  }
+
+  void _addCategoryIfMissing(String value) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) return;
+
+    final exists = categories.any(
+      (item) => item.toLowerCase() == normalized.toLowerCase(),
+    );
+    if (!exists) {
+      categories.add(normalized);
+    }
+  }
+
+  void _addCustomCategory() {
+    final value = customCategoryController.text.trim();
+    if (value.isEmpty) return;
+
+    setState(() {
+      _addCategoryIfMissing(value);
+      category = categories.firstWhere(
+        (item) => item.toLowerCase() == value.toLowerCase(),
+        orElse: () => value,
+      );
+      customCategoryController.clear();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +153,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         const SizedBox(height: 10),
 
                         TextField(
-                          controller: amount_controller,
+                          controller: amountController,
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.center,
                           style: TextStyle(
@@ -105,7 +176,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               'vi',
                             ).format(int.parse(numbers));
 
-                            amount_controller.value = TextEditingValue(
+                            amountController.value = TextEditingValue(
                               text: formatted,
                               selection: TextSelection.collapsed(
                                 offset: formatted.length,
@@ -199,7 +270,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   const SizedBox(height: 8),
 
                   TextField(
-                    controller: description_controller,
+                    controller: descriptionController,
                     style: TextStyle(
                       color: isDark ? Colors.white : Colors.black,
                     ),
@@ -218,13 +289,17 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
                   const SizedBox(height: 15),
 
-                  /// TAG
-                  Row(
-                    children: [
-                      _tag("✨ Food & Drink", true, isDark),
-                      const SizedBox(width: 8),
-                      _tag("☕ Coffee", false, isDark),
-                    ],
+                  /// CATEGORY SHORTCUTS
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: categories.take(5).map((item) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _categoryChip(item, isDark),
+                        );
+                      }).toList(),
+                    ),
                   ),
 
                   const SizedBox(height: 20),
@@ -242,29 +317,69 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
                   _card(
                     DropdownButtonFormField(
+                      key: ValueKey(category),
                       dropdownColor: isDark
                           ? const Color(0xFF1E1E1E)
                           : Colors.white,
-                      value: category,
-                      items: const [
-                        DropdownMenuItem(
-                          value: "Food & Drink",
-                          child: Text("Food & Drink"),
-                        ),
-                        DropdownMenuItem(
-                          value: "Shopping",
-                          child: Text("Shopping"),
-                        ),
-                        DropdownMenuItem(
-                          value: "Transport",
-                          child: Text("Transport"),
-                        ),
-                      ],
+                      initialValue: category,
+                      items: categories
+                          .map(
+                            (item) => DropdownMenuItem(
+                              value: item,
+                              child: Text(item),
+                            ),
+                          )
+                          .toList(),
                       onChanged: (v) => setState(() => category = v!),
                       decoration: const InputDecoration(
                         border: InputBorder.none,
                       ),
                     ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: customCategoryController,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _addCustomCategory(),
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: "Add custom category",
+                            filled: true,
+                            fillColor: isDark
+                                ? const Color(0xFF1E1E1E)
+                                : Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        height: 52,
+                        child: ElevatedButton.icon(
+                          onPressed: _addCustomCategory,
+                          icon: const Icon(Icons.add),
+                          label: const Text("Add"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1132D4),
+                            foregroundColor: Colors.white,
+                            iconColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 15),
@@ -292,7 +407,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                     Text(
                                       DateFormat(
                                         'dd/MM/yyyy',
-                                      ).format(selected_date),
+                                      ).format(selectedDate),
                                       style: TextStyle(
                                         color: isDark
                                             ? Colors.white
@@ -313,10 +428,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       Expanded(
                         child: _card(
                           DropdownButtonFormField(
+                            key: ValueKey(account),
                             dropdownColor: isDark
                                 ? const Color(0xFF1E1E1E)
                                 : Colors.white,
-                            value: account,
+                            initialValue: account,
                             items: const [
                               DropdownMenuItem(
                                 value: "Main Card",
@@ -351,7 +467,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   const SizedBox(height: 8),
 
                   TextField(
-                    controller: notes_controller,
+                    controller: notesController,
                     maxLines: 3,
                     style: TextStyle(
                       color: isDark ? Colors.white : Colors.black,
@@ -383,6 +499,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1D4ED8),
+                  foregroundColor: Colors.white,
+                  iconColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -390,17 +508,17 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 ),
                 onPressed: () async {
                   final data = {
-                    "description": description_controller.text,
+                    "description": descriptionController.text,
                     "category": category,
                     "account": account,
                     "amount":
                         double.tryParse(
-                          amount_controller.text.replaceAll(".", ""),
+                          amountController.text.replaceAll(".", ""),
                         ) ??
                         0,
                     "is_expense": isExpense ? 1 : 0,
-                    "notes": notes_controller.text,
-                    "date": selected_date.toString(),
+                    "notes": notesController.text,
+                    "date": selectedDate.toString(),
                   };
 
                   await ApiService().addTransaction(data);
@@ -422,22 +540,24 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
   }
 
-  /// TAG
-  Widget _tag(String text, bool active, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: active
-            ? (isDark ? Colors.blue.withOpacity(0.2) : const Color(0xFFE0E7FF))
-            : (isDark ? Colors.grey[800] : const Color(0xFFF3F4F6)),
-        borderRadius: BorderRadius.circular(20),
+  Widget _categoryChip(String value, bool isDark) {
+    final active = category.toLowerCase() == value.toLowerCase();
+
+    return ChoiceChip(
+      label: Text(value),
+      selected: active,
+      onSelected: (_) => setState(() => category = value),
+      selectedColor: isDark
+          ? Colors.blue.withValues(alpha: 0.2)
+          : const Color(0xFFE0E7FF),
+      backgroundColor: isDark ? Colors.grey[800] : const Color(0xFFF3F4F6),
+      labelStyle: TextStyle(
+        color: active ? Colors.blue : Colors.grey,
+        fontWeight: FontWeight.w500,
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: active ? Colors.blue : Colors.grey,
-          fontWeight: FontWeight.w500,
-        ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide.none,
       ),
     );
   }

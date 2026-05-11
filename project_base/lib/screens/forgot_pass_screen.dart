@@ -5,11 +5,7 @@ class ResetPasswordScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: SafeArea(
-        child: Body(),
-      ),
-    );
+    return const Scaffold(body: SafeArea(child: Body()));
   }
 }
 
@@ -18,7 +14,6 @@ class Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     /// 🎯 COLOR SYSTEM (giống LoginScreen)
@@ -26,7 +21,9 @@ class Body extends StatelessWidget {
 
     final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9);
     final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final inputColor = isDark ? const Color(0xFF0B1220) : const Color(0xFFF8FAFC);
+    final inputColor = isDark
+        ? const Color(0xFF0B1220)
+        : const Color(0xFFF8FAFC);
 
     final borderColor = isDark ? Colors.white10 : const Color(0xFFE2E8F0);
 
@@ -52,18 +49,17 @@ class Body extends StatelessWidget {
               boxShadow: [
                 BoxShadow(
                   color: isDark
-                      ? Colors.black.withOpacity(0.4)
-                      : Colors.black.withOpacity(0.05),
+                      ? Colors.black.withValues(alpha: 0.4)
+                      : Colors.black.withValues(alpha: 0.05),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
-                )
+                ),
               ],
             ),
 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-
                 /// HEADER
                 Row(
                   children: [
@@ -138,13 +134,12 @@ class Body extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Reset link sent (demo)"),
-                        ),
+                        const SnackBar(content: Text("Reset link sent (demo)")),
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -166,12 +161,12 @@ class Body extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? Colors.green.withOpacity(0.15)
+                        ? Colors.green.withValues(alpha: 0.15)
                         : const Color(0xFFE6F4EA),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isDark
-                          ? Colors.green.withOpacity(0.3)
+                          ? Colors.green.withValues(alpha: 0.3)
                           : const Color(0xFFB7E1C1),
                     ),
                   ),
