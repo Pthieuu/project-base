@@ -17,7 +17,7 @@ class AiChatService {
     return history.sublist(history.length - 8);
   }
 
-  Future<String> askFinancialAssistant({
+  Future<AiAssistantResponse> askFinancialAssistant({
     required String userMessage,
     required List<AiChatTurn> history,
     required List<TransactionModel> transactions,
@@ -70,7 +70,7 @@ class AiChatService {
       throw const AiChatException('AI không trả về nội dung hợp lệ.');
     }
 
-    return reply;
+    return AiAssistantResponse.fromText(reply);
   }
 
   Map<String, dynamic> _decodeResponse(String body) {
@@ -105,6 +105,77 @@ class AiChatService {
   bool _isQuotaNotAvailable(Map<String, dynamic> data) {
     final message = data['message'];
     return message is String && message.contains('limit: 0');
+  }
+}
+
+class AiAssistantResponse {
+  final String text;
+  final AiAssistantAction? action;
+
+  const AiAssistantResponse({required this.text, this.action});
+
+  factory AiAssistantResponse.fromText(String rawText) {
+    final decoded = _tryDecodeAction(rawText);
+    if (decoded == null) {
+      return AiAssistantResponse(text: rawText);
+    }
+
+    final message = decoded['message']?.toString().trim();
+    return AiAssistantResponse(
+      text: message == null || message.isEmpty
+          ? 'Mình đã hiểu yêu cầu. Bạn kiểm tra lại thông tin bên dưới trước khi lưu.'
+          : message,
+      action: AiAssistantAction.fromJson(decoded),
+    );
+  }
+
+  static Map<String, dynamic>? _tryDecodeAction(String rawText) {
+    final trimmed = rawText.trim();
+    final candidates = <String>[trimmed];
+
+    final fenced = RegExp(
+      r'```(?:json)?\s*([\s\S]*?)\s*```',
+      caseSensitive: false,
+    ).firstMatch(trimmed);
+    if (fenced != null) {
+      candidates.insert(0, fenced.group(1)!.trim());
+    }
+
+    final firstBrace = trimmed.indexOf('{');
+    final lastBrace = trimmed.lastIndexOf('}');
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      candidates.add(trimmed.substring(firstBrace, lastBrace + 1));
+    }
+
+    for (final candidate in candidates) {
+      try {
+        final decoded = jsonDecode(candidate);
+        if (decoded is Map<String, dynamic> &&
+            decoded['type'] == 'action' &&
+            decoded['action'] is String &&
+            decoded['payload'] is Map) {
+          return decoded;
+        }
+      } catch (_) {
+        continue;
+      }
+    }
+
+    return null;
+  }
+}
+
+class AiAssistantAction {
+  final String action;
+  final Map<String, dynamic> payload;
+
+  const AiAssistantAction({required this.action, required this.payload});
+
+  factory AiAssistantAction.fromJson(Map<String, dynamic> json) {
+    return AiAssistantAction(
+      action: json['action'].toString(),
+      payload: Map<String, dynamic>.from(json['payload'] as Map),
+    );
   }
 }
 

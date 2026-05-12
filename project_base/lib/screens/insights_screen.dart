@@ -10,6 +10,14 @@ import 'package:project_base/services/user_session.dart';
 class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
 
+  static int? _chatSessionUserId;
+  static final List<_ChatMessage> _chatSessionMessages = [];
+
+  static void clearSessionChat() {
+    _chatSessionUserId = null;
+    _chatSessionMessages.clear();
+  }
+
   @override
   State<InsightsScreen> createState() => _InsightsScreenState();
 }
@@ -18,7 +26,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   late Future<_InsightsData> futureInsights;
   final TextEditingController messageController = TextEditingController();
   final ScrollController scrollController = ScrollController();
-  final List<_ChatMessage> messages = [];
+  late final List<_ChatMessage> messages;
   final AiChatService aiChatService = AiChatService();
   _InsightsData? currentInsights;
   List<TransactionModel> currentTransactions = [];
@@ -33,6 +41,11 @@ class _InsightsScreenState extends State<InsightsScreen> {
   @override
   void initState() {
     super.initState();
+    if (InsightsScreen._chatSessionUserId != UserSession.user_id) {
+      InsightsScreen._chatSessionUserId = UserSession.user_id;
+      InsightsScreen._chatSessionMessages.clear();
+    }
+    messages = InsightsScreen._chatSessionMessages;
     futureInsights = _loadInsights();
   }
 
@@ -253,6 +266,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       messageController.clear();
     });
 
+    AiAssistantResponse? aiResponse;
     String reply;
     try {
       if (aiChatService.isConfigured) {
@@ -269,11 +283,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
               .toList(),
         );
 
-        reply = await aiChatService.askFinancialAssistant(
+        aiResponse = await aiChatService.askFinancialAssistant(
           userMessage: text,
           history: history,
           transactions: currentTransactions,
         );
+        reply = aiResponse.text;
       } else {
         reply = _buildAiUnavailableReply();
       }
@@ -286,7 +301,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
     if (!mounted) return;
 
     setState(() {
-      messages.add(_ChatMessage(text: reply, isUser: false));
+      messages.add(
+        _ChatMessage(text: reply, isUser: false, action: aiResponse?.action),
+      );
       isSending = false;
     });
 
@@ -299,6 +316,145 @@ class _InsightsScreenState extends State<InsightsScreen> {
         );
       }
     });
+  }
+
+  Future<void> _confirmAiAction(_ChatMessage message) async {
+    final action = message.action;
+    if (action == null || message.actionCompleted) return;
+
+    try {
+      await _executeAiAction(action);
+      if (!mounted) return;
+      setState(() {
+        message.actionCompleted = true;
+        messages.add(
+          _ChatMessage(text: "Đã lưu thông tin vào app.", isUser: false),
+        );
+        futureInsights = _loadInsights();
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
+  }
+
+  void _cancelAiAction(_ChatMessage message) {
+    if (message.actionCompleted) return;
+    setState(() {
+      message.actionCompleted = true;
+      messages.add(
+        _ChatMessage(
+          text: "Đã hủy thao tác, mình chưa lưu gì vào app.",
+          isUser: false,
+        ),
+      );
+    });
+  }
+
+  Future<void> _executeAiAction(AiAssistantAction action) async {
+    final payload = action.payload;
+    final api = ApiService();
+
+    switch (action.action) {
+      case 'add_transaction':
+        await api.addTransaction({
+          "description": _stringValue(
+            payload['description'],
+            fallback: 'AI entry',
+          ),
+          "category": _stringValue(payload['category'], fallback: 'Other'),
+          "account": _stringValue(payload['account'], fallback: 'Main Card'),
+          "amount": _doubleValue(payload['amount']),
+          "is_expense": _boolValue(payload['is_expense'], fallback: true)
+              ? 1
+              : 0,
+          "notes": _stringValue(payload['notes']),
+          "date": _dateValue(payload['date']).toString(),
+        });
+        break;
+      case 'add_saving_goal':
+        await api.saveGoal(
+          title: _stringValue(payload['title'], fallback: 'Saving goal'),
+          targetAmount: _doubleValue(payload['target_amount']),
+          currentAmount: _doubleValue(payload['current_amount']),
+          targetDate: _dateOnlyValue(payload['target_date']),
+          note: _stringValue(payload['note']),
+        );
+        break;
+      case 'set_budget':
+        await api.saveBudget(
+          category: _stringValue(payload['category'], fallback: 'Other'),
+          month: _monthValue(payload['month']),
+          monthlyLimit: _doubleValue(payload['monthly_limit']),
+        );
+        break;
+      case 'add_recurring_transaction':
+        await api.saveRecurringTransaction(
+          description: _stringValue(
+            payload['description'],
+            fallback: 'Recurring',
+          ),
+          category: _stringValue(payload['category'], fallback: 'Other'),
+          account: _stringValue(payload['account'], fallback: 'Main Card'),
+          amount: _doubleValue(payload['amount']),
+          isExpense: _boolValue(payload['is_expense'], fallback: true),
+          frequency: _frequencyValue(payload['frequency']),
+          nextRunDate: _dateOnlyValue(payload['next_run_date'])!,
+          notes: _stringValue(payload['notes']),
+        );
+        break;
+      default:
+        throw Exception('Action chưa được hỗ trợ: ${action.action}');
+    }
+  }
+
+  String _stringValue(dynamic value, {String fallback = ''}) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? fallback : text;
+  }
+
+  double _doubleValue(dynamic value) {
+    if (value is num) return value.toDouble();
+    final normalized = value
+        ?.toString()
+        .replaceAll(RegExp(r'[^0-9.,]'), '')
+        .replaceAll('.', '')
+        .replaceAll(',', '.');
+    return double.tryParse(normalized ?? '') ?? 0;
+  }
+
+  bool _boolValue(dynamic value, {required bool fallback}) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    final text = value?.toString().toLowerCase().trim();
+    if (text == 'true' || text == '1' || text == 'expense') return true;
+    if (text == 'false' || text == '0' || text == 'income') return false;
+    return fallback;
+  }
+
+  DateTime _dateValue(dynamic value) {
+    final parsed = DateTime.tryParse(value?.toString() ?? '');
+    return parsed ?? DateTime.now();
+  }
+
+  String? _dateOnlyValue(dynamic value) {
+    if (value == null || value.toString().trim().isEmpty) return null;
+    final parsed = _dateValue(value);
+    return DateFormat('yyyy-MM-dd').format(parsed);
+  }
+
+  String _monthValue(dynamic value) {
+    final parsed = DateTime.tryParse('${value ?? ''}-01');
+    final now = DateTime.now();
+    return DateFormat('yyyy-MM').format(parsed ?? now);
+  }
+
+  String _frequencyValue(dynamic value) {
+    final text = value?.toString().toLowerCase().trim();
+    if (text == 'daily' || text == 'weekly' || text == 'monthly') return text!;
+    return 'monthly';
   }
 
   String _buildAiUnavailableReply([AiChatException? error]) {
@@ -720,6 +876,16 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 ),
                                 const SizedBox(height: 16),
                                 ...messages.map((message) {
+                                  if (message.action != null) {
+                                    return _AiActionMessageCard(
+                                      message: message,
+                                      currencyFormat: currencyFormat,
+                                      onConfirm: () =>
+                                          _confirmAiAction(message),
+                                      onCancel: () => _cancelAiAction(message),
+                                    );
+                                  }
+
                                   return Align(
                                     alignment: message.isUser
                                         ? Alignment.centerRight
@@ -894,8 +1060,180 @@ class _PromptChip extends StatelessWidget {
 class _ChatMessage {
   final String text;
   final bool isUser;
+  final AiAssistantAction? action;
+  bool actionCompleted = false;
 
-  const _ChatMessage({required this.text, required this.isUser});
+  _ChatMessage({required this.text, required this.isUser, this.action});
+}
+
+class _AiActionMessageCard extends StatelessWidget {
+  final _ChatMessage message;
+  final NumberFormat currencyFormat;
+  final VoidCallback onConfirm;
+  final VoidCallback onCancel;
+
+  const _AiActionMessageCard({
+    required this.message,
+    required this.currencyFormat,
+    required this.onConfirm,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final action = message.action!;
+    final payload = action.payload;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFF1132D4).withValues(alpha: 0.2),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              message.text,
+              style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.black : Colors.white,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                children: [
+                  _actionRow(Icons.bolt, 'Action', _actionLabel(action.action)),
+                  ..._payloadRows(payload),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: message.actionCompleted ? null : onCancel,
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: message.actionCompleted ? null : onConfirm,
+                    icon: Icon(
+                      message.actionCompleted ? Icons.check : Icons.save,
+                    ),
+                    label: Text(message.actionCompleted ? 'Saved' : 'Confirm'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _payloadRows(Map<String, dynamic> payload) {
+    final rows = <Widget>[];
+    for (final entry in payload.entries) {
+      final value = entry.value;
+      if (value == null || value.toString().trim().isEmpty) continue;
+      rows.add(
+        _actionRow(
+          Icons.circle,
+          _fieldLabel(entry.key),
+          _formatValue(entry.key, value),
+          smallIcon: true,
+        ),
+      );
+    }
+    return rows;
+  }
+
+  Widget _actionRow(
+    IconData icon,
+    String label,
+    String value, {
+    bool smallIcon = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: smallIcon ? 8 : 16, color: const Color(0xFF1132D4)),
+          SizedBox(width: smallIcon ? 12 : 8),
+          SizedBox(
+            width: 92,
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _actionLabel(String action) {
+    switch (action) {
+      case 'add_transaction':
+        return 'Add transaction';
+      case 'add_saving_goal':
+        return 'Add saving goal';
+      case 'set_budget':
+        return 'Set budget';
+      case 'add_recurring_transaction':
+        return 'Add recurring';
+      default:
+        return action;
+    }
+  }
+
+  String _fieldLabel(String key) {
+    return key
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map(
+          (word) => word.isEmpty
+              ? word
+              : '${word[0].toUpperCase()}${word.substring(1)}',
+        )
+        .join(' ');
+  }
+
+  String _formatValue(String key, dynamic value) {
+    if (key.contains('amount') || key.contains('limit')) {
+      final amount = value is num
+          ? value.toDouble()
+          : double.tryParse(value.toString()) ?? 0;
+      return currencyFormat.format(amount);
+    }
+    if (key == 'is_expense') {
+      return value == true || value == 1 ? 'Expense' : 'Income';
+    }
+    return value.toString();
+  }
 }
 
 class _CategoryVisual {
