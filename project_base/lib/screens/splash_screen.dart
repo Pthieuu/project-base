@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/widgets/app_logo.dart';
 import '../screens/onboarding_screen.dart';
 
@@ -41,6 +43,8 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final t = context.watch<LanguageController>().text;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF6F6F8),
       body: Stack(
@@ -83,9 +87,9 @@ class _SplashScreenState extends State<SplashScreen>
                 const SizedBox(height: 30),
 
                 /// app name
-                const Text(
-                  "AI Expense Manager",
-                  style: TextStyle(
+                Text(
+                  t('app_name'),
+                  style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF0F172A),
@@ -94,9 +98,9 @@ class _SplashScreenState extends State<SplashScreen>
 
                 const SizedBox(height: 6),
 
-                const Text(
-                  "SMART FINANCIAL CONTROL",
-                  style: TextStyle(
+                Text(
+                  t('smart_financial_control'),
+                  style: const TextStyle(
                     fontSize: 12,
                     letterSpacing: 1.5,
                     color: Colors.grey,
@@ -141,9 +145,9 @@ class _SplashScreenState extends State<SplashScreen>
 
                     const SizedBox(width: 10),
 
-                    const Text(
-                      "Analysing transactions...",
-                      style: TextStyle(
+                    Text(
+                      t('analyzing_transactions'),
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: Colors.grey,

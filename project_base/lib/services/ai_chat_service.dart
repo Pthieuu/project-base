@@ -25,7 +25,7 @@ class AiChatService {
     final rateLimitedUntil = _rateLimitedUntil;
     if (rateLimitedUntil != null && DateTime.now().isBefore(rateLimitedUntil)) {
       throw AiChatException(
-        'AI đang giới hạn tạm thời. Hãy thử lại sau.',
+        'AI is temporarily rate-limited. Please try again later.',
         statusCode: 429,
         retryAfter: rateLimitedUntil.difference(DateTime.now()),
       );
@@ -67,7 +67,7 @@ class AiChatService {
 
     final reply = (data['reply'] as String).trim();
     if (reply.isEmpty) {
-      throw const AiChatException('AI không trả về nội dung hợp lệ.');
+      throw const AiChatException('AI returned an invalid response.');
     }
 
     return AiAssistantResponse.fromText(reply);
@@ -82,7 +82,7 @@ class AiChatService {
     }
     return {
       'status': 'error',
-      'message': body.trim().isEmpty ? 'Backend không trả về dữ liệu.' : body,
+      'message': body.trim().isEmpty ? 'Backend returned no data.' : body,
     };
   }
 
@@ -91,7 +91,7 @@ class AiChatService {
     if (message is String && message.trim().isNotEmpty) {
       return message.trim();
     }
-    return 'AI backend lỗi $statusCode.';
+    return 'AI backend error $statusCode.';
   }
 
   Duration? _readRetryAfter(Map<String, dynamic> data) {
@@ -123,7 +123,7 @@ class AiAssistantResponse {
     final message = decoded['message']?.toString().trim();
     return AiAssistantResponse(
       text: message == null || message.isEmpty
-          ? 'Mình đã hiểu yêu cầu. Bạn kiểm tra lại thông tin bên dưới trước khi lưu.'
+          ? 'I understood your request. Please review the details below before saving.'
           : message,
       action: AiAssistantAction.fromJson(decoded),
     );

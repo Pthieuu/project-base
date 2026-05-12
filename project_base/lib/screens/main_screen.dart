@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../controller/language_controller.dart';
 import 'dashboard_screen.dart';
 import 'transaction_history.dart';
 import 'budget_screen.dart';
@@ -45,6 +47,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final language = context.watch<LanguageController>();
 
     return Scaffold(
       body: _screens[_selectedIndex],
@@ -57,18 +60,27 @@ class _MainScreenState extends State<MainScreen> {
         type: BottomNavigationBarType.fixed,
         onTap: _onItemTapped,
 
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: "History"),
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet),
-            label: "Budget",
+            icon: const Icon(Icons.home),
+            label: language.text('home'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.insights),
-            label: "Insights",
+            icon: const Icon(Icons.history),
+            label: language.text('history'),
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.account_balance_wallet),
+            label: language.text('budget'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.insights),
+            label: language.text('insights'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.person),
+            label: language.text('profile'),
+          ),
         ],
       ),
     );

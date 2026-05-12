@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:project_base/controller/language_controller.dart';
 
 class ResetPasswordScreen extends StatelessWidget {
   const ResetPasswordScreen({super.key});
@@ -15,6 +17,7 @@ class Body extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.watch<LanguageController>().text;
 
     /// 🎯 COLOR SYSTEM (giống LoginScreen)
     const primaryColor = Color(0xFF1132D4);
@@ -71,7 +74,7 @@ class Body extends StatelessWidget {
                     const SizedBox(width: 12),
 
                     Text(
-                      "Reset Password",
+                      t('reset_password'),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -84,7 +87,7 @@ class Body extends StatelessWidget {
                 const SizedBox(height: 30),
 
                 Text(
-                  "Forgot Password?",
+                  t('forgot_password_title'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
@@ -96,7 +99,7 @@ class Body extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 Text(
-                  "Enter the email address associated with your account\nand we'll send you a link to reset your password.",
+                  t('reset_password_body'),
                   textAlign: TextAlign.center,
                   style: TextStyle(color: textSecondary),
                 ),
@@ -134,7 +137,7 @@ class Body extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Reset link sent (demo)")),
+                        SnackBar(content: Text(t('reset_link_sent'))),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -144,9 +147,9 @@ class Body extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      "Send Reset Link",
-                      style: TextStyle(
+                    child: Text(
+                      t('send_reset_link'),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -171,7 +174,7 @@ class Body extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    "Success! If an account exists for this email, you will receive a reset link shortly.",
+                    t('reset_success'),
                     style: TextStyle(color: textSecondary),
                   ),
                 ),

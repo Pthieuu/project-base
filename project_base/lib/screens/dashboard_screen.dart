@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'addtransaction_screen.dart';
 import 'transaction_history.dart';
 import '../services/api_service.dart';
 import '../services/user_session.dart';
 import 'package:intl/intl.dart';
+import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/utils/category_visuals.dart';
 
@@ -23,6 +25,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double totalIncome = 0;
   double totalExpense = 0;
   double totalBalance = 0;
+  double monthlyIncome = 0;
+  double monthlyExpense = 0;
 
   final currencyFormat = NumberFormat.currency(
     locale: 'vi_VN',
@@ -50,12 +54,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     double income = 0;
     double expense = 0;
+    double currentMonthIncome = 0;
+    double currentMonthExpense = 0;
+    final now = DateTime.now();
 
     for (var tx in txList) {
       if (tx.isExpense) {
         expense += tx.amount;
       } else {
         income += tx.amount;
+      }
+
+      final date = _parseTransactionDate(tx.date);
+      if (date != null && date.year == now.year && date.month == now.month) {
+        if (tx.isExpense) {
+          currentMonthExpense += tx.amount;
+        } else {
+          currentMonthIncome += tx.amount;
+        }
       }
     }
 
@@ -64,6 +80,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       totalIncome = income;
       totalExpense = expense;
       totalBalance = income - expense;
+      monthlyIncome = currentMonthIncome;
+      monthlyExpense = currentMonthExpense;
     });
   }
 
@@ -136,15 +154,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   double _monthlyTotal({required bool expense}) {
-    final now = DateTime.now();
-    return transactions.fold<double>(0, (sum, tx) {
-      final date = _parseTransactionDate(tx.date);
-      if (date == null || date.year != now.year || date.month != now.month) {
-        return sum;
-      }
-      if (tx.isExpense != expense) return sum;
-      return sum + tx.amount;
-    });
+    return expense ? monthlyExpense : monthlyIncome;
   }
 
   void _openTransactionHistory() async {
@@ -157,6 +167,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _showBalanceDetails() {
     final theme = Theme.of(context);
+    final t = context.read<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
     const primary = Color(0xFF1132D4);
     final monthlyIncome = _monthlyTotal(expense: false);
@@ -205,7 +216,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Balance details",
+                              t('balance_details'),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -227,19 +238,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 18),
                   _detailRow(
-                    title: "Income this month",
+                    title: t('income_this_month'),
                     value: currencyFormat.format(monthlyIncome),
                     icon: Icons.arrow_upward,
                     color: const Color(0xFF059669),
                   ),
                   _detailRow(
-                    title: "Expense this month",
+                    title: t('expense_this_month'),
                     value: currencyFormat.format(monthlyExpense),
                     icon: Icons.arrow_downward,
                     color: const Color(0xFFDC2626),
                   ),
                   _detailRow(
-                    title: "Month balance",
+                    title: t('month_balance'),
                     value: currencyFormat.format(monthlyBalance),
                     icon: Icons.savings_outlined,
                     color: primary,
@@ -253,8 +264,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     child: Text(
                       monthlyIncome <= 0
-                          ? "Tháng này chưa có thu nhập để tính tỷ lệ tiết kiệm."
-                          : "Bạn đang giữ lại khoảng $savedRate% thu nhập tháng này.",
+                          ? t('no_month_income_rate')
+                          : t(
+                              'keeping_income',
+                            ).replaceAll('{rate}', savedRate.toString()),
                       style: const TextStyle(
                         color: primary,
                         fontWeight: FontWeight.w600,
@@ -277,9 +290,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _openTransactionHistory();
                     },
                     icon: const Icon(Icons.history),
-                    label: const Text(
-                      "View transaction history",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    label: Text(
+                      t('view_transaction_history'),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -291,9 +304,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  String _monthlyBalanceNote() {
+    final balance = monthlyIncome - monthlyExpense;
+    final t = context.read<LanguageController>().text;
+    if (monthlyIncome <= 0 && monthlyExpense <= 0) {
+      return t('no_month_activity');
+    }
+    if (balance >= 0) {
+      return t(
+        'month_left',
+      ).replaceAll('{amount}', currencyFormat.format(balance));
+    }
+    return t(
+      'month_short',
+    ).replaceAll('{amount}', currencyFormat.format(balance.abs()));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.watch<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
     final weeklyExpenseData = _buildWeeklyExpenseData();
 
@@ -349,7 +379,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Column(
                         children: [
                           Text(
-                            "Welcome back,",
+                            t('welcome_back'),
                             style: TextStyle(fontSize: 12, color: subText),
                           ),
                           Text(
@@ -381,9 +411,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Total Balance",
-                        style: TextStyle(color: Colors.white70),
+                      Text(
+                        t('available_balance'),
+                        style: const TextStyle(color: Colors.white70),
                       ),
 
                       const SizedBox(height: 6),
@@ -422,10 +452,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              "You're on track to save ₫500,000 more this month.",
-                              style: TextStyle(color: Colors.white),
+                              _monthlyBalanceNote(),
+                              style: const TextStyle(color: Colors.white),
                             ),
                           ),
                           ElevatedButton(
@@ -434,7 +464,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               foregroundColor: primary,
                             ),
                             onPressed: _showBalanceDetails,
-                            child: const Text("Details"),
+                            child: Text(t('details')),
                           ),
                         ],
                       ),
@@ -450,8 +480,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Expanded(
                       child: statCard(
-                        title: "Income",
-                        value: currencyFormat.format(totalIncome),
+                        title: t('income'),
+                        subtitle: DateFormat('MMM yyyy').format(DateTime.now()),
+                        value: currencyFormat.format(monthlyIncome),
                         icon: Icons.arrow_downward,
                         color: Colors.green,
                         card: card,
@@ -464,8 +495,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     Expanded(
                       child: statCard(
-                        title: "Expenses",
-                        value: currencyFormat.format(totalExpense),
+                        title: t('expenses'),
+                        subtitle: DateFormat('MMM yyyy').format(DateTime.now()),
+                        value: currencyFormat.format(monthlyExpense),
                         icon: Icons.arrow_upward,
                         color: Colors.red,
                         card: card,
@@ -494,7 +526,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Spending Summary",
+                            t('spending_summary'),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: text,
@@ -509,9 +541,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               color: primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text(
-                              "Last 7 Days",
-                              style: TextStyle(fontSize: 10, color: primary),
+                            child: Text(
+                              t('last_7_days'),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: primary,
+                              ),
                             ),
                           ),
                         ],
@@ -548,7 +583,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Recent Transactions",
+                          t('recent_transactions'),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: text,
@@ -560,9 +595,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             foregroundColor: primary,
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                           ),
-                          child: const Text(
-                            "See All",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                          child: Text(
+                            t('see_all'),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -702,6 +737,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   static Widget statCard({
     required String title,
+    required String subtitle,
     required String value,
     required IconData icon,
     required Color color,
@@ -721,6 +757,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Icon(icon, color: color),
           const SizedBox(height: 6),
           Text(title, style: TextStyle(color: subText, fontSize: 12)),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: subText,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 4),
           Text(
             value,

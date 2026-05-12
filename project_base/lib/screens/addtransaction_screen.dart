@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/utils/app_date_picker.dart';
 import 'package:project_base/utils/category_visuals.dart';
 import '../services/api_service.dart';
@@ -119,6 +121,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.watch<LanguageController>().text;
 
     return Scaffold(
       backgroundColor: isDark
@@ -134,7 +137,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         ),
         centerTitle: true,
         title: Text(
-          "Add Transaction",
+          t('add_transaction'),
           style: TextStyle(color: isDark ? Colors.white : Colors.black),
         ),
       ),
@@ -151,9 +154,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   Center(
                     child: Column(
                       children: [
-                        const Text(
-                          "AMOUNT",
-                          style: TextStyle(
+                        Text(
+                          t('amount').toUpperCase(),
+                          style: const TextStyle(
                             color: Colors.grey,
                             letterSpacing: 1,
                             fontSize: 12,
@@ -226,7 +229,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                "Expense",
+                                t('expense'),
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: isExpense ? Colors.blue : Colors.grey,
@@ -251,7 +254,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                "Income",
+                                t('income_type'),
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: !isExpense
@@ -270,7 +273,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
                   /// DESCRIPTION
                   Text(
-                    "Description",
+                    t('description'),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : Colors.black,
@@ -285,7 +288,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       color: isDark ? Colors.white : Colors.black,
                     ),
                     decoration: InputDecoration(
-                      hintText: "Enter description",
+                      hintText: t('enter_description'),
                       filled: true,
                       fillColor: isDark
                           ? const Color(0xFF1E1E1E)
@@ -316,7 +319,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
                   /// CATEGORY
                   Text(
-                    "Category",
+                    t('category'),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : Colors.black,
@@ -360,7 +363,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             color: isDark ? Colors.white : Colors.black,
                           ),
                           decoration: InputDecoration(
-                            hintText: "Add custom category",
+                            hintText: t('custom_category'),
                             filled: true,
                             fillColor: isDark
                                 ? const Color(0xFF1E1E1E)
@@ -378,7 +381,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _addCustomCategory,
                           icon: const Icon(Icons.add),
-                          label: const Text("Add"),
+                          label: Text(t('add')),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1132D4),
                             foregroundColor: Colors.white,
@@ -443,14 +446,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 ? const Color(0xFF1E1E1E)
                                 : Colors.white,
                             initialValue: account,
-                            items: const [
+                            items: [
                               DropdownMenuItem(
                                 value: "Main Card",
-                                child: Text("Main Card"),
+                                child: Text(t('main_card')),
                               ),
                               DropdownMenuItem(
                                 value: "Cash",
-                                child: Text("Cash"),
+                                child: Text(t('cash')),
                               ),
                             ],
                             onChanged: (v) => setState(() => account = v!),
@@ -467,7 +470,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
                   /// NOTES
                   Text(
-                    "Notes (Optional)",
+                    t('notes_optional'),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : Colors.black,
@@ -483,7 +486,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       color: isDark ? Colors.white : Colors.black,
                     ),
                     decoration: InputDecoration(
-                      hintText: "Add a note...",
+                      hintText: t('add_note'),
                       filled: true,
                       fillColor: isDark
                           ? const Color(0xFF1E1E1E)
@@ -525,7 +528,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
                   if (amount <= 0) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Số tiền phải lớn hơn 0đ.")),
+                      SnackBar(content: Text(t('amount_gt_zero'))),
                     );
                     return;
                   }
@@ -547,9 +550,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   }
                 },
                 icon: const Icon(Icons.check_circle),
-                label: const Text(
-                  "Save Transaction",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                label: Text(
+                  t('save_transaction'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ),

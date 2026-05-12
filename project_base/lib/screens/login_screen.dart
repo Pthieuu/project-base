@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:project_base/controller/language_controller.dart';
 import 'main_screen.dart';
 import '../services/auth_service.dart';
 import '../services/user_session.dart';
@@ -20,10 +22,11 @@ class _LoginScreenState extends State<LoginScreen> {
   bool obscurePassword = true;
 
   Future<void> login() async {
+    final t = context.read<LanguageController>().text;
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter email and password")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t('please_enter_email_password'))));
       return;
     }
 
@@ -46,15 +49,16 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Email or password incorrect")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t('email_password_incorrect'))));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.watch<LanguageController>().text;
 
     /// 🎯 COLOR SYSTEM
     final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9);
@@ -104,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Expanded(
                       child: Center(
                         child: Text(
-                          "AI Expense Manager",
+                          t('app_name'),
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -121,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 30),
 
                 Text(
-                  "Welcome Back",
+                  t('welcome_back_title'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
@@ -132,10 +136,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 8),
 
-                const Text(
-                  "Log in to manage your finances with AI",
+                Text(
+                  t('login_subtitle'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
+                  style: const TextStyle(color: Colors.grey),
                 ),
 
                 const SizedBox(height: 40),
@@ -164,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text("Password"),
+                        Text(t('password')),
                         GestureDetector(
                           onTap: () {
                             Navigator.push(
@@ -174,9 +178,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             );
                           },
-                          child: const Text(
-                            "Forgot password?",
-                            style: TextStyle(color: primaryColor, fontSize: 12),
+                          child: Text(
+                            t('forgot_password'),
+                            style: const TextStyle(
+                              color: primaryColor,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ],
@@ -188,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: passwordController,
                       obscureText: obscurePassword,
                       decoration: InputDecoration(
-                        hintText: "Enter your password",
+                        hintText: t('enter_password'),
                         prefixIcon: const Icon(Icons.lock_outline),
 
                         suffixIcon: IconButton(
@@ -230,9 +237,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     onPressed: login,
-                    child: const Text(
-                      "Log In",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    child: Text(
+                      t('log_in'),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -241,13 +248,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 /// DIVIDER
                 Row(
-                  children: const [
-                    Expanded(child: Divider()),
+                  children: [
+                    const Expanded(child: Divider()),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text("Or continue with"),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(t('or_continue_with')),
                     ),
-                    Expanded(child: Divider()),
+                    const Expanded(child: Divider()),
                   ],
                 ),
 
@@ -288,7 +295,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Don't have an account? "),
+                    Text(t('no_account')),
 
                     GestureDetector(
                       onTap: () {
@@ -299,9 +306,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         );
                       },
-                      child: const Text(
-                        "Register now",
-                        style: TextStyle(
+                      child: Text(
+                        t('register_now'),
+                        style: const TextStyle(
                           color: primaryColor,
                           fontWeight: FontWeight.bold,
                         ),

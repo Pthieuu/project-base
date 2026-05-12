@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/screens/recurring_transactions_screen.dart';
 import 'package:project_base/screens/saving_goals_screen.dart';
 import 'package:project_base/services/api_service.dart';
@@ -137,6 +139,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
   }
 
   Future<void> _editBudget(_BudgetCategory item) async {
+    final t = context.read<LanguageController>().text;
     final controller = TextEditingController(
       text: item.monthlyLimit <= 0 ? '' : item.monthlyLimit.toStringAsFixed(0),
     );
@@ -167,7 +170,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 _sheetHeader(
                   icon: item.icon,
                   title: item.title,
-                  subtitle: "Monthly spending limit",
+                  subtitle: t('monthly_spending_limit'),
                 ),
                 const SizedBox(height: 14),
                 Container(
@@ -186,7 +189,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                     decoration: InputDecoration(
-                      labelText: "Monthly limit",
+                      labelText: t('monthly_limit'),
                       prefixIcon: const Icon(Icons.savings),
                       suffixText: "VND",
                       filled: true,
@@ -206,7 +209,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(sheetContext),
-                        child: const Text("Cancel"),
+                        child: Text(t('cancel')),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -222,8 +225,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
                               0;
                           if (amount <= 0) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Giới hạn phải lớn hơn 0đ."),
+                              SnackBar(
+                                content: Text(t('budget_limit_gt_zero')),
                               ),
                             );
                             return;
@@ -231,7 +234,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                           Navigator.pop(sheetContext, amount);
                         },
                         icon: const Icon(Icons.check),
-                        label: const Text("Save"),
+                        label: Text(t('save')),
                       ),
                     ),
                   ],
@@ -300,6 +303,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
   }
 
   Future<void> _showBudgetTools() async {
+    final t = context.read<LanguageController>().text;
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -313,15 +317,15 @@ class _BudgetScreenState extends State<BudgetScreen> {
               children: [
                 _sheetHeader(
                   icon: Icons.tune,
-                  title: "Budget tools",
-                  subtitle: "Manage plans beyond monthly limits",
+                  title: t('budget_tools'),
+                  subtitle: t('budget_tools_subtitle'),
                 ),
                 const SizedBox(height: 14),
                 _toolOption(
                   sheetContext,
                   icon: Icons.savings,
-                  title: "Saving Goals",
-                  subtitle: "Track targets like trips, laptop, emergency fund.",
+                  title: t('saving_goals'),
+                  subtitle: t('saving_goals_subtitle'),
                   color: Colors.green,
                   onTap: () {
                     Navigator.pop(sheetContext);
@@ -337,9 +341,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 _toolOption(
                   sheetContext,
                   icon: Icons.event_repeat,
-                  title: "Recurring Transactions",
-                  subtitle:
-                      "Plan salary, rent, subscriptions, and fixed bills.",
+                  title: t('recurring_transactions'),
+                  subtitle: t('recurring_subtitle'),
                   color: Colors.orange,
                   onTap: () {
                     Navigator.pop(sheetContext);
@@ -422,6 +425,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     final bg = isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF6F6F8);
     final card = isDark ? theme.cardColor : Colors.white;
     final text = isDark ? Colors.white : const Color(0xFF0F172A);
+    final t = context.watch<LanguageController>().text;
 
     return Scaffold(
       backgroundColor: bg,
@@ -429,20 +433,20 @@ class _BudgetScreenState extends State<BudgetScreen> {
         backgroundColor: card,
         elevation: 0,
         title: Text(
-          "Monthly Budget",
+          t('monthly_budget'),
           style: TextStyle(color: text, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            tooltip: "Budget tools",
+            tooltip: t('budget_tools'),
             icon: Icon(Icons.more_vert, color: text),
             onPressed: _showBudgetTools,
           ),
         ],
       ),
       body: UserSession.user_id == null
-          ? const Center(child: Text("User not logged in"))
+          ? Center(child: Text(t('user_not_logged_in')))
           : FutureBuilder<_BudgetSummary>(
               future: futureBudget,
               builder: (context, snapshot) {
@@ -450,10 +454,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return Center(child: Text("Error: ${snapshot.error}"));
+                  return Center(
+                    child: Text("${t('error_prefix')}: ${snapshot.error}"),
+                  );
                 }
                 if (!snapshot.hasData) {
-                  return const Center(child: Text("No budget data found."));
+                  return Center(child: Text(t('no_budget_data')));
                 }
 
                 final summary = snapshot.data!;
@@ -472,7 +478,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Category Budgets",
+                              t('category_budgets'),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -493,9 +499,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         _emptyCard(
                           context,
                           icon: Icons.category,
-                          title: "No categories yet",
-                          message:
-                              "Add categories from Add Transaction to set monthly limits.",
+                          title: t('no_categories'),
+                          message: t('no_categories_subtitle'),
                         )
                       else
                         ...summary.categories.map(
@@ -514,6 +519,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     _BudgetSummary summary,
     double remaining,
   ) {
+    final t = context.watch<LanguageController>().text;
     final hasBudget = summary.totalBudget > 0;
 
     return Container(
@@ -544,9 +550,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Spent this month",
-                      style: TextStyle(
+                    Text(
+                      t('spent_this_month'),
+                      style: const TextStyle(
                         color: Colors.white70,
                         fontWeight: FontWeight.w500,
                       ),
@@ -574,8 +580,11 @@ class _BudgetScreenState extends State<BudgetScreen> {
           ),
           Text(
             hasBudget
-                ? "of ${currencyFormat.format(summary.totalBudget)} planned"
-                : "Set category budgets to track limits",
+                ? t('planned_of_budget').replaceAll(
+                    '{amount}',
+                    currencyFormat.format(summary.totalBudget),
+                  )
+                : t('set_category_budgets'),
             style: const TextStyle(
               color: Colors.white70,
               fontWeight: FontWeight.w600,
@@ -592,8 +601,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
           const SizedBox(height: 8),
           Text(
             hasBudget
-                ? "${currencyFormat.format(remaining)} remaining"
-                : "No monthly limits yet",
+                ? "${currencyFormat.format(remaining)} ${t('remaining').toLowerCase()}"
+                : t('no_monthly_limits'),
             style: const TextStyle(color: Colors.white70),
           ),
         ],
@@ -603,10 +612,11 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   Widget _budgetItem(BuildContext context, _BudgetCategory item) {
     final theme = Theme.of(context);
+    final t = context.watch<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
     final subtitle = item.monthlyLimit <= 0
-        ? "${currencyFormat.format(item.spent)} spent - no limit"
-        : "${currencyFormat.format(item.spent)} spent of ${currencyFormat.format(item.monthlyLimit)}";
+        ? "${currencyFormat.format(item.spent)} ${t('spent').toLowerCase()} - ${t('no_monthly_limits').toLowerCase()}"
+        : "${currencyFormat.format(item.spent)} ${t('spent').toLowerCase()} / ${currencyFormat.format(item.monthlyLimit)}";
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -651,9 +661,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
               ),
               TextButton(
                 onPressed: () => _editBudget(item),
-                child: const Text(
-                  "Edit",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                child: Text(
+                  t('edit'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],

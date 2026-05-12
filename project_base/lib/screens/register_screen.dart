@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/widgets/app_logo.dart';
 import '../services/auth_service.dart';
 import 'account_created_screen.dart';
@@ -11,43 +13,55 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  bool agree_terms = false;
-  bool hide_password = true;
+  bool agreeTerms = false;
+  bool hidePassword = true;
 
-  final name_controller = TextEditingController();
-  final email_controller = TextEditingController();
-  final pass_controller = TextEditingController();
-  final confirm_controller = TextEditingController();
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final passController = TextEditingController();
+  final confirmController = TextEditingController();
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passController.dispose();
+    confirmController.dispose();
+    super.dispose();
+  }
 
   Future<void> register() async {
-    if (name_controller.text.isEmpty ||
-        email_controller.text.isEmpty ||
-        pass_controller.text.isEmpty) {
+    final t = context.read<LanguageController>().text;
+    if (nameController.text.isEmpty ||
+        emailController.text.isEmpty ||
+        passController.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
+      ).showSnackBar(SnackBar(content: Text(t('please_fill_all_fields'))));
       return;
     }
 
-    if (pass_controller.text != confirm_controller.text) {
+    if (passController.text != confirmController.text) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Password does not match")));
+      ).showSnackBar(SnackBar(content: Text(t('password_mismatch'))));
       return;
     }
 
-    if (!agree_terms) {
+    if (!agreeTerms) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Please accept terms")));
+      ).showSnackBar(SnackBar(content: Text(t('accept_terms'))));
       return;
     }
 
     var result = await AuthService.register(
-      name_controller.text,
-      email_controller.text,
-      pass_controller.text,
+      nameController.text,
+      emailController.text,
+      passController.text,
     );
+
+    if (!mounted) return;
 
     if (result["status"] == "success") {
       Navigator.pushReplacement(
@@ -57,23 +71,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Register failed")));
+      ).showSnackBar(SnackBar(content: Text(t('register_failed'))));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final is_dark = theme.brightness == Brightness.dark;
+    final isDark = theme.brightness == Brightness.dark;
+    final t = context.watch<LanguageController>().text;
 
     return Scaffold(
-      backgroundColor: is_dark
+      backgroundColor: isDark
           ? theme.scaffoldBackgroundColor
           : const Color(0xFFF6F6F8),
 
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: is_dark
+        backgroundColor: isDark
             ? theme.scaffoldBackgroundColor
             : Colors.transparent,
         leading: IconButton(
@@ -82,7 +97,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         centerTitle: true,
         title: Text(
-          "Create Account",
+          t('create_account'),
           style: TextStyle(color: theme.textTheme.bodyLarge?.color),
         ),
       ),
@@ -96,21 +111,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
             constraints: const BoxConstraints(maxWidth: 420),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: is_dark ? theme.cardColor : Colors.white,
+              color: isDark ? theme.cardColor : Colors.white,
               borderRadius: BorderRadius.circular(16),
 
               /// 👇 tạo cảm giác "card nổi" giống light mode
-              boxShadow: is_dark
+              boxShadow: isDark
                   ? [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.4),
+                        color: Colors.black.withValues(alpha: 0.4),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
                     ]
                   : [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -123,7 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const AppLogo(size: 42, iconSize: 24),
                 const SizedBox(height: 18),
                 Text(
-                  "Join AI Expense Manager",
+                  t('join_app'),
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
@@ -133,37 +148,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 6),
 
-                const Text(
-                  "Start tracking your finances smarter with AI-driven insights.",
-                  style: TextStyle(color: Colors.grey),
+                Text(
+                  t('register_subtitle'),
+                  style: const TextStyle(color: Colors.grey),
                 ),
 
                 const SizedBox(height: 24),
 
-                build_text_field(
-                  "Full Name",
-                  "Enter your full name",
-                  name_controller,
+                buildTextField(
+                  t('full_name'),
+                  t('enter_full_name'),
+                  nameController,
                   Icons.person,
-                  is_dark,
+                  isDark,
                 ),
 
-                build_text_field(
-                  "Email Address",
+                buildTextField(
+                  t('email_address'),
                   "name@example.com",
-                  email_controller,
+                  emailController,
                   Icons.email,
-                  is_dark,
+                  isDark,
                 ),
 
-                build_password_field(is_dark),
+                buildPasswordField(isDark, t),
 
-                build_text_field(
-                  "Confirm Password",
-                  "Repeat your password",
-                  confirm_controller,
+                buildTextField(
+                  t('confirm_password'),
+                  t('repeat_password'),
+                  confirmController,
                   Icons.lock,
-                  is_dark,
+                  isDark,
                   obscure: true,
                 ),
 
@@ -172,19 +187,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   children: [
                     Checkbox(
-                      value: agree_terms,
+                      value: agreeTerms,
                       activeColor: const Color(0xFF1132D4),
                       onChanged: (value) {
                         setState(() {
-                          agree_terms = value!;
+                          agreeTerms = value!;
                         });
                       },
                     ),
 
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        "By registering, you agree to our Terms of Service and Privacy Policy.",
-                        style: TextStyle(fontSize: 12),
+                        t('terms_text'),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                   ],
@@ -201,9 +216,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     onPressed: register,
-                    child: const Text(
-                      "Register",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    child: Text(
+                      t('register'),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -211,13 +226,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 24),
 
                 Row(
-                  children: const [
-                    Expanded(child: Divider()),
+                  children: [
+                    const Expanded(child: Divider()),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text("Or continue with"),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(t('or_continue_with')),
                     ),
-                    Expanded(child: Divider()),
+                    const Expanded(child: Divider()),
                   ],
                 ),
 
@@ -233,7 +248,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           width: 20,
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: is_dark
+                          foregroundColor: isDark
                               ? Colors.white
                               : const Color(0xFF1132D4),
                         ),
@@ -248,7 +263,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         onPressed: () {},
                         icon: const Icon(Icons.apple),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: is_dark
+                          foregroundColor: isDark
                               ? Colors.white
                               : const Color(0xFF1132D4),
                         ),
@@ -263,9 +278,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Center(
                   child: TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      "Already have an account? Login",
-                      style: TextStyle(
+                    child: Text(
+                      t('already_account_login'),
+                      style: const TextStyle(
                         color: Color(0xFF1132D4),
                         fontWeight: FontWeight.bold,
                       ),
@@ -281,12 +296,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   /// TEXT FIELD
-  Widget build_text_field(
+  Widget buildTextField(
     String label,
     String hint,
     TextEditingController controller,
     IconData icon,
-    bool is_dark, {
+    bool isDark, {
     bool obscure = false,
   }) {
     return Padding(
@@ -301,7 +316,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           prefixIcon: Icon(icon),
 
           filled: true,
-          fillColor: is_dark ? Colors.grey[900] : Colors.white,
+          fillColor: isDark ? Colors.grey[900] : Colors.white,
 
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -310,29 +325,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   /// PASSWORD FIELD
-  Widget build_password_field(bool is_dark) {
+  Widget buildPasswordField(bool isDark, String Function(String) t) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
-        controller: pass_controller,
-        obscureText: hide_password,
+        controller: passController,
+        obscureText: hidePassword,
         style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
         decoration: InputDecoration(
-          labelText: "Password",
-          hintText: "Create a strong password",
+          labelText: t('password'),
+          hintText: t('enter_password'),
           prefixIcon: const Icon(Icons.lock),
 
           suffixIcon: IconButton(
-            icon: Icon(hide_password ? Icons.visibility : Icons.visibility_off),
+            icon: Icon(hidePassword ? Icons.visibility : Icons.visibility_off),
             onPressed: () {
               setState(() {
-                hide_password = !hide_password;
+                hidePassword = !hidePassword;
               });
             },
           ),
 
           filled: true,
-          fillColor: is_dark ? Colors.grey[900] : Colors.white,
+          fillColor: isDark ? Colors.grey[900] : Colors.white,
 
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),

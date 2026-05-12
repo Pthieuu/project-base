@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/services/api_service.dart';
 import 'package:project_base/services/user_session.dart';
@@ -44,6 +46,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.watch<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
@@ -63,7 +66,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Transaction History",
+          t('transaction_history'),
           style: TextStyle(
             color: isDark ? theme.textTheme.titleLarge?.color : Colors.black,
           ),
@@ -71,16 +74,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         centerTitle: true,
       ),
       body: UserSession.user_id == null
-          ? const Center(child: Text("User not logged in"))
+          ? Center(child: Text(t('user_not_logged_in')))
           : FutureBuilder<List<TransactionModel>>(
               future: futureTransactions,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return Center(child: Text("Error: ${snapshot.error}"));
+                  return Center(
+                    child: Text("${t('error_prefix')}: ${snapshot.error}"),
+                  );
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text("No transactions found."));
+                  return Center(child: Text(t('no_transactions')));
                 }
 
                 final allTransactions = [...snapshot.data!]
@@ -99,9 +104,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       buildSummaryCard(allTransactions),
                       _buildFilters(categories, isDark),
                       if (transactions.isEmpty)
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.all(24),
-                          child: Text("No transactions match your filters."),
+                          child: Text(t('no_filter_results')),
                         ),
                       for (final group in groupedTransactions.entries) ...[
                         sectionTitle(_sectionLabel(group.key), isDark),
@@ -169,6 +174,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   Widget _buildFilters(List<String> categories, bool isDark) {
+    final t = context.watch<LanguageController>().text;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Column(
@@ -177,7 +183,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             controller: searchController,
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
-              hintText: "Search description, category, note...",
+              hintText: t('search_transactions'),
               prefixIcon: const Icon(Icons.search),
               filled: true,
               fillColor: isDark ? const Color(0xFF111111) : Colors.white,
@@ -194,6 +200,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 child: _filterDropdown(
                   value: typeFilter,
                   items: const ['All', 'Income', 'Expense'],
+                  itemLabel: (item) => _localizedFilterLabel(item),
                   onChanged: (value) => setState(() => typeFilter = value),
                   isDark: isDark,
                 ),
@@ -205,6 +212,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       ? categoryFilter
                       : 'All',
                   items: categories,
+                  itemLabel: (item) =>
+                      item == 'All' ? t('all') : displayCategoryName(item),
                   onChanged: (value) => setState(() => categoryFilter = value),
                   isDark: isDark,
                 ),
@@ -221,6 +230,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     required List<String> items,
     required ValueChanged<String> onChanged,
     required bool isDark,
+    String Function(String)? itemLabel,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -234,7 +244,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           isExpanded: true,
           dropdownColor: isDark ? const Color(0xFF111111) : Colors.white,
           items: items
-              .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+              .map(
+                (item) => DropdownMenuItem<String>(
+                  value: item,
+                  child: Text(itemLabel?.call(item) ?? item),
+                ),
+              )
               .toList(),
           onChanged: (value) {
             if (value != null) onChanged(value);
@@ -245,6 +260,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   String _sectionLabel(String dateKey) {
+    final t = context.read<LanguageController>().text;
     final date = DateTime.tryParse(dateKey);
     if (date == null) return dateKey;
 
@@ -252,12 +268,26 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     final today = DateTime(now.year, now.month, now.day);
     final day = DateTime(date.year, date.month, date.day);
 
-    if (day == today) return "Today";
+    if (day == today) return t('today');
     if (day == today.subtract(const Duration(days: 1))) {
-      return "Yesterday";
+      return t('yesterday');
     }
 
     return DateFormat('dd/MM/yyyy').format(day);
+  }
+
+  String _localizedFilterLabel(String item) {
+    final t = context.read<LanguageController>().text;
+    switch (item) {
+      case 'All':
+        return t('all');
+      case 'Income':
+        return t('income_type');
+      case 'Expense':
+        return t('expense');
+      default:
+        return item;
+    }
   }
 
   static DateTime _parseDate(String value) {
@@ -265,6 +295,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   Future<void> _showTransactionActions(TransactionModel tx) async {
+    final t = context.read<LanguageController>().text;
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -304,7 +335,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           _showEditTransactionDialog(tx);
                         },
                         icon: const Icon(Icons.edit),
-                        label: const Text("Edit"),
+                        label: Text(t('edit')),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -320,7 +351,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           _confirmDeleteTransaction(tx);
                         },
                         icon: const Icon(Icons.delete),
-                        label: const Text("Delete"),
+                        label: Text(t('delete')),
                       ),
                     ),
                   ],
@@ -335,6 +366,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   Future<void> _showEditTransactionDialog(TransactionModel tx) async {
     if (tx.id == null) return;
+    final t = context.read<LanguageController>().text;
 
     final descriptionController = TextEditingController(text: tx.description);
     final categoryController = TextEditingController(text: tx.category);
@@ -395,7 +427,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Edit transaction",
+                                  t('edit_transaction'),
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -431,7 +463,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         child: Row(
                           children: [
                             _typeSegment(
-                              label: "Expense",
+                              label: t('expense'),
                               icon: Icons.arrow_downward,
                               active: isExpense,
                               activeColor: const Color(0xFFDC2626),
@@ -440,7 +472,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                               },
                             ),
                             _typeSegment(
-                              label: "Income",
+                              label: t('income_type'),
                               icon: Icons.arrow_upward,
                               active: !isExpense,
                               activeColor: const Color(0xFF059669),
@@ -454,29 +486,29 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       const SizedBox(height: 16),
                       _editField(
                         controller: descriptionController,
-                        label: "Description",
+                        label: t('description'),
                         icon: Icons.notes,
                       ),
                       _editField(
                         controller: categoryController,
-                        label: "Category",
+                        label: t('category'),
                         icon: Icons.category_outlined,
                         onChanged: (_) => setDialogState(() {}),
                       ),
                       _editField(
                         controller: accountController,
-                        label: "Account",
+                        label: t('account'),
                         icon: Icons.account_balance_wallet_outlined,
                       ),
                       _editField(
                         controller: amountController,
-                        label: "Amount",
+                        label: t('amount'),
                         icon: Icons.payments_outlined,
                         keyboardType: TextInputType.number,
                       ),
                       _editField(
                         controller: notesController,
-                        label: "Notes",
+                        label: t('notes'),
                         icon: Icons.sticky_note_2_outlined,
                       ),
                       const SizedBox(height: 4),
@@ -557,9 +589,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
                           if (amount <= 0) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Số tiền phải lớn hơn 0đ."),
-                              ),
+                              SnackBar(content: Text(t('amount_gt_zero'))),
                             );
                             return;
                           }
@@ -580,9 +610,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           _reloadTransactions();
                         },
                         icon: const Icon(Icons.check),
-                        label: const Text(
-                          "Save changes",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        label: Text(
+                          t('save_changes'),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -683,17 +713,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   Future<void> _confirmDeleteTransaction(TransactionModel tx) async {
     if (tx.id == null) return;
+    final t = context.read<LanguageController>().text;
 
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Delete transaction?"),
-          content: const Text("This action cannot be undone."),
+          title: Text(t('delete_transaction')),
+          content: Text(t('delete_warning')),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text("Cancel"),
+              child: Text(t('cancel')),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -701,7 +732,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text("Delete"),
+              child: Text(t('delete')),
             ),
           ],
         );
@@ -716,6 +747,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   // Build summary card
   Widget buildSummaryCard(List<TransactionModel> transactions) {
+    final t = context.watch<LanguageController>().text;
     final now = DateTime.now();
     final currentMonth = DateTime(now.year, now.month);
     double carriedBalance = 0;
@@ -753,7 +785,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Balance for $monthLabel",
+            "${t('month_balance')} $monthLabel",
             style: const TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 6),
@@ -772,7 +804,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               children: [
                 Expanded(
                   child: CardStat(
-                    title: "Income",
+                    title: t('income'),
                     value: formatter.format(monthlyIncome),
                     color: Colors.green,
                   ),
@@ -780,7 +812,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: CardStat(
-                    title: "Expense",
+                    title: t('expense'),
                     value: formatter.format(monthlyExpense),
                     color: Colors.red,
                   ),
@@ -788,7 +820,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: CardStat(
-                    title: "Carried",
+                    title: t('carried'),
                     value: formatter.format(carriedBalance),
                     color: Colors.white,
                   ),

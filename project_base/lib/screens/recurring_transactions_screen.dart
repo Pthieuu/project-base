@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/models/recurring_transaction_model.dart';
 import 'package:project_base/services/api_service.dart';
 import 'package:project_base/utils/app_date_picker.dart';
@@ -37,6 +39,7 @@ class _RecurringTransactionsScreenState
   }
 
   Future<void> _showForm({RecurringTransactionModel? item}) async {
+    final t = context.read<LanguageController>().text;
     final descriptionController = TextEditingController(
       text: item?.description ?? '',
     );
@@ -61,14 +64,16 @@ class _RecurringTransactionsScreenState
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text(item == null ? "New recurring" : "Edit recurring"),
+              title: Text(
+                item == null ? t('new_recurring') : t('edit_recurring'),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text(isExpense ? "Expense" : "Income"),
+                      title: Text(isExpense ? t('expense') : t('income_type')),
                       value: isExpense,
                       onChanged: (value) {
                         setDialogState(() => isExpense = value);
@@ -76,46 +81,47 @@ class _RecurringTransactionsScreenState
                     ),
                     TextField(
                       controller: descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: "Description",
-                      ),
+                      decoration: InputDecoration(labelText: t('description')),
                     ),
                     TextField(
                       controller: categoryController,
-                      decoration: const InputDecoration(labelText: "Category"),
+                      decoration: InputDecoration(labelText: t('category')),
                     ),
                     TextField(
                       controller: amountController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: "Amount"),
+                      decoration: InputDecoration(labelText: t('amount')),
                     ),
                     DropdownButtonFormField<String>(
                       initialValue: account,
-                      items: const [
+                      items: [
                         DropdownMenuItem(
                           value: "Main Card",
-                          child: Text("Main Card"),
+                          child: Text(t('main_card')),
                         ),
-                        DropdownMenuItem(value: "Cash", child: Text("Cash")),
+                        DropdownMenuItem(value: "Cash", child: Text(t('cash'))),
                       ],
                       onChanged: (value) {
                         if (value != null) {
                           setDialogState(() => account = value);
                         }
                       },
-                      decoration: const InputDecoration(labelText: "Account"),
+                      decoration: InputDecoration(labelText: t('account')),
                     ),
                     DropdownButtonFormField<String>(
                       initialValue: frequency,
-                      items: const [
-                        DropdownMenuItem(value: "daily", child: Text("Daily")),
+                      items: [
+                        DropdownMenuItem(
+                          value: "daily",
+                          child: Text(t('daily')),
+                        ),
                         DropdownMenuItem(
                           value: "weekly",
-                          child: Text("Weekly"),
+                          child: Text(t('weekly')),
                         ),
                         DropdownMenuItem(
                           value: "monthly",
-                          child: Text("Monthly"),
+                          child: Text(t('monthly')),
                         ),
                       ],
                       onChanged: (value) {
@@ -123,7 +129,7 @@ class _RecurringTransactionsScreenState
                           setDialogState(() => frequency = value);
                         }
                       },
-                      decoration: const InputDecoration(labelText: "Frequency"),
+                      decoration: InputDecoration(labelText: t('frequency')),
                     ),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
@@ -143,7 +149,7 @@ class _RecurringTransactionsScreenState
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text("Active"),
+                      title: Text(t('active')),
                       value: isActive,
                       onChanged: (value) {
                         setDialogState(() => isActive = value);
@@ -151,7 +157,7 @@ class _RecurringTransactionsScreenState
                     ),
                     TextField(
                       controller: notesController,
-                      decoration: const InputDecoration(labelText: "Notes"),
+                      decoration: InputDecoration(labelText: t('notes')),
                     ),
                   ],
                 ),
@@ -159,7 +165,7 @@ class _RecurringTransactionsScreenState
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text("Cancel"),
+                  child: Text(t('cancel')),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -173,8 +179,8 @@ class _RecurringTransactionsScreenState
                         SnackBar(
                           content: Text(
                             amount <= 0
-                                ? "Số tiền phải lớn hơn 0đ."
-                                : "Vui lòng nhập đầy đủ thông tin.",
+                                ? t('amount_gt_zero')
+                                : t('required_info'),
                           ),
                         ),
                       );
@@ -196,7 +202,7 @@ class _RecurringTransactionsScreenState
 
                     if (context.mounted) Navigator.pop(context, true);
                   },
-                  child: const Text("Save"),
+                  child: Text(t('save')),
                 ),
               ],
             );
@@ -215,6 +221,7 @@ class _RecurringTransactionsScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.watch<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
     final bg = isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF6F6F8);
     final card = isDark ? theme.cardColor : Colors.white;
@@ -227,13 +234,13 @@ class _RecurringTransactionsScreenState
         backgroundColor: card,
         iconTheme: IconThemeData(color: text),
         title: Text(
-          "Recurring",
+          t('recurring'),
           style: TextStyle(color: text, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            tooltip: "Add recurring",
+            tooltip: t('add_recurring'),
             onPressed: () => _showForm(),
             icon: const Icon(Icons.add_circle_outline),
           ),
@@ -246,7 +253,9 @@ class _RecurringTransactionsScreenState
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
+            return Center(
+              child: Text("${t('error_prefix')}: ${snapshot.error}"),
+            );
           }
 
           final items = snapshot.data ?? [];
@@ -269,7 +278,7 @@ class _RecurringTransactionsScreenState
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        "No recurring transactions",
+                        t('no_recurring'),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: theme.textTheme.bodyLarge?.color,
@@ -277,7 +286,7 @@ class _RecurringTransactionsScreenState
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        "Create salary, rent, subscriptions, or other repeated transactions.",
+                        t('no_recurring_subtitle'),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: isDark ? Colors.grey[400] : Colors.grey,
@@ -289,7 +298,7 @@ class _RecurringTransactionsScreenState
                         child: ElevatedButton.icon(
                           onPressed: () => _showForm(),
                           icon: const Icon(Icons.add),
-                          label: const Text("Add Recurring Transaction"),
+                          label: Text(t('add_recurring')),
                         ),
                       ),
                     ],
@@ -316,6 +325,7 @@ class _RecurringTransactionsScreenState
   }
 
   Widget _summaryCard(List<RecurringTransactionModel> items) {
+    final t = context.watch<LanguageController>().text;
     final activeItems = items.where((item) => item.isActive).toList();
     final monthlyImpact = activeItems.fold<double>(0, (sum, item) {
       final signed = item.isExpense ? -item.amount : item.amount;
@@ -351,9 +361,9 @@ class _RecurringTransactionsScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Estimated monthly impact",
-                  style: TextStyle(color: Colors.white70),
+                Text(
+                  t('estimated_monthly_impact'),
+                  style: const TextStyle(color: Colors.white70),
                 ),
                 Text(
                   currencyFormat.format(monthlyImpact),
@@ -380,6 +390,7 @@ class _RecurringTransactionsScreenState
 
   Widget _itemCard(RecurringTransactionModel item) {
     final theme = Theme.of(context);
+    final t = context.watch<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
     final amountColor = item.isExpense ? Colors.red : Colors.green;
     final visual = categoryVisual(item.category);
@@ -436,7 +447,7 @@ class _RecurringTransactionsScreenState
               ),
               TextButton(
                 onPressed: () => _showForm(item: item),
-                child: const Text("Edit"),
+                child: Text(t('edit')),
               ),
             ],
           ),

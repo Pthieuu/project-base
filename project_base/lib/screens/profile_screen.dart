@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../controller/language_controller.dart';
 import '../controller/theme_controller.dart';
 import '../services/api_service.dart';
 import '../services/user_session.dart';
@@ -50,7 +51,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'profile_ai_insights_${UserSession.user_id ?? 'local'}';
   String get _currencyKey =>
       'profile_currency_${UserSession.user_id ?? 'local'}';
-
   static const List<String> _currencyOptions = [
     'VND (₫)',
     'USD (\$)',
@@ -115,6 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _showNotificationsSheet() async {
+    final t = context.read<LanguageController>().text;
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -130,15 +131,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const _SheetHeader(
+                  _SheetHeader(
                     icon: Icons.notifications,
-                    title: 'Notifications',
-                    subtitle: 'Manage app reminders on this device',
+                    title: t('notifications'),
+                    subtitle: t('notifications_subtitle'),
                   ),
                   const SizedBox(height: 14),
                   _InfoCard(
                     icon: Icons.notifications_active,
-                    title: 'Budget reminders',
+                    title: t('budget_reminders'),
                     subtitle: _notificationsEnabled
                         ? 'Notifications are enabled for local reminders.'
                         : 'Notifications are muted on this device.',
@@ -146,8 +147,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 10),
                   ProfileItem(
                     icon: Icons.notifications,
-                    title: 'Enable Notifications',
-                    subtitle: _notificationsEnabled ? 'On' : 'Off',
+                    title: t('enable_notifications'),
+                    subtitle: _notificationsEnabled ? t('on') : t('off'),
                     trailing: Switch(
                       value: _notificationsEnabled,
                       onChanged: (value) {
@@ -175,6 +176,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _showAvatarPicker() async {
+    final t = context.read<LanguageController>().text;
     final selectedAvatar = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
@@ -191,10 +193,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _SheetHeader(
+                  _SheetHeader(
                     icon: Icons.account_circle,
-                    title: 'Avatar',
-                    subtitle: 'Choose how your profile should look',
+                    title: t('avatar'),
+                    subtitle: t('avatar_subtitle'),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -202,7 +204,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Expanded(
                         child: _AvatarActionButton(
                           icon: Icons.photo_library,
-                          label: 'Thư viện',
+                          label: t('gallery'),
                           onTap: () {
                             Navigator.pop(sheetContext);
                             _pickAvatar(ImageSource.gallery);
@@ -213,7 +215,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Expanded(
                         child: _AvatarActionButton(
                           icon: Icons.photo_camera,
-                          label: 'Camera',
+                          label: t('camera'),
                           onTap: () {
                             Navigator.pop(sheetContext);
                             _pickAvatar(ImageSource.camera);
@@ -223,9 +225,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 18),
-                  const Text(
-                    'Hoặc chọn ảnh mẫu',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                  Text(
+                    t('template_avatar'),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 12),
                   GridView.builder(
@@ -312,6 +314,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _showEditProfileSheet() async {
+    final t = context.read<LanguageController>().text;
     final nameController = TextEditingController(text: _displayName);
     final emailController = TextEditingController(
       text: UserSession.email ?? (_email == 'No email available' ? '' : _email),
@@ -337,21 +340,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 _SheetHeader(
                   icon: Icons.person,
-                  title: 'Edit profile',
-                  subtitle: 'Update your display information',
+                  title: t('edit_profile_title'),
+                  subtitle: t('edit_profile_subtitle'),
                 ),
                 const SizedBox(height: 14),
                 _profileTextField(
                   sheetContext,
                   controller: nameController,
-                  label: 'Name',
+                  label: t('name'),
                   icon: Icons.badge,
                 ),
                 const SizedBox(height: 10),
                 _profileTextField(
                   sheetContext,
                   controller: emailController,
-                  label: 'Email',
+                  label: t('email'),
                   icon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
                 ),
@@ -361,7 +364,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(sheetContext, false),
-                        child: const Text('Cancel'),
+                        child: Text(t('cancel')),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -392,7 +395,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           }
                         },
                         icon: const Icon(Icons.check),
-                        label: const Text('Save'),
+                        label: Text(t('save')),
                       ),
                     ),
                   ],
@@ -413,6 +416,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _showCurrencySheet() async {
+    final t = context.read<LanguageController>().text;
     final selected = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
@@ -430,8 +434,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   _SheetHeader(
                     icon: Icons.payments,
-                    title: 'Currency',
-                    subtitle: 'Choose display currency for your profile',
+                    title: t('currency'),
+                    subtitle: t('choose_currency'),
                   ),
                   const SizedBox(height: 14),
                   ..._currencyOptions.map(
@@ -459,7 +463,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _currency = selected);
   }
 
+  Future<void> _showLanguageSheet() async {
+    final languageController = context.read<LanguageController>();
+    final t = languageController.text;
+    final selected = await showModalBottomSheet<AppLanguage>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.75,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _SheetHeader(
+                    icon: Icons.language,
+                    title: t('language'),
+                    subtitle: t('choose_language'),
+                  ),
+                  const SizedBox(height: 14),
+                  ...AppLanguage.values.map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _SelectionTile(
+                        title: item.label,
+                        icon: Icons.language,
+                        selected: item == languageController.language,
+                        onTap: () => Navigator.pop(sheetContext, item),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected == null) return;
+    await languageController.setLanguage(selected);
+  }
+
   Future<void> _showAiInsightsSheet() async {
+    final t = context.read<LanguageController>().text;
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -477,22 +529,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   _SheetHeader(
                     icon: Icons.psychology,
-                    title: 'AI Insights',
-                    subtitle: 'Control smart suggestions in the app',
+                    title: t('ai_insights'),
+                    subtitle: t('ai_subtitle'),
                   ),
                   const SizedBox(height: 14),
                   _InfoCard(
                     icon: Icons.auto_awesome,
-                    title: 'Personalized analysis',
+                    title: t('personalized_analysis'),
                     subtitle: _aiInsightsEnabled
-                        ? 'AI insights are enabled for your spending data.'
-                        : 'AI insights are paused on this device.',
+                        ? t('ai_enabled_note')
+                        : t('ai_disabled_note'),
                   ),
                   const SizedBox(height: 10),
                   ProfileItem(
                     icon: Icons.psychology,
-                    title: 'Enable AI Insights',
-                    subtitle: _aiInsightsEnabled ? 'On' : 'Off',
+                    title: t('enable_ai'),
+                    subtitle: _aiInsightsEnabled ? t('on') : t('off'),
                     trailing: Switch(
                       value: _aiInsightsEnabled,
                       onChanged: (value) {
@@ -511,6 +563,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _confirmLogout() async {
+    final t = context.read<LanguageController>().text;
     final shouldLogout = await showModalBottomSheet<bool>(
       context: context,
       showDragHandle: true,
@@ -528,8 +581,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   _SheetHeader(
                     icon: Icons.logout,
-                    title: 'Logout',
-                    subtitle: 'You can sign in again anytime',
+                    title: t('logout'),
+                    subtitle: t('logout_subtitle'),
                     color: const Color(0xFFDC2626),
                   ),
                   const SizedBox(height: 14),
@@ -538,7 +591,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () => Navigator.pop(sheetContext, false),
-                          child: const Text('Cancel'),
+                          child: Text(t('cancel')),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -551,7 +604,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           onPressed: () => Navigator.pop(sheetContext, true),
                           icon: const Icon(Icons.logout),
-                          label: const Text('Logout'),
+                          label: Text(t('logout')),
                         ),
                       ),
                     ],
@@ -602,6 +655,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final language = context.watch<LanguageController>();
+    final t = language.text;
     final isDark = theme.brightness == Brightness.dark;
     final bg = isDark ? Colors.black : const Color(0xFFF6F6F8);
     final card = isDark ? theme.cardColor : Colors.white;
@@ -619,12 +674,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         centerTitle: true,
         title: Text(
-          "Profile",
+          t('profile_title'),
           style: TextStyle(color: text, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
-            tooltip: 'Edit profile',
+            tooltip: t('edit_profile'),
             onPressed: _showEditProfileSheet,
             icon: Icon(Icons.edit_outlined, color: text),
           ),
@@ -673,7 +728,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: _showAvatarPicker,
-                    child: const Text('Thay đổi avatar'),
+                    child: Text(t('change_avatar')),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -711,7 +766,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: OutlinedButton.icon(
                       onPressed: _showEditProfileSheet,
                       icon: const Icon(Icons.manage_accounts),
-                      label: const Text('Edit Profile'),
+                      label: Text(t('edit_profile')),
                     ),
                   ),
                 ],
@@ -721,11 +776,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  const Align(
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      "ACCOUNT SETTINGS",
-                      style: TextStyle(
+                      t('account_settings'),
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
                         fontWeight: FontWeight.bold,
@@ -735,7 +790,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 10),
                   ProfileItem(
                     icon: Icons.dark_mode,
-                    title: "Dark Mode",
+                    title: t('dark_mode'),
                     trailing: Consumer<ThemeController>(
                       builder: (context, themeCtrl, child) {
                         return Switch(
@@ -749,8 +804,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   ProfileItem(
                     icon: Icons.notifications,
-                    title: "Notifications",
-                    subtitle: _notificationsEnabled ? 'On' : 'Off',
+                    title: t('notifications'),
+                    subtitle: _notificationsEnabled ? t('on') : t('off'),
                     trailing: Switch(
                       value: _notificationsEnabled,
                       onChanged: _setNotifications,
@@ -759,14 +814,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   ProfileItem(
                     icon: Icons.payments,
-                    title: "Currency",
+                    title: t('currency'),
                     subtitle: _currency,
                     onTap: _showCurrencySheet,
                   ),
                   ProfileItem(
+                    icon: Icons.language,
+                    title: t('language'),
+                    subtitle: language.label,
+                    onTap: _showLanguageSheet,
+                  ),
+                  ProfileItem(
                     icon: Icons.psychology,
-                    title: "AI Insights",
-                    subtitle: _aiInsightsEnabled ? 'Enabled' : 'Disabled',
+                    title: t('ai_insights'),
+                    subtitle: _aiInsightsEnabled ? t('enabled') : t('disabled'),
                     trailing: Switch(
                       value: _aiInsightsEnabled,
                       onChanged: _setAiInsights,
@@ -791,8 +852,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       onPressed: _confirmLogout,
                       icon: const Icon(Icons.logout),
-                      label: const Text(
-                        "Logout",
+                      label: Text(
+                        t('logout'),
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -912,11 +973,13 @@ class _SheetHeader extends StatelessWidget {
 
 class _SelectionTile extends StatelessWidget {
   final String title;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
   const _SelectionTile({
     required this.title,
+    this.icon = Icons.payments,
     required this.selected,
     required this.onTap,
   });
@@ -943,7 +1006,7 @@ class _SelectionTile extends StatelessWidget {
           children: [
             CircleAvatar(
               backgroundColor: const Color(0xFF1132D4).withValues(alpha: 0.1),
-              child: const Icon(Icons.payments, color: Color(0xFF1132D4)),
+              child: Icon(icon, color: const Color(0xFF1132D4)),
             ),
             const SizedBox(width: 12),
             Expanded(

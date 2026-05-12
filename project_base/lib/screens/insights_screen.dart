@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/services/ai_chat_service.dart';
 import 'package:project_base/services/api_service.dart';
@@ -60,7 +62,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
   Future<_InsightsData> _loadInsights() async {
     if (UserSession.user_id == null) {
-      throw Exception("Người dùng chưa đăng nhập");
+      throw Exception("User is not logged in");
     }
 
     final prefs = await SharedPreferences.getInstance();
@@ -76,7 +78,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         messages.add(
           _ChatMessage(
             text:
-                "AI Insights đang tắt trong Profile. Khi bật lại, mình sẽ tiếp tục phân tích chi tiêu và hỗ trợ nhập dữ liệu bằng chat.",
+                "AI Insights is turned off in Profile. Turn it back on when you want smart spending analysis and chat-based data entry.",
             isUser: false,
           ),
         );
@@ -94,12 +96,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
       messages.addAll([
         _ChatMessage(
           text:
-              "Mình đã xem các giao dịch gần đây của bạn. Danh mục chi nhiều nhất tháng này là ${data.topCategoryName}, và với tốc độ hiện tại bạn có thể chi khoảng ${currencyFormat.format(data.predictedSpend)} trong tháng.",
+              "I reviewed your recent transactions. Your highest spending category this month is ${data.topCategoryName}, and at the current pace you may spend around ${currencyFormat.format(data.predictedSpend)} by month end.",
           isUser: false,
         ),
         _ChatMessage(
           text:
-              "Bạn có thể hỏi mình về việc chi quá tay, danh mục chi tiêu, dự đoán cuối tháng hoặc cách tiết kiệm.",
+              "You can ask me about overspending, spending categories, month-end forecasts, or ways to save.",
           isUser: false,
         ),
       ]);
@@ -144,7 +146,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
     final topCategoryEntry = sortedCategories.isNotEmpty
         ? sortedCategories.first
-        : const MapEntry('Chưa có chi tiêu', 0.0);
+        : const MapEntry('No spending yet', 0.0);
 
     final topCategoryName = _displayCategory(topCategoryEntry.key);
     final topCategorySpend = topCategoryEntry.value;
@@ -249,20 +251,20 @@ class _InsightsScreenState extends State<InsightsScreen> {
     required double suggestedCut,
   }) {
     if (currentSpent == 0) {
-      return "Tháng này bạn chưa có giao dịch chi tiêu nào. Hãy thêm vài giao dịch để mình bắt đầu phân tích thói quen chi tiêu.";
+      return "You have no expense transactions this month yet. Add a few transactions so I can start analyzing your spending habits.";
     }
 
     final monthTrend = previousSpent == 0
-        ? "Đây là tháng đầu tiên có dữ liệu để theo dõi."
+        ? "This is the first month with enough data to track."
         : currentSpent > previousSpent
-        ? "Bạn đang chi nhiều hơn tháng trước."
-        : "Bạn đang chi ít hơn tháng trước.";
+        ? "You are spending more than last month."
+        : "You are spending less than last month.";
 
     final categoryTrend = topCategoryChange > 0
-        ? "$topCategoryName đang có xu hướng tăng."
-        : "$topCategoryName hiện khá ổn định.";
+        ? "$topCategoryName is trending upward."
+        : "$topCategoryName is relatively stable.";
 
-    return "$monthTrend $categoryTrend Nếu cắt bớt ${currencyFormat.format(suggestedCut)} ở $topCategoryName, mức chi dự kiến cuối tháng sẽ giảm còn khoảng ${currencyFormat.format(math.max(predictedSpend - suggestedCut, 0))}.";
+    return "$monthTrend $categoryTrend If you cut about ${currencyFormat.format(suggestedCut)} from $topCategoryName, your projected month-end spending could drop to around ${currencyFormat.format(math.max(predictedSpend - suggestedCut, 0))}.";
   }
 
   String _buildSpendingWarningTitle(_InsightsData insights) {
@@ -271,25 +273,25 @@ class _InsightsScreenState extends State<InsightsScreen> {
     final category = insights.topCategoryName;
 
     if (current <= 0) {
-      return "Chưa có chi tiêu nổi bật trong tháng này";
+      return "No notable spending this month yet";
     }
 
     if (previous <= 0) {
-      return "$category mới phát sinh ${currencyFormat.format(current)}";
+      return "$category newly reached ${currencyFormat.format(current)}";
     }
 
     final diff = current - previous;
     final percent = (diff / previous * 100).abs().round();
 
     if (previous < 100000 && diff > 0) {
-      return "$category tăng từ ${currencyFormat.format(previous)} lên ${currencyFormat.format(current)}";
+      return "$category increased from ${currencyFormat.format(previous)} to ${currencyFormat.format(current)}";
     }
 
     if (diff.abs() < 50000) {
-      return "$category gần như ổn định so với tháng trước";
+      return "$category is nearly unchanged from last month";
     }
 
-    return "$category đang ${diff >= 0 ? 'tăng' : 'giảm'} $percent%";
+    return "$category is ${diff >= 0 ? 'up' : 'down'} $percent%";
   }
 
   Future<void> _sendMessage([String? preset]) async {
@@ -364,7 +366,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
       setState(() {
         message.actionCompleted = true;
         messages.add(
-          _ChatMessage(text: "Đã lưu thông tin vào app.", isUser: false),
+          _ChatMessage(
+            text: context.read<LanguageController>().text('saved_to_app'),
+            isUser: false,
+          ),
         );
         futureInsights = _loadInsights();
       });
@@ -382,7 +387,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       message.actionCompleted = true;
       messages.add(
         _ChatMessage(
-          text: "Đã hủy thao tác, mình chưa lưu gì vào app.",
+          text: context.read<LanguageController>().text('action_canceled'),
           isUser: false,
         ),
       );
@@ -395,7 +400,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
     switch (action.action) {
       case 'add_transaction':
-        final amount = _positiveAmount(payload['amount'], 'Số tiền giao dịch');
+        final amount = _positiveAmount(payload['amount'], 'Transaction amount');
         await api.addTransaction({
           "description": _stringValue(
             payload['description'],
@@ -414,11 +419,11 @@ class _InsightsScreenState extends State<InsightsScreen> {
       case 'add_saving_goal':
         final targetAmount = _positiveAmount(
           payload['target_amount'],
-          'Số tiền mục tiêu',
+          'Goal amount',
         );
         final currentAmount = _doubleValue(payload['current_amount']);
         if (currentAmount < 0) {
-          throw Exception("Số tiền hiện có không được nhỏ hơn 0đ.");
+          throw Exception("Current saved amount cannot be less than 0.");
         }
         await api.saveGoal(
           title: _stringValue(payload['title'], fallback: 'Saving goal'),
@@ -431,7 +436,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       case 'set_budget':
         final monthlyLimit = _positiveAmount(
           payload['monthly_limit'],
-          'Giới hạn ngân sách',
+          'Budget limit',
         );
         await api.saveBudget(
           category: _stringValue(payload['category'], fallback: 'Other'),
@@ -440,7 +445,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         );
         break;
       case 'add_recurring_transaction':
-        final amount = _positiveAmount(payload['amount'], 'Số tiền định kỳ');
+        final amount = _positiveAmount(payload['amount'], 'Recurring amount');
         await api.saveRecurringTransaction(
           description: _stringValue(
             payload['description'],
@@ -456,7 +461,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         );
         break;
       default:
-        throw Exception('Action chưa được hỗ trợ: ${action.action}');
+        throw Exception('Unsupported action: ${action.action}');
     }
   }
 
@@ -478,7 +483,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   double _positiveAmount(dynamic value, String fieldName) {
     final amount = _doubleValue(value);
     if (amount <= 0) {
-      throw Exception("$fieldName phải lớn hơn 0đ.");
+      throw Exception("$fieldName must be greater than 0.");
     }
     return amount;
   }
@@ -525,17 +530,17 @@ class _InsightsScreenState extends State<InsightsScreen> {
     if (error?.statusCode == 429) {
       final retryAfter = error?.retryAfter;
       final retryText = retryAfter == null
-          ? 'một lát'
-          : '${math.max(1, retryAfter.inSeconds)} giây';
-      return "Mình chưa gọi được AI thật lúc này vì model local đang bận. Bạn thử lại sau $retryText.";
+          ? 'a moment'
+          : '${math.max(1, retryAfter.inSeconds)} seconds';
+      return "I cannot reach the real AI right now because the local model is busy. Try again in $retryText.";
     }
 
     if (!aiChatService.isConfigured) {
-      return "Mình chưa kết nối được AI thật. Hãy kiểm tra backend PHP và Ollama local.";
+      return "The real AI is not connected. Check the PHP backend and local Ollama service.";
     }
 
     return message.isEmpty
-        ? "Mình chưa gọi được AI thật lúc này. Bạn thử lại sau một lát nhé."
+        ? "I cannot reach the real AI right now. Please try again shortly."
         : message;
   }
 
@@ -546,6 +551,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     required Color subText,
   }) {
     const primary = Color(0xFF1132D4);
+    final t = context.watch<LanguageController>().text;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -570,7 +576,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                "AI Insights đang tắt",
+                t('ai_off'),
                 style: TextStyle(
                   color: text,
                   fontSize: 22,
@@ -579,7 +585,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                "App sẽ tạm dừng phân tích thông minh, cảnh báo chi tiêu và chat AI cho đến khi bạn bật lại.",
+                t('ai_off_body'),
                 style: TextStyle(color: subText, height: 1.4),
               ),
               const SizedBox(height: 18),
@@ -595,9 +601,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 ),
                 onPressed: () => _setAiInsightsEnabled(true),
                 icon: const Icon(Icons.auto_awesome),
-                label: const Text(
-                  "Bật AI Insights",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                label: Text(
+                  t('turn_on_ai'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -610,6 +616,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.watch<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
     final text = isDark ? Colors.white : const Color(0xFF0F172A);
     final subText = isDark ? Colors.white70 : Colors.grey;
@@ -624,7 +631,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             ? theme.appBarTheme.backgroundColor
             : Colors.white,
         title: Text(
-          "Phân tích AI",
+          t('ai_insights'),
           style: TextStyle(
             color: isDark ? theme.textTheme.titleLarge?.color : Colors.black,
           ),
@@ -641,7 +648,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         ],
       ),
       body: UserSession.user_id == null
-          ? const Center(child: Text("Người dùng chưa đăng nhập"))
+          ? Center(child: Text(t('user_not_logged_in')))
           : FutureBuilder<_InsightsData>(
               future: futureInsights,
               builder: (context, snapshot) {
@@ -649,12 +656,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return Center(child: Text("Lỗi: ${snapshot.error}"));
+                  return Center(
+                    child: Text("${t('error_prefix')}: ${snapshot.error}"),
+                  );
                 }
                 if (!snapshot.hasData) {
-                  return const Center(
-                    child: Text("Không có dữ liệu phân tích."),
-                  );
+                  return Center(child: Text(t('no_insight_data')));
                 }
 
                 final insights = snapshot.data!;
@@ -717,14 +724,14 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                             MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
-                                            "Cảnh báo chi tiêu",
+                                            t('spending_alert'),
                                             style: TextStyle(
                                               color: visual.color,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                           Text(
-                                            "Tháng này",
+                                            t('this_month'),
                                             style: TextStyle(color: subText),
                                           ),
                                         ],
@@ -755,11 +762,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                                 foregroundColor: Colors.white,
                                               ),
                                               onPressed: () => _sendMessage(
-                                                "Làm sao để giảm chi tiêu ở ${insights.topCategoryName}?",
+                                                "How can I reduce spending in ${insights.topCategoryName}?",
                                               ),
-                                              child: const Text(
-                                                "Phân tích thói quen",
-                                              ),
+                                              child: Text(t('analyze_habits')),
                                             ),
                                           ),
                                           const SizedBox(width: 10),
@@ -768,10 +773,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                               foregroundColor: text,
                                             ),
                                             onPressed: () => _sendMessage(
-                                              "Tuần này tôi nên làm gì?",
+                                              "What should I do this week?",
                                             ),
                                             child: Text(
-                                              "Hỏi AI",
+                                              t('ask_ai'),
                                               style: TextStyle(color: text),
                                             ),
                                           ),
@@ -794,18 +799,18 @@ class _InsightsScreenState extends State<InsightsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  children: const [
-                                    CircleAvatar(
+                                  children: [
+                                    const CircleAvatar(
                                       backgroundColor: Color(0xFFDFF5E1),
                                       child: Icon(
                                         Icons.savings,
                                         color: Colors.green,
                                       ),
                                     ),
-                                    SizedBox(width: 10),
+                                    const SizedBox(width: 10),
                                     Text(
-                                      "Gợi ý tiết kiệm",
-                                      style: TextStyle(
+                                      t('saving_suggestion'),
+                                      style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
                                       ),
@@ -814,7 +819,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  "Nếu giảm ${insights.topCategoryName} khoảng 10%, bạn có thể giữ lại ${currencyFormat.format(insights.suggestedCut)} trong tháng này.",
+                                  "If you reduce ${insights.topCategoryName} by about 10%, you could keep ${currencyFormat.format(insights.suggestedCut)} this month.",
                                   style: TextStyle(color: subText),
                                 ),
                                 const SizedBox(height: 16),
@@ -842,9 +847,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                       foregroundColor: Colors.white,
                                     ),
                                     onPressed: () => _sendMessage(
-                                      "Hãy gợi ý cho tôi một kế hoạch tiết kiệm.",
+                                      "Suggest a saving plan for me.",
                                     ),
-                                    child: const Text("Tạo kế hoạch tiết kiệm"),
+                                    child: Text(t('create_saving_plan')),
                                   ),
                                 ),
                               ],
@@ -861,7 +866,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Dự đoán tháng này",
+                                  t('this_month_forecast'),
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
@@ -892,7 +897,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                     Column(
                                       children: [
                                         Text(
-                                          "Đã chi",
+                                          t('spent'),
                                           style: TextStyle(color: subText),
                                         ),
                                         Text(
@@ -910,7 +915,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                     Column(
                                       children: [
                                         Text(
-                                          "Dự đoán",
+                                          t('forecast'),
                                           style: TextStyle(color: subText),
                                         ),
                                         Text(
@@ -945,7 +950,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          "Với tốc độ hiện tại, nhiều khả năng bạn sẽ kết thúc tháng ở mức khoảng ${currencyFormat.format(insights.predictedSpend)}.",
+                                          "At the current pace, you will likely end the month at around ${currencyFormat.format(insights.predictedSpend)}.",
                                           style: const TextStyle(fontSize: 12),
                                         ),
                                       ),
@@ -973,7 +978,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      "Trợ lý AI",
+                                      t('ai_assistant'),
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -988,21 +993,20 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                   runSpacing: 8,
                                   children: [
                                     _PromptChip(
-                                      label: "Tôi có đang chi quá tay không?",
-                                      onTap: () => _sendMessage(
-                                        "Tôi có đang chi quá tay không?",
-                                      ),
-                                    ),
-                                    _PromptChip(
-                                      label: "Nên cắt giảm danh mục nào?",
-                                      onTap: () => _sendMessage(
-                                        "Nên cắt giảm danh mục nào?",
-                                      ),
-                                    ),
-                                    _PromptChip(
-                                      label: "Dự đoán tháng này",
+                                      label: t('am_i_overspending'),
                                       onTap: () =>
-                                          _sendMessage("Dự đoán tháng này"),
+                                          _sendMessage("Am I overspending?"),
+                                    ),
+                                    _PromptChip(
+                                      label: t('which_category_cut'),
+                                      onTap: () => _sendMessage(
+                                        "Which category should I cut?",
+                                      ),
+                                    ),
+                                    _PromptChip(
+                                      label: t('this_month_forecast'),
+                                      onTap: () =>
+                                          _sendMessage("This month forecast"),
                                     ),
                                   ],
                                 ),
@@ -1076,8 +1080,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                               controller: messageController,
                               onSubmitted: (_) => _sendMessage(),
                               decoration: InputDecoration(
-                                hintText:
-                                    "Hỏi về chi tiêu, dự đoán hoặc tiết kiệm...",
+                                hintText: t('ask_placeholder'),
                                 filled: true,
                                 fillColor: isDark
                                     ? const Color(0xFF1A1A1A)
@@ -1214,6 +1217,7 @@ class _AiActionMessageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.watch<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
     final action = message.action!;
     final payload = action.payload;
@@ -1247,8 +1251,12 @@ class _AiActionMessageCard extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _actionRow(Icons.bolt, 'Action', _actionLabel(action.action)),
-                  ..._payloadRows(payload),
+                  _actionRow(
+                    Icons.bolt,
+                    t('action'),
+                    _actionLabel(action.action, t),
+                  ),
+                  ..._payloadRows(payload, t),
                 ],
               ),
             ),
@@ -1258,7 +1266,7 @@ class _AiActionMessageCard extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: message.actionCompleted ? null : onCancel,
-                    child: const Text('Cancel'),
+                    child: Text(t('cancel')),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -1268,7 +1276,9 @@ class _AiActionMessageCard extends StatelessWidget {
                     icon: Icon(
                       message.actionCompleted ? Icons.check : Icons.save,
                     ),
-                    label: Text(message.actionCompleted ? 'Saved' : 'Confirm'),
+                    label: Text(
+                      message.actionCompleted ? t('saved') : t('confirm'),
+                    ),
                   ),
                 ),
               ],
@@ -1279,7 +1289,10 @@ class _AiActionMessageCard extends StatelessWidget {
     );
   }
 
-  List<Widget> _payloadRows(Map<String, dynamic> payload) {
+  List<Widget> _payloadRows(
+    Map<String, dynamic> payload,
+    String Function(String) t,
+  ) {
     final rows = <Widget>[];
     for (final entry in payload.entries) {
       final value = entry.value;
@@ -1287,8 +1300,8 @@ class _AiActionMessageCard extends StatelessWidget {
       rows.add(
         _actionRow(
           Icons.circle,
-          _fieldLabel(entry.key),
-          _formatValue(entry.key, value),
+          _fieldLabel(entry.key, t),
+          _formatValue(entry.key, value, t),
           smallIcon: true,
         ),
       );
@@ -1327,22 +1340,38 @@ class _AiActionMessageCard extends StatelessWidget {
     );
   }
 
-  String _actionLabel(String action) {
+  String _actionLabel(String action, String Function(String) t) {
     switch (action) {
       case 'add_transaction':
-        return 'Add transaction';
+        return t('add_transaction');
       case 'add_saving_goal':
-        return 'Add saving goal';
+        return t('add_saving_goal');
       case 'set_budget':
-        return 'Set budget';
+        return t('set_budget');
       case 'add_recurring_transaction':
-        return 'Add recurring';
+        return t('add_recurring');
       default:
         return action;
     }
   }
 
-  String _fieldLabel(String key) {
+  String _fieldLabel(String key, String Function(String) t) {
+    final labels = {
+      'description': t('description'),
+      'category': t('category'),
+      'account': t('account'),
+      'amount': t('amount'),
+      'is_expense': t('transaction_type'),
+      'notes': t('notes'),
+      'date': t('date'),
+      'title': t('goal_name'),
+      'target_amount': t('target'),
+      'current_amount': t('saved'),
+      'monthly_limit': t('monthly_limit'),
+      'frequency': t('frequency'),
+    };
+    if (labels.containsKey(key)) return labels[key]!;
+
     return key
         .replaceAll('_', ' ')
         .split(' ')
@@ -1354,7 +1383,7 @@ class _AiActionMessageCard extends StatelessWidget {
         .join(' ');
   }
 
-  String _formatValue(String key, dynamic value) {
+  String _formatValue(String key, dynamic value, String Function(String) t) {
     if (key.contains('amount') || key.contains('limit')) {
       final amount = value is num
           ? value.toDouble()
@@ -1362,7 +1391,7 @@ class _AiActionMessageCard extends StatelessWidget {
       return currencyFormat.format(amount);
     }
     if (key == 'is_expense') {
-      return value == true || value == 1 ? 'Expense' : 'Income';
+      return value == true || value == 1 ? t('expense') : t('income_type');
     }
     return value.toString();
   }

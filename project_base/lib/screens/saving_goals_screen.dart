@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/models/saving_goal_model.dart';
 import 'package:project_base/services/api_service.dart';
 import 'package:project_base/utils/app_date_picker.dart';
@@ -59,6 +61,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
   }
 
   Future<void> _showGoalForm({SavingGoalModel? goal}) async {
+    final t = context.read<LanguageController>().text;
     final titleController = TextEditingController(text: goal?.title ?? '');
     final targetController = TextEditingController(
       text: goal == null ? '' : goal.targetAmount.toStringAsFixed(0),
@@ -93,16 +96,18 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                   children: [
                     _sheetHeader(
                       icon: Icons.flag,
-                      title: goal == null ? "New Saving Goal" : "Edit Goal",
-                      subtitle: "Build progress you can actually see",
+                      title: goal == null
+                          ? t('new_saving_goal')
+                          : t('edit_goal'),
+                      subtitle: t('goal_sheet_subtitle'),
                     ),
                     const SizedBox(height: 14),
                     _sheetTextField(
                       context,
                       controller: titleController,
-                      label: "Goal name",
+                      label: t('goal_name'),
                       icon: Icons.edit,
-                      hint: "Emergency fund",
+                      hint: t('emergency_fund'),
                     ),
                     const SizedBox(height: 10),
                     Row(
@@ -111,7 +116,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                           child: _sheetTextField(
                             context,
                             controller: targetController,
-                            label: "Target",
+                            label: t('target'),
                             icon: Icons.track_changes,
                             keyboardType: TextInputType.number,
                           ),
@@ -121,7 +126,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                           child: _sheetTextField(
                             context,
                             controller: currentController,
-                            label: "Saved",
+                            label: t('saved'),
                             icon: Icons.savings,
                             keyboardType: TextInputType.number,
                           ),
@@ -132,9 +137,9 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                     _sheetTextField(
                       context,
                       controller: noteController,
-                      label: "Note",
+                      label: t('note'),
                       icon: Icons.notes,
-                      hint: "Optional",
+                      hint: t('optional'),
                     ),
                     const SizedBox(height: 10),
                     _datePickerCard(
@@ -150,7 +155,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () => Navigator.pop(context, false),
-                            child: const Text("Cancel"),
+                            child: Text(t('cancel')),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -166,30 +171,20 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                               );
                               if (title.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Vui lòng nhập tên mục tiêu.",
-                                    ),
-                                  ),
+                                  SnackBar(content: Text(t('enter_goal_name'))),
                                 );
                                 return;
                               }
                               if (target <= 0) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Số tiền mục tiêu phải lớn hơn 0đ.",
-                                    ),
-                                  ),
+                                  SnackBar(content: Text(t('target_gt_zero'))),
                                 );
                                 return;
                               }
                               if (current < 0) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Số tiền hiện có không được nhỏ hơn 0đ.",
-                                    ),
+                                  SnackBar(
+                                    content: Text(t('saved_not_negative')),
                                   ),
                                 );
                                 return;
@@ -214,7 +209,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                               }
                             },
                             icon: const Icon(Icons.check),
-                            label: const Text("Save"),
+                            label: Text(t('save')),
                           ),
                         ),
                       ],
@@ -232,6 +227,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
   }
 
   Future<void> _addMoney(SavingGoalModel goal) async {
+    final t = context.read<LanguageController>().text;
     final controller = TextEditingController();
     final amount = await showModalBottomSheet<double>(
       context: context,
@@ -252,14 +248,14 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
               children: [
                 _sheetHeader(
                   icon: Icons.add,
-                  title: "Add Money",
+                  title: t('add_money'),
                   subtitle: goal.title,
                 ),
                 const SizedBox(height: 14),
                 _sheetTextField(
                   context,
                   controller: controller,
-                  label: "Amount",
+                  label: t('amount'),
                   icon: Icons.payments,
                   keyboardType: TextInputType.number,
                 ),
@@ -269,7 +265,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text("Cancel"),
+                        child: Text(t('cancel')),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -279,16 +275,14 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                           final amount = _parseAmount(controller.text);
                           if (amount <= 0) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Số tiền thêm phải lớn hơn 0đ."),
-                              ),
+                              SnackBar(content: Text(t('added_gt_zero'))),
                             );
                             return;
                           }
                           Navigator.pop(context, amount);
                         },
                         icon: const Icon(Icons.add),
-                        label: const Text("Add"),
+                        label: Text(t('add')),
                       ),
                     ),
                   ],
@@ -317,6 +311,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.watch<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
     final bg = isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF6F6F8);
     final card = isDark ? theme.cardColor : Colors.white;
@@ -329,13 +324,13 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
         backgroundColor: card,
         iconTheme: IconThemeData(color: text),
         title: Text(
-          "Saving Goals",
+          t('saving_goals'),
           style: TextStyle(color: text, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            tooltip: "Add goal",
+            tooltip: t('add_goal'),
             onPressed: () => _showGoalForm(),
             icon: const Icon(Icons.add_circle_outline),
           ),
@@ -348,7 +343,9 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
+            return Center(
+              child: Text("${t('error_prefix')}: ${snapshot.error}"),
+            );
           }
 
           final goals = snapshot.data ?? [];
@@ -387,6 +384,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
   }
 
   Widget _summaryCard(double totalSaved, double totalTarget, int goalCount) {
+    final t = context.watch<LanguageController>().text;
     final progress = totalTarget <= 0
         ? 0.0
         : (totalSaved / totalTarget).clamp(0.0, 1.0);
@@ -412,10 +410,10 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                 child: const Icon(Icons.savings, color: Colors.white),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "Saving progress",
-                  style: TextStyle(
+                  t('saving_progress'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
@@ -435,7 +433,9 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
           ),
           const SizedBox(height: 2),
           Text(
-            "of ${currencyFormat.format(totalTarget)} target",
+            t(
+              'of_target',
+            ).replaceAll('{amount}', currencyFormat.format(totalTarget)),
             style: const TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 16),
@@ -451,14 +451,14 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
             children: [
               Expanded(
                 child: _summaryMetric(
-                  label: "Goals",
+                  label: t('goals'),
                   value: goalCount.toString(),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _summaryMetric(
-                  label: "Remaining",
+                  label: t('remaining'),
                   value: currencyFormat.format(
                     (totalTarget - totalSaved).clamp(0.0, double.infinity),
                   ),
@@ -473,6 +473,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
 
   Widget _goalCard(SavingGoalModel goal, int index) {
     final theme = Theme.of(context);
+    final t = context.watch<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
     final progress = goal.targetAmount <= 0
         ? 0.0
@@ -531,7 +532,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                                 ),
                               ),
                               Text(
-                                "${currencyFormat.format(remaining)} remaining",
+                                "${currencyFormat.format(remaining)} ${t('remaining').toLowerCase()}",
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark
@@ -573,7 +574,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                           ),
                         ),
                         IconButton(
-                          tooltip: "Edit",
+                          tooltip: t('edit'),
                           onPressed: () => _showGoalForm(goal: goal),
                           icon: const Icon(Icons.edit_outlined),
                         ),
@@ -587,7 +588,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                             : () => _addMoney(goal),
                         icon: const Icon(Icons.add),
                         label: Text(
-                          goal.isCompleted ? "Completed" : "Add Money",
+                          goal.isCompleted ? t('completed') : t('add_money'),
                         ),
                       ),
                     ),
@@ -603,6 +604,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
 
   Widget _emptyStateCard(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.watch<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
@@ -635,8 +637,8 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Text(
-                  "Make the next target visible",
+                Text(
+                  t('empty_goal_title'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
@@ -645,8 +647,8 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  "Track a laptop, trip, emergency fund, or anything you want to save for.",
+                Text(
+                  t('empty_goal_subtitle'),
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white70),
                 ),
@@ -659,7 +661,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
             child: ElevatedButton.icon(
               onPressed: () => _showGoalForm(),
               icon: const Icon(Icons.add),
-              label: const Text("Add Goal"),
+              label: Text(t('add_goal')),
             ),
           ),
         ],
@@ -754,6 +756,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final t = context.watch<LanguageController>().text;
 
     return InkWell(
       borderRadius: BorderRadius.circular(14),
@@ -779,7 +782,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
             Expanded(
               child: Text(
                 targetDate == null
-                    ? "No target date"
+                    ? t('no_target_date')
                     : DateFormat('dd/MM/yyyy').format(targetDate),
                 style: TextStyle(
                   color: theme.textTheme.bodyLarge?.color,

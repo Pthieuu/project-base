@@ -31,7 +31,7 @@ class AuthService {
 
     if (response.statusCode != 200) {
       throw Exception(
-        "API ${response.statusCode}: không tìm thấy $uri. Kiểm tra lại PHP server/API_BASE_URL.",
+        "API ${response.statusCode}: could not find $uri. Check the PHP server/API_BASE_URL.",
       );
     }
 
@@ -42,7 +42,7 @@ class AuthService {
       throw const FormatException("Response is not a JSON object");
     } on FormatException {
       throw Exception(
-        "API trả về không phải JSON. Có thể PHP server đang trỏ sai thư mục: $uri",
+        "API did not return JSON. The PHP server may be pointing to the wrong folder: $uri",
       );
     }
   }

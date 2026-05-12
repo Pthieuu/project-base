@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/widgets/app_logo.dart';
 import 'login_screen.dart';
 
@@ -9,6 +11,7 @@ class OnboardingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final t = context.watch<LanguageController>().text;
 
     return Scaffold(
       backgroundColor: isDark
@@ -42,9 +45,9 @@ class OnboardingScreen extends StatelessWidget {
                       color: const Color(0xFF1132D4).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      "Skip",
-                      style: TextStyle(
+                    child: Text(
+                      t('skip'),
+                      style: const TextStyle(
                         color: Color(0xFF1132D4),
                         fontWeight: FontWeight.w500,
                       ),
@@ -92,7 +95,7 @@ class OnboardingScreen extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      "Today",
+                                      t('today'),
                                       style: TextStyle(
                                         color: isDark
                                             ? Colors.grey[400]
@@ -101,7 +104,7 @@ class OnboardingScreen extends StatelessWidget {
                                       ),
                                     ),
                                     Text(
-                                      "Money Flow",
+                                      t('money_flow'),
                                       style: TextStyle(
                                         color: theme.textTheme.bodyLarge?.color,
                                         fontWeight: FontWeight.bold,
@@ -118,7 +121,7 @@ class OnboardingScreen extends StatelessWidget {
                           _moneyCard(
                             isDark: isDark,
                             icon: Icons.arrow_upward,
-                            title: "Income",
+                            title: t('income'),
                             value: "+8.000.000đ",
                             color: const Color(0xFF059669),
                           ),
@@ -126,7 +129,7 @@ class OnboardingScreen extends StatelessWidget {
                           _moneyCard(
                             isDark: isDark,
                             icon: Icons.arrow_downward,
-                            title: "Expense",
+                            title: t('expense'),
                             value: "-245.000đ",
                             color: const Color(0xFFEA580C),
                           ),
@@ -176,7 +179,7 @@ class OnboardingScreen extends StatelessWidget {
                       left: 0,
                       child: _sticker(
                         icon: Icons.savings,
-                        label: "Save",
+                        label: t('save_short'),
                         color: const Color(0xFF059669),
                         isDark: isDark,
                       ),
@@ -186,7 +189,7 @@ class OnboardingScreen extends StatelessWidget {
                       left: 0,
                       child: _sticker(
                         icon: Icons.restaurant,
-                        label: "Food",
+                        label: t('food'),
                         color: const Color(0xFFEA580C),
                         isDark: isDark,
                       ),
@@ -201,14 +204,17 @@ class OnboardingScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  const Text(
-                    "Your Money, Smarter",
+                  Text(
+                    t('your_money_smarter'),
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    "Experience the future of personal finance with AI-powered tracking.",
+                    t('onboarding_subtitle'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -251,19 +257,22 @@ class OnboardingScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "Get Started",
-                              style: TextStyle(
+                              t('get_started'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(width: 6),
-                            Icon(Icons.arrow_forward, color: Colors.white),
+                            const SizedBox(width: 6),
+                            const Icon(
+                              Icons.arrow_forward,
+                              color: Colors.white,
+                            ),
                           ],
                         ),
                       ),

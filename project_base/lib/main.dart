@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'controller/language_controller.dart';
 import 'controller/theme_controller.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeController(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeController()),
+        ChangeNotifierProvider(create: (_) => LanguageController()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -20,11 +24,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeController>(context);
+    final language = Provider.of<LanguageController>(context);
     const primary = Color(0xFF1132D4);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: "AI Expense Manager",
+      locale: Locale(language.language.code),
 
       /// 🌙 DARK MODE
       theme: ThemeData(

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:project_base/controller/language_controller.dart';
 import 'login_screen.dart';
 
 class AccountCreatedScreen extends StatelessWidget {
@@ -6,7 +8,8 @@ class AccountCreatedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screen_width = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final t = context.watch<LanguageController>().text;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F9FF),
@@ -20,7 +23,7 @@ class AccountCreatedScreen extends StatelessWidget {
                 child: Stack(
                   children: [
                     Positioned(
-                      left: screen_width * 0.4,
+                      left: screenWidth * 0.4,
                       top: -200,
                       child: _circle(const Color(0x0C3D5AFE)),
                     ),
@@ -52,7 +55,7 @@ class AccountCreatedScreen extends StatelessWidget {
 
                         /// 🔵 Title
                         Text(
-                          'Account Created!',
+                          t('account_created'),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Color(0xFF1132D4),
@@ -65,19 +68,15 @@ class AccountCreatedScreen extends StatelessWidget {
 
                         /// 🔵 Description
                         Text(
-                          'Your AI Expense Manager account is ready.\n'
-                          'Start tracking your finances smarter today.',
+                          t('account_created_body'),
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            height: 1.6,
-                          ),
+                          style: const TextStyle(fontSize: 16, height: 1.6),
                         ),
 
                         const SizedBox(height: 80),
 
                         /// 🔵 Button
-                        _buildButton(context),
+                        _buildButton(context, t),
 
                         const SizedBox(height: 40),
                       ],
@@ -113,7 +112,7 @@ class AccountCreatedScreen extends StatelessWidget {
           width: 160,
           height: 160,
           decoration: BoxDecoration(
-            color: const Color(0xFF3D5AFE).withOpacity(0.1),
+            color: const Color(0xFF3D5AFE).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(999),
           ),
         ),
@@ -128,62 +127,56 @@ class AccountCreatedScreen extends StatelessWidget {
                 color: Color(0x4C3D5AFE),
                 blurRadius: 40,
                 spreadRadius: -10,
-              )
+              ),
             ],
           ),
-          child: const Icon(
-            Icons.check,
-            size: 48,
-            color: Color(0xFF1132D4),
-          ),
+          child: const Icon(Icons.check, size: 48, color: Color(0xFF1132D4)),
         ),
       ],
     );
   }
 
-  Widget _buildButton(BuildContext context) {
-  return GestureDetector(
-    onTap: () {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const LoginScreen(),
+  Widget _buildButton(BuildContext context, String Function(String) t) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false, // 🔥 xóa toàn bộ stack
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1132D4),
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x333D5AFE),
+              blurRadius: 10,
+              offset: Offset(0, 8),
+              spreadRadius: -6,
+            ),
+            BoxShadow(
+              color: Color(0x333D5AFE),
+              blurRadius: 25,
+              offset: Offset(0, 20),
+              spreadRadius: -5,
+            ),
+          ],
         ),
-        (route) => false, // 🔥 xóa toàn bộ stack
-      );
-    },
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1132D4),
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x333D5AFE),
-            blurRadius: 10,
-            offset: Offset(0, 8),
-            spreadRadius: -6,
-          ),
-          BoxShadow(
-            color: Color(0x333D5AFE),
-            blurRadius: 25,
-            offset: Offset(0, 20),
-            spreadRadius: -5,
-          ),
-        ],
-      ),
-      child: const Center(
-        child: Text(
-          'Get Started',
-          style: TextStyle(
-            color: Color(0xFFF1F0FF),
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
+        child: Center(
+          child: Text(
+            t('get_started'),
+            style: const TextStyle(
+              color: Color(0xFFF1F0FF),
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
