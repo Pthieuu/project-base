@@ -220,6 +220,14 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                     .replaceAll(",", ""),
                               ) ??
                               0;
+                          if (amount <= 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Giới hạn phải lớn hơn 0đ."),
+                              ),
+                            );
+                            return;
+                          }
                           Navigator.pop(sheetContext, amount);
                         },
                         icon: const Icon(Icons.check),

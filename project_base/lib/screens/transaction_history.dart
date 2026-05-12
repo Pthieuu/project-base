@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/services/api_service.dart';
 import 'package:project_base/services/user_session.dart';
+import 'package:project_base/utils/app_date_picker.dart';
 import 'package:project_base/utils/category_visuals.dart';
 import 'package:intl/intl.dart';
 
@@ -345,104 +346,249 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     var isExpense = tx.isExpense;
     var selectedDate = _parseDate(tx.date);
 
-    await showDialog<void>(
+    await showModalBottomSheet<void>(
       context: context,
-      builder: (dialogContext) {
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text("Edit transaction"),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(isExpense ? "Expense" : "Income"),
-                      value: isExpense,
-                      onChanged: (value) {
-                        setDialogState(() => isExpense = value);
-                      },
-                    ),
-                    TextField(
-                      controller: descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: "Description",
+            final theme = Theme.of(context);
+            final isDark = theme.brightness == Brightness.dark;
+            final visual = categoryVisual(categoryController.text);
+            final primary = const Color(0xFF1132D4);
+            final sheetColor = isDark ? theme.cardColor : Colors.white;
+
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  6,
+                  16,
+                  MediaQuery.viewInsetsOf(context).bottom + 16,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: sheetColor,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: visual.color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(visual.icon, color: visual.color),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Edit transaction",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.textTheme.bodyLarge?.color,
+                                  ),
+                                ),
+                                Text(
+                                  visual.label,
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? Colors.grey[400]
+                                        : Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(sheetContext),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
                       ),
-                    ),
-                    TextField(
-                      controller: categoryController,
-                      decoration: const InputDecoration(labelText: "Category"),
-                    ),
-                    TextField(
-                      controller: accountController,
-                      decoration: const InputDecoration(labelText: "Account"),
-                    ),
-                    TextField(
-                      controller: amountController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: "Amount"),
-                    ),
-                    TextField(
-                      controller: notesController,
-                      decoration: const InputDecoration(labelText: "Notes"),
-                    ),
-                    const SizedBox(height: 12),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.calendar_today),
-                      title: Text(
-                        DateFormat('dd/MM/yyyy').format(selectedDate),
+                      const SizedBox(height: 18),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF151827)
+                              : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            _typeSegment(
+                              label: "Expense",
+                              icon: Icons.arrow_downward,
+                              active: isExpense,
+                              activeColor: const Color(0xFFDC2626),
+                              onTap: () {
+                                setDialogState(() => isExpense = true);
+                              },
+                            ),
+                            _typeSegment(
+                              label: "Income",
+                              icon: Icons.arrow_upward,
+                              active: !isExpense,
+                              activeColor: const Color(0xFF059669),
+                              onTap: () {
+                                setDialogState(() => isExpense = false);
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: selectedDate,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2100),
-                        );
-                        if (picked != null) {
-                          setDialogState(() {
-                            selectedDate = DateTime(
-                              picked.year,
-                              picked.month,
-                              picked.day,
-                              selectedDate.hour,
-                              selectedDate.minute,
+                      const SizedBox(height: 16),
+                      _editField(
+                        controller: descriptionController,
+                        label: "Description",
+                        icon: Icons.notes,
+                      ),
+                      _editField(
+                        controller: categoryController,
+                        label: "Category",
+                        icon: Icons.category_outlined,
+                        onChanged: (_) => setDialogState(() {}),
+                      ),
+                      _editField(
+                        controller: accountController,
+                        label: "Account",
+                        icon: Icons.account_balance_wallet_outlined,
+                      ),
+                      _editField(
+                        controller: amountController,
+                        label: "Amount",
+                        icon: Icons.payments_outlined,
+                        keyboardType: TextInputType.number,
+                      ),
+                      _editField(
+                        controller: notesController,
+                        label: "Notes",
+                        icon: Icons.sticky_note_2_outlined,
+                      ),
+                      const SizedBox(height: 4),
+                      InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () async {
+                          final picked = await showAppDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2100),
+                          );
+                          if (picked != null) {
+                            setDialogState(() {
+                              selectedDate = DateTime(
+                                picked.year,
+                                picked.month,
+                                picked.day,
+                                selectedDate.hour,
+                                selectedDate.minute,
+                              );
+                            });
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF151827)
+                                : const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white10
+                                  : const Color(0xFFE2E8F0),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.calendar_today, color: primary),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  DateFormat('dd/MM/yyyy').format(selectedDate),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.textTheme.bodyLarge?.color,
+                                  ),
+                                ),
+                              ),
+                              const Icon(Icons.keyboard_arrow_down),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primary,
+                          foregroundColor: Colors.white,
+                          iconColor: Colors.white,
+                          minimumSize: const Size.fromHeight(52),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        onPressed: () async {
+                          final amount =
+                              double.tryParse(
+                                amountController.text
+                                    .replaceAll(".", "")
+                                    .replaceAll(",", ""),
+                              ) ??
+                              0;
+
+                          if (amount <= 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Số tiền phải lớn hơn 0đ."),
+                              ),
                             );
+                            return;
+                          }
+
+                          await ApiService().updateTransaction({
+                            "id": tx.id,
+                            "description": descriptionController.text.trim(),
+                            "category": categoryController.text.trim(),
+                            "account": accountController.text.trim(),
+                            "amount": amount,
+                            "is_expense": isExpense ? 1 : 0,
+                            "notes": notesController.text.trim(),
+                            "date": selectedDate.toString(),
                           });
-                        }
-                      },
-                    ),
-                  ],
+
+                          if (!sheetContext.mounted) return;
+                          Navigator.pop(sheetContext);
+                          _reloadTransactions();
+                        },
+                        icon: const Icon(Icons.check),
+                        label: const Text(
+                          "Save changes",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text("Cancel"),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    await ApiService().updateTransaction({
-                      "id": tx.id,
-                      "description": descriptionController.text.trim(),
-                      "category": categoryController.text.trim(),
-                      "account": accountController.text.trim(),
-                      "amount":
-                          double.tryParse(amountController.text) ?? tx.amount,
-                      "is_expense": isExpense ? 1 : 0,
-                      "notes": notesController.text.trim(),
-                      "date": selectedDate.toString(),
-                    });
-
-                    if (!dialogContext.mounted) return;
-                    Navigator.pop(dialogContext);
-                    _reloadTransactions();
-                  },
-                  child: const Text("Save"),
-                ),
-              ],
             );
           },
         );
@@ -454,6 +600,85 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     accountController.dispose();
     amountController.dispose();
     notesController.dispose();
+  }
+
+  Widget _typeSegment({
+    required String label,
+    required IconData icon,
+    required bool active,
+    required Color activeColor,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(13),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: active ? activeColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(13),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: active ? Colors.white : activeColor),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: active ? Colors.white : activeColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _editField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+    ValueChanged<String>? onChanged,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: const Color(0xFF1132D4)),
+          filled: true,
+          fillColor: isDark ? const Color(0xFF151827) : const Color(0xFFF8FAFC),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFF1132D4), width: 1.4),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _confirmDeleteTransaction(TransactionModel tx) async {

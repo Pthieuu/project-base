@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:project_base/models/recurring_transaction_model.dart';
 import 'package:project_base/services/api_service.dart';
+import 'package:project_base/utils/app_date_picker.dart';
 import 'package:project_base/utils/category_visuals.dart';
 
 class RecurringTransactionsScreen extends StatefulWidget {
@@ -129,7 +130,7 @@ class _RecurringTransactionsScreenState
                       leading: const Icon(Icons.event_repeat),
                       title: Text(DateFormat('dd/MM/yyyy').format(nextRunDate)),
                       onTap: () async {
-                        final picked = await showDatePicker(
+                        final picked = await showAppDatePicker(
                           context: context,
                           initialDate: nextRunDate,
                           firstDate: DateTime(2020),
@@ -168,6 +169,15 @@ class _RecurringTransactionsScreenState
                     if (description.isEmpty ||
                         category.isEmpty ||
                         amount <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            amount <= 0
+                                ? "Số tiền phải lớn hơn 0đ."
+                                : "Vui lòng nhập đầy đủ thông tin.",
+                          ),
+                        ),
+                      );
                       return;
                     }
 

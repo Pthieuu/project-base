@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:project_base/models/saving_goal_model.dart';
 import 'package:project_base/services/api_service.dart';
+import 'package:project_base/utils/app_date_picker.dart';
 
 class SavingGoalsScreen extends StatefulWidget {
   const SavingGoalsScreen({super.key});
@@ -163,7 +164,36 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                               final current = _parseAmount(
                                 currentController.text,
                               );
-                              if (title.isEmpty || target <= 0) return;
+                              if (title.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Vui lòng nhập tên mục tiêu.",
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+                              if (target <= 0) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Số tiền mục tiêu phải lớn hơn 0đ.",
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+                              if (current < 0) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Số tiền hiện có không được nhỏ hơn 0đ.",
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
 
                               await ApiService().saveGoal(
                                 id: goal?.id,
@@ -246,7 +276,16 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.pop(context, _parseAmount(controller.text));
+                          final amount = _parseAmount(controller.text);
+                          if (amount <= 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Số tiền thêm phải lớn hơn 0đ."),
+                              ),
+                            );
+                            return;
+                          }
+                          Navigator.pop(context, amount);
                         },
                         icon: const Icon(Icons.add),
                         label: const Text("Add"),
@@ -719,7 +758,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: () async {
-        final picked = await showDatePicker(
+        final picked = await showAppDatePicker(
           context: context,
           initialDate: targetDate ?? DateTime.now(),
           firstDate: DateTime.now(),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'addtransaction_screen.dart';
+import 'transaction_history.dart';
 import '../services/api_service.dart';
 import '../services/user_session.dart';
 import 'package:intl/intl.dart';
@@ -37,6 +38,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future loadTransactions() async {
     final txList = await ApiService().getTransactions(UserSession.user_id!);
+    txList.sort((a, b) {
+      final dateA = _parseTransactionDate(a.date);
+      final dateB = _parseTransactionDate(b.date);
+
+      if (dateA == null && dateB == null) return 0;
+      if (dateA == null) return 1;
+      if (dateB == null) return -1;
+      return dateB.compareTo(dateA);
+    });
 
     double income = 0;
     double expense = 0;
@@ -123,6 +133,162 @@ class _DashboardScreenState extends State<DashboardScreen> {
         height: normalizedHeight.clamp(8.0, _chartMaxBarHeight).toDouble(),
       );
     }).toList();
+  }
+
+  double _monthlyTotal({required bool expense}) {
+    final now = DateTime.now();
+    return transactions.fold<double>(0, (sum, tx) {
+      final date = _parseTransactionDate(tx.date);
+      if (date == null || date.year != now.year || date.month != now.month) {
+        return sum;
+      }
+      if (tx.isExpense != expense) return sum;
+      return sum + tx.amount;
+    });
+  }
+
+  void _openTransactionHistory() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TransactionHistoryScreen()),
+    );
+    if (mounted) loadTransactions();
+  }
+
+  void _showBalanceDetails() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    const primary = Color(0xFF1132D4);
+    final monthlyIncome = _monthlyTotal(expense: false);
+    final monthlyExpense = _monthlyTotal(expense: true);
+    final monthlyBalance = monthlyIncome - monthlyExpense;
+    final savedRate = monthlyIncome <= 0
+        ? 0
+        : (monthlyBalance / monthlyIncome * 100).clamp(0, 100).round();
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 18),
+            child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: isDark ? theme.cardColor : Colors.white,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.account_balance_wallet,
+                          color: primary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Balance details",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: theme.textTheme.bodyLarge?.color,
+                              ),
+                            ),
+                            Text(
+                              DateFormat('MMMM yyyy').format(DateTime.now()),
+                              style: TextStyle(
+                                color: isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  _detailRow(
+                    title: "Income this month",
+                    value: currencyFormat.format(monthlyIncome),
+                    icon: Icons.arrow_upward,
+                    color: const Color(0xFF059669),
+                  ),
+                  _detailRow(
+                    title: "Expense this month",
+                    value: currencyFormat.format(monthlyExpense),
+                    icon: Icons.arrow_downward,
+                    color: const Color(0xFFDC2626),
+                  ),
+                  _detailRow(
+                    title: "Month balance",
+                    value: currencyFormat.format(monthlyBalance),
+                    icon: Icons.savings_outlined,
+                    color: primary,
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      monthlyIncome <= 0
+                          ? "Tháng này chưa có thu nhập để tính tỷ lệ tiết kiệm."
+                          : "Bạn đang giữ lại khoảng $savedRate% thu nhập tháng này.",
+                      style: const TextStyle(
+                        color: primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primary,
+                      foregroundColor: Colors.white,
+                      iconColor: Colors.white,
+                      minimumSize: const Size.fromHeight(50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _openTransactionHistory();
+                    },
+                    icon: const Icon(Icons.history),
+                    label: const Text(
+                      "View transaction history",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -267,7 +433,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               backgroundColor: Colors.white,
                               foregroundColor: primary,
                             ),
-                            onPressed: () {},
+                            onPressed: _showBalanceDetails,
                             child: const Text("Details"),
                           ),
                         ],
@@ -388,11 +554,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             color: text,
                           ),
                         ),
-                        const Text(
-                          "See All",
-                          style: TextStyle(
-                            color: primary,
-                            fontWeight: FontWeight.bold,
+                        TextButton(
+                          onPressed: _openTransactionHistory,
+                          style: TextButton.styleFrom(
+                            foregroundColor: primary,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          child: const Text(
+                            "See All",
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -400,7 +570,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     const SizedBox(height: 12),
 
-                    ...transactions.map((tx) {
+                    ...transactions.take(5).map((tx) {
                       final isExpense = tx.isExpense;
                       final amountColor = isExpense ? Colors.red : Colors.green;
                       final categoryStyle = _categoryStyle(tx.category);
@@ -477,6 +647,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// ================= COMPONENT =================
+
+  Widget _detailRow({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF151827) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: isDark ? Colors.grey[300] : const Color(0xFF475569),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   static Widget statCard({
     required String title,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_base/utils/app_date_picker.dart';
 import 'package:project_base/utils/category_visuals.dart';
 import '../services/api_service.dart';
 import 'package:intl/intl.dart';
@@ -15,7 +16,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   DateTime selectedDate = DateTime.now();
 
   Future<void> pickDate() async {
-    final picked = await showDatePicker(
+    final picked = await showAppDatePicker(
       context: context,
       initialDate: selectedDate,
       firstDate: DateTime(2020),
@@ -516,15 +517,24 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   ),
                 ),
                 onPressed: () async {
+                  final amount =
+                      double.tryParse(
+                        amountController.text.replaceAll(".", ""),
+                      ) ??
+                      0;
+
+                  if (amount <= 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Số tiền phải lớn hơn 0đ.")),
+                    );
+                    return;
+                  }
+
                   final data = {
                     "description": descriptionController.text,
                     "category": category,
                     "account": account,
-                    "amount":
-                        double.tryParse(
-                          amountController.text.replaceAll(".", ""),
-                        ) ??
-                        0,
+                    "amount": amount,
                     "is_expense": isExpense ? 1 : 0,
                     "notes": notesController.text,
                     "date": selectedDate.toString(),

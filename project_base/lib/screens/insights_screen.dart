@@ -171,6 +171,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       predictedSpend: predictedSpend,
       topCategoryName: topCategoryName,
       topCategorySpend: topCategorySpend,
+      previousTopCategorySpend: previousTopCategorySpend,
       topCategoryChange: topCategoryChange,
       suggestedCut: suggestedCut,
       weeklySpend: weeklySpend,
@@ -224,6 +225,33 @@ class _InsightsScreenState extends State<InsightsScreen> {
         : "$topCategoryName hiện khá ổn định.";
 
     return "$monthTrend $categoryTrend Nếu cắt bớt ${currencyFormat.format(suggestedCut)} ở $topCategoryName, mức chi dự kiến cuối tháng sẽ giảm còn khoảng ${currencyFormat.format(math.max(predictedSpend - suggestedCut, 0))}.";
+  }
+
+  String _buildSpendingWarningTitle(_InsightsData insights) {
+    final current = insights.topCategorySpend;
+    final previous = insights.previousTopCategorySpend;
+    final category = insights.topCategoryName;
+
+    if (current <= 0) {
+      return "Chưa có chi tiêu nổi bật trong tháng này";
+    }
+
+    if (previous <= 0) {
+      return "$category mới phát sinh ${currencyFormat.format(current)}";
+    }
+
+    final diff = current - previous;
+    final percent = (diff / previous * 100).abs().round();
+
+    if (previous < 100000 && diff > 0) {
+      return "$category tăng từ ${currencyFormat.format(previous)} lên ${currencyFormat.format(current)}";
+    }
+
+    if (diff.abs() < 50000) {
+      return "$category gần như ổn định so với tháng trước";
+    }
+
+    return "$category đang ${diff >= 0 ? 'tăng' : 'giảm'} $percent%";
   }
 
   Future<void> _sendMessage([String? preset]) async {
@@ -329,6 +357,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
     switch (action.action) {
       case 'add_transaction':
+        final amount = _positiveAmount(payload['amount'], 'Số tiền giao dịch');
         await api.addTransaction({
           "description": _stringValue(
             payload['description'],
@@ -336,7 +365,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           ),
           "category": _stringValue(payload['category'], fallback: 'Other'),
           "account": _stringValue(payload['account'], fallback: 'Main Card'),
-          "amount": _doubleValue(payload['amount']),
+          "amount": amount,
           "is_expense": _boolValue(payload['is_expense'], fallback: true)
               ? 1
               : 0,
@@ -345,22 +374,35 @@ class _InsightsScreenState extends State<InsightsScreen> {
         });
         break;
       case 'add_saving_goal':
+        final targetAmount = _positiveAmount(
+          payload['target_amount'],
+          'Số tiền mục tiêu',
+        );
+        final currentAmount = _doubleValue(payload['current_amount']);
+        if (currentAmount < 0) {
+          throw Exception("Số tiền hiện có không được nhỏ hơn 0đ.");
+        }
         await api.saveGoal(
           title: _stringValue(payload['title'], fallback: 'Saving goal'),
-          targetAmount: _doubleValue(payload['target_amount']),
-          currentAmount: _doubleValue(payload['current_amount']),
+          targetAmount: targetAmount,
+          currentAmount: currentAmount,
           targetDate: _dateOnlyValue(payload['target_date']),
           note: _stringValue(payload['note']),
         );
         break;
       case 'set_budget':
+        final monthlyLimit = _positiveAmount(
+          payload['monthly_limit'],
+          'Giới hạn ngân sách',
+        );
         await api.saveBudget(
           category: _stringValue(payload['category'], fallback: 'Other'),
           month: _monthValue(payload['month']),
-          monthlyLimit: _doubleValue(payload['monthly_limit']),
+          monthlyLimit: monthlyLimit,
         );
         break;
       case 'add_recurring_transaction':
+        final amount = _positiveAmount(payload['amount'], 'Số tiền định kỳ');
         await api.saveRecurringTransaction(
           description: _stringValue(
             payload['description'],
@@ -368,7 +410,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           ),
           category: _stringValue(payload['category'], fallback: 'Other'),
           account: _stringValue(payload['account'], fallback: 'Main Card'),
-          amount: _doubleValue(payload['amount']),
+          amount: amount,
           isExpense: _boolValue(payload['is_expense'], fallback: true),
           frequency: _frequencyValue(payload['frequency']),
           nextRunDate: _dateOnlyValue(payload['next_run_date'])!,
@@ -393,6 +435,14 @@ class _InsightsScreenState extends State<InsightsScreen> {
         .replaceAll('.', '')
         .replaceAll(',', '.');
     return double.tryParse(normalized ?? '') ?? 0;
+  }
+
+  double _positiveAmount(dynamic value, String fieldName) {
+    final amount = _doubleValue(value);
+    if (amount <= 0) {
+      throw Exception("$fieldName phải lớn hơn 0đ.");
+    }
+    return amount;
   }
 
   bool _boolValue(dynamic value, {required bool fallback}) {
@@ -503,10 +553,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
                 final insights = snapshot.data!;
                 final visual = _categoryVisual(insights.topCategoryName);
-                final changePercent = (insights.topCategoryChange * 100)
-                    .abs()
-                    .round();
-                final isUp = insights.topCategoryChange >= 0;
+                final warningTitle = _buildSpendingWarningTitle(insights);
                 final maxWeek = insights.weeklySpend.fold<double>(0, math.max);
 
                 return Column(
@@ -569,7 +616,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        "Chi tiêu ${insights.topCategoryName} đang ${isUp ? 'tăng' : 'giảm'} $changePercent%",
+                                        warningTitle,
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
@@ -1219,6 +1266,7 @@ class _InsightsData {
   final double predictedSpend;
   final String topCategoryName;
   final double topCategorySpend;
+  final double previousTopCategorySpend;
   final double topCategoryChange;
   final double suggestedCut;
   final List<double> weeklySpend;
@@ -1231,6 +1279,7 @@ class _InsightsData {
     required this.predictedSpend,
     required this.topCategoryName,
     required this.topCategorySpend,
+    required this.previousTopCategorySpend,
     required this.topCategoryChange,
     required this.suggestedCut,
     required this.weeklySpend,
