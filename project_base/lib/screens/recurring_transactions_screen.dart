@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:project_base/models/recurring_transaction_model.dart';
 import 'package:project_base/services/api_service.dart';
+import 'package:project_base/utils/category_visuals.dart';
 
 class RecurringTransactionsScreen extends StatefulWidget {
   const RecurringTransactionsScreen({super.key});
@@ -371,6 +372,7 @@ class _RecurringTransactionsScreenState
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final amountColor = item.isExpense ? Colors.red : Colors.green;
+    final visual = categoryVisual(item.category);
     final sign = item.isExpense ? '-' : '+';
 
     return Container(
@@ -383,8 +385,8 @@ class _RecurringTransactionsScreenState
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: amountColor.withValues(alpha: 0.1),
-            child: Icon(Icons.event_repeat, color: amountColor),
+            backgroundColor: visual.color.withValues(alpha: 0.12),
+            child: Icon(visual.icon, color: visual.color),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -401,7 +403,7 @@ class _RecurringTransactionsScreenState
                   ),
                 ),
                 Text(
-                  "${item.category} - ${item.frequency} - next ${item.nextRunDate}",
+                  "${visual.label} - ${item.frequency} - next ${item.nextRunDate}",
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(

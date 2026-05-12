@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/services/api_service.dart';
 import 'package:project_base/services/user_session.dart';
+import 'package:project_base/utils/category_visuals.dart';
 import 'package:intl/intl.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
@@ -679,41 +680,12 @@ class TransactionTile extends StatelessWidget {
   }
 
   static String _displayCategory(String category) {
-    switch (category.trim().toLowerCase()) {
-      case 'food':
-      case 'food & drink':
-      case 'food & dining':
-        return 'Food & Dining';
-      default:
-        return category;
-    }
+    return displayCategoryName(category);
   }
 
   static _CategoryStyle _categoryStyle(String category) {
-    switch (category.trim().toLowerCase()) {
-      case 'food':
-      case 'food & drink':
-      case 'food & dining':
-        return const _CategoryStyle(
-          icon: Icons.restaurant,
-          color: Colors.orange,
-        );
-      case 'housing':
-      case 'home':
-        return const _CategoryStyle(icon: Icons.home, color: Color(0xFF1132D4));
-      case 'entertainment':
-        return const _CategoryStyle(icon: Icons.movie, color: Colors.red);
-      case 'shopping':
-        return const _CategoryStyle(
-          icon: Icons.shopping_bag,
-          color: Colors.green,
-        );
-      default:
-        return const _CategoryStyle(
-          icon: Icons.payment,
-          color: Color(0xFF1132D4),
-        );
-    }
+    final visual = categoryVisual(category);
+    return _CategoryStyle(icon: visual.icon, color: visual.color);
   }
 
   @override
