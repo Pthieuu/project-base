@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:project_base/widgets/app_logo.dart';
 import '../screens/onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -11,7 +12,6 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-
   late AnimationController _controller;
 
   @override
@@ -27,9 +27,7 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const OnboardingScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
         );
       }
     });
@@ -47,7 +45,6 @@ class _SplashScreenState extends State<SplashScreen>
       backgroundColor: const Color(0xFFF6F6F8),
       body: Stack(
         children: [
-
           /// background blur circles
           Positioned(
             top: -100,
@@ -56,7 +53,7 @@ class _SplashScreenState extends State<SplashScreen>
               width: 250,
               height: 250,
               decoration: BoxDecoration(
-                color: const Color(0xFF1132D4).withOpacity(0.2),
+                color: const Color(0xFF1132D4).withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
             ),
@@ -69,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen>
               width: 250,
               height: 250,
               decoration: BoxDecoration(
-                color: const Color(0xFF1132D4).withOpacity(0.2),
+                color: const Color(0xFF1132D4).withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
             ),
@@ -80,28 +77,8 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-
                 /// logo
-                Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1132D4),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF1132D4).withOpacity(0.4),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      )
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.shield,
-                    color: Colors.white,
-                    size: 48,
-                  ),
-                ),
+                const AppLogo(size: 96, iconSize: 48, withShadow: true),
 
                 const SizedBox(height: 30),
 
@@ -137,7 +114,6 @@ class _SplashScreenState extends State<SplashScreen>
             right: 40,
             child: Column(
               children: [
-
                 /// progress bar
                 ClipRRect(
                   borderRadius: BorderRadius.circular(20),
@@ -155,7 +131,6 @@ class _SplashScreenState extends State<SplashScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-
                     RotationTransition(
                       turns: _controller,
                       child: const Icon(
@@ -175,7 +150,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ),
                   ],
-                )
+                ),
               ],
             ),
           ),

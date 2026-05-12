@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_base/widgets/app_logo.dart';
 import '../services/auth_service.dart';
 import 'account_created_screen.dart';
 
@@ -119,6 +120,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const AppLogo(size: 42, iconSize: 24),
+                const SizedBox(height: 18),
                 Text(
                   "Join AI Expense Manager",
                   style: TextStyle(

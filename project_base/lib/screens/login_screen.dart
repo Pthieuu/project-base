@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'main_screen.dart';
 import '../services/auth_service.dart';
 import '../services/user_session.dart';
+import 'package:project_base/widgets/app_logo.dart';
 import 'register_screen.dart';
 import 'forgot_pass_screen.dart';
 
@@ -98,15 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 /// HEADER
                 Row(
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.payments, color: primaryColor),
-                    ),
+                    const AppLogo(size: 40, iconSize: 22),
 
                     Expanded(
                       child: Center(
