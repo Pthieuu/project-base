@@ -60,103 +60,136 @@ class OnboardingScreen extends StatelessWidget {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    /// vòng quay ngoài
-                    _SpinningCircle(size: 260, duration: 20),
-
-                    /// vòng quay trong
-                    _SpinningCircle(size: 320, duration: 30, reverse: true),
-
-                    /// CARD
                     Container(
-                      width: 260,
-                      height: 260,
-                      padding: const EdgeInsets.all(20),
+                      width: 280,
+                      height: 280,
+                      padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
                         color: isDark ? Colors.grey[900] : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: const [
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white10
+                              : const Color(0xFFE2E8F0),
+                        ),
+                        boxShadow: [
                           BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 20,
-                            offset: Offset(0, 10),
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 28,
+                            offset: const Offset(0, 16),
                           ),
                         ],
                       ),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          /// icon lớn
-                          Container(
-                            width: 70,
-                            height: 70,
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF1132D4,
-                              ).withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.show_chart,
-                              color: Color(0xFF1132D4),
-                              size: 40,
-                            ),
-                          ),
-
-                          /// fake text line
-                          Column(
+                          Row(
                             children: [
-                              Container(
-                                height: 6,
-                                width: 140,
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.grey[700]
-                                      : Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(10),
+                              const AppLogo(size: 48, iconSize: 26),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Today",
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? Colors.grey[400]
+                                            : Colors.grey,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      "Money Flow",
+                                      style: TextStyle(
+                                        color: theme.textTheme.bodyLarge?.color,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 17,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 6),
-                              Container(
-                                height: 6,
-                                width: 100,
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.grey[700]
-                                      : Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
+                              _statusPill("+12%"),
                             ],
                           ),
-
-                          /// chart
+                          const SizedBox(height: 18),
+                          _moneyCard(
+                            isDark: isDark,
+                            icon: Icons.arrow_upward,
+                            title: "Income",
+                            value: "+8.000.000đ",
+                            color: const Color(0xFF059669),
+                          ),
+                          const SizedBox(height: 10),
+                          _moneyCard(
+                            isDark: isDark,
+                            icon: Icons.arrow_downward,
+                            title: "Expense",
+                            value: "-245.000đ",
+                            color: const Color(0xFFEA580C),
+                          ),
+                          const Spacer(),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(children: [_bar(20), _bar(30), _bar(40)]),
-                              const Icon(
-                                Icons.account_balance_wallet,
-                                color: Color(0xFF1132D4),
-                                size: 30,
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  _bar(24, const Color(0xFF93C5FD)),
+                                  _bar(36, const Color(0xFF1132D4)),
+                                  _bar(48, const Color(0xFF7C3AED)),
+                                  _bar(30, const Color(0xFFF59E0B)),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFF1132D4,
+                                  ).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: const Icon(
+                                  Icons.insights,
+                                  color: Color(0xFF1132D4),
+                                ),
                               ),
                             ],
                           ),
                         ],
                       ),
                     ),
-
-                    /// floating icon 1
                     Positioned(
                       top: 20,
-                      right: 10,
-                      child: _floatingIcon(Icons.psychology),
+                      right: 4,
+                      child: _sticker(
+                        icon: Icons.auto_awesome,
+                        label: "AI",
+                        color: const Color(0xFF7C3AED),
+                        isDark: isDark,
+                      ),
                     ),
-
-                    /// floating icon 2
                     Positioned(
                       bottom: 20,
-                      left: 10,
-                      child: _floatingIcon(Icons.insights),
+                      left: 0,
+                      child: _sticker(
+                        icon: Icons.savings,
+                        label: "Save",
+                        color: const Color(0xFF059669),
+                        isDark: isDark,
+                      ),
+                    ),
+                    Positioned(
+                      top: 88,
+                      left: 0,
+                      child: _sticker(
+                        icon: Icons.restaurant,
+                        label: "Food",
+                        color: const Color(0xFFEA580C),
+                        isDark: isDark,
+                      ),
                     ),
                   ],
                 ),
@@ -248,14 +281,14 @@ class OnboardingScreen extends StatelessWidget {
   }
 
   /// bar chart nhỏ
-  static Widget _bar(double h) {
+  static Widget _bar(double h, Color color) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2),
-      width: 6,
+      width: 8,
       height: h,
       decoration: BoxDecoration(
-        color: const Color(0xFF1132D4),
-        borderRadius: BorderRadius.circular(3),
+        color: color,
+        borderRadius: BorderRadius.circular(8),
       ),
     );
   }
@@ -273,65 +306,96 @@ class OnboardingScreen extends StatelessWidget {
     );
   }
 
-  /// icon nổi
-  static Widget _floatingIcon(IconData icon) {
+  static Widget _statusPill(String text) {
     return Container(
-      width: 50,
-      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.7),
-        shape: BoxShape.circle,
+        color: const Color(0xFF059669).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Icon(icon, color: const Color(0xFF1132D4)),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Color(0xFF059669),
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+      ),
     );
   }
-}
 
-/// vòng quay animation
-class _SpinningCircle extends StatefulWidget {
-  final double size;
-  final int duration;
-  final bool reverse;
-
-  const _SpinningCircle({
-    required this.size,
-    required this.duration,
-    this.reverse = false,
-  });
-
-  @override
-  State<_SpinningCircle> createState() => _SpinningCircleState();
-}
-
-class _SpinningCircleState extends State<_SpinningCircle>
-    with SingleTickerProviderStateMixin {
-  late AnimationController controller;
-
-  @override
-  void initState() {
-    controller = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: widget.duration),
-    )..repeat();
-    super.initState();
+  static Widget _moneyCard({
+    required bool isDark,
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF151827) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(color: isDark ? Colors.white70 : Colors.grey),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return RotationTransition(
-      turns: widget.reverse
-          ? Tween(begin: 1.0, end: 0.0).animate(controller)
-          : controller,
-      child: Container(
-        width: widget.size,
-        height: widget.size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: const Color(0xFF1132D4).withValues(alpha: 0.3),
-            width: 1,
+  static Widget _sticker({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF151827) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
-        ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }

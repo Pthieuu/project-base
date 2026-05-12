@@ -4,6 +4,7 @@ import '../services/api_service.dart';
 import '../services/user_session.dart';
 import 'package:intl/intl.dart';
 import 'package:project_base/models/transaction_model.dart';
+import 'package:project_base/utils/category_visuals.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String userName;
@@ -57,41 +58,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   _CategoryStyle _categoryStyle(String category) {
-    switch (category.trim().toLowerCase()) {
-      case 'food':
-      case 'food & drink':
-      case 'food & dining':
-        return const _CategoryStyle(
-          title: 'Food & Dining',
-          icon: Icons.restaurant,
-          color: Colors.orange,
-        );
-      case 'housing':
-      case 'home':
-        return const _CategoryStyle(
-          title: 'Housing',
-          icon: Icons.home,
-          color: Color(0xFF1132D4),
-        );
-      case 'entertainment':
-        return const _CategoryStyle(
-          title: 'Entertainment',
-          icon: Icons.movie,
-          color: Colors.red,
-        );
-      case 'shopping':
-        return const _CategoryStyle(
-          title: 'Shopping',
-          icon: Icons.shopping_bag,
-          color: Colors.green,
-        );
-      default:
-        return const _CategoryStyle(
-          title: '',
-          icon: Icons.attach_money,
-          color: Color(0xFF1132D4),
-        );
-    }
+    final visual = categoryVisual(category);
+    return _CategoryStyle(
+      title: visual.label,
+      icon: visual.icon,
+      color: visual.color,
+    );
   }
 
   DateTime? _parseTransactionDate(String value) {
@@ -368,7 +340,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: primary.withOpacity(0.1),
+                              color: primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Text(
@@ -447,8 +419,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: Row(
                           children: [
                             CircleAvatar(
-                              backgroundColor: categoryStyle.color.withOpacity(
-                                0.1,
+                              backgroundColor: categoryStyle.color.withValues(
+                                alpha: 0.1,
                               ),
                               child: Icon(
                                 categoryStyle.icon,
@@ -491,7 +463,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),

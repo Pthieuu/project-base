@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_base/utils/category_visuals.dart';
 import '../services/api_service.dart';
 import 'package:intl/intl.dart';
 
@@ -550,17 +551,31 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   Widget _categoryChip(String value, bool isDark) {
     final active = category.toLowerCase() == value.toLowerCase();
+    final visual = categoryVisual(value);
 
     return ChoiceChip(
-      label: Text(value),
+      avatar: Container(
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+          color: visual.color.withValues(alpha: active ? 0.18 : 0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          visual.icon,
+          size: 15,
+          color: active ? visual.color : visual.color.withValues(alpha: 0.75),
+        ),
+      ),
+      label: Text(visual.label),
       selected: active,
       onSelected: (_) => setState(() => category = value),
       selectedColor: isDark
-          ? Colors.blue.withValues(alpha: 0.2)
+          ? visual.color.withValues(alpha: 0.2)
           : const Color(0xFFE0E7FF),
       backgroundColor: isDark ? Colors.grey[800] : const Color(0xFFF3F4F6),
       labelStyle: TextStyle(
-        color: active ? Colors.blue : Colors.grey,
+        color: active ? const Color(0xFF1132D4) : Colors.grey,
         fontWeight: FontWeight.w500,
       ),
       shape: RoundedRectangleBorder(

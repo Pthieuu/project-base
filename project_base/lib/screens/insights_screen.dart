@@ -6,6 +6,7 @@ import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/services/ai_chat_service.dart';
 import 'package:project_base/services/api_service.dart';
 import 'package:project_base/services/user_session.dart';
+import 'package:project_base/utils/category_visuals.dart';
 
 class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
@@ -192,43 +193,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
   }
 
   String _displayCategory(String category) {
-    switch (category.trim().toLowerCase()) {
-      case 'food':
-      case 'food & drink':
-      case 'food & dining':
-        return 'Food & Dining';
-      case 'home':
-        return 'Housing';
-      default:
-        return category.isEmpty ? 'Other' : category;
-    }
+    return displayCategoryName(category);
   }
 
   _CategoryVisual _categoryVisual(String category) {
-    switch (category.trim().toLowerCase()) {
-      case 'food & dining':
-        return const _CategoryVisual(
-          icon: Icons.restaurant,
-          color: Colors.orange,
-        );
-      case 'housing':
-        return const _CategoryVisual(
-          icon: Icons.home,
-          color: Color(0xFF1132D4),
-        );
-      case 'entertainment':
-        return const _CategoryVisual(icon: Icons.movie, color: Colors.red);
-      case 'shopping':
-        return const _CategoryVisual(
-          icon: Icons.shopping_bag,
-          color: Colors.green,
-        );
-      default:
-        return const _CategoryVisual(
-          icon: Icons.account_balance_wallet,
-          color: Color(0xFF1132D4),
-        );
-    }
+    final visual = categoryVisual(category);
+    return _CategoryVisual(icon: visual.icon, color: visual.color);
   }
 
   String _buildHeadlineInsight({

@@ -4,6 +4,7 @@ import 'package:project_base/screens/recurring_transactions_screen.dart';
 import 'package:project_base/screens/saving_goals_screen.dart';
 import 'package:project_base/services/api_service.dart';
 import 'package:project_base/services/user_session.dart';
+import 'package:project_base/utils/category_visuals.dart';
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -127,48 +128,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
   }
 
   static String _displayCategory(String category) {
-    switch (category.trim().toLowerCase()) {
-      case 'food':
-      case 'food & drink':
-      case 'food & dining':
-        return 'Food & Dining';
-      case 'home':
-        return 'Housing';
-      default:
-        return category.isEmpty ? 'Other' : category;
-    }
+    return displayCategoryName(category);
   }
 
   static _CategoryStyle _categoryStyle(String category) {
-    switch (category.trim().toLowerCase()) {
-      case 'food':
-      case 'food & drink':
-      case 'food & dining':
-        return const _CategoryStyle(
-          icon: Icons.restaurant,
-          color: Colors.orange,
-        );
-      case 'housing':
-      case 'home':
-        return const _CategoryStyle(icon: Icons.home, color: _primary);
-      case 'entertainment':
-        return const _CategoryStyle(icon: Icons.movie, color: Colors.red);
-      case 'shopping':
-        return const _CategoryStyle(
-          icon: Icons.shopping_bag,
-          color: Colors.green,
-        );
-      case 'transport':
-        return const _CategoryStyle(
-          icon: Icons.directions_car,
-          color: Colors.teal,
-        );
-      default:
-        return const _CategoryStyle(
-          icon: Icons.account_balance_wallet,
-          color: _primary,
-        );
-    }
+    final visual = categoryVisual(category);
+    return _CategoryStyle(icon: visual.icon, color: visual.color);
   }
 
   Future<void> _editBudget(_BudgetCategory item) async {
