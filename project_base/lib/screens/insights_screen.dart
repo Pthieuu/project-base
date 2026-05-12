@@ -7,6 +7,7 @@ import 'package:project_base/services/ai_chat_service.dart';
 import 'package:project_base/services/api_service.dart';
 import 'package:project_base/services/user_session.dart';
 import 'package:project_base/utils/category_visuals.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
@@ -60,6 +61,27 @@ class _InsightsScreenState extends State<InsightsScreen> {
   Future<_InsightsData> _loadInsights() async {
     if (UserSession.user_id == null) {
       throw Exception("Người dùng chưa đăng nhập");
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final aiEnabled =
+        prefs.getBool(
+          'profile_ai_insights_${UserSession.user_id ?? 'local'}',
+        ) ??
+        true;
+
+    if (!aiEnabled) {
+      currentTransactions = [];
+      if (messages.isEmpty) {
+        messages.add(
+          _ChatMessage(
+            text:
+                "AI Insights đang tắt trong Profile. Khi bật lại, mình sẽ tiếp tục phân tích chi tiêu và hỗ trợ nhập dữ liệu bằng chat.",
+            isUser: false,
+          ),
+        );
+      }
+      return _InsightsData.disabled();
     }
 
     final transactions = await ApiService().getTransactions(
@@ -177,7 +199,23 @@ class _InsightsScreenState extends State<InsightsScreen> {
       weeklySpend: weeklySpend,
       categoryTotals: currentByCategory,
       insightText: insightText,
+      aiEnabled: true,
     );
+  }
+
+  Future<void> _setAiInsightsEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(
+      'profile_ai_insights_${UserSession.user_id ?? 'local'}',
+      value,
+    );
+    if (!mounted) return;
+    setState(() {
+      if (value) {
+        messages.clear();
+      }
+      futureInsights = _loadInsights();
+    });
   }
 
   Map<String, double> _groupCategoryTotals(List<TransactionModel> expenses) {
@@ -501,6 +539,74 @@ class _InsightsScreenState extends State<InsightsScreen> {
         : message;
   }
 
+  Widget _disabledInsightsView({
+    required ThemeData theme,
+    required bool isDark,
+    required Color text,
+    required Color subText,
+  }) {
+    const primary = Color(0xFF1132D4);
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDark ? theme.cardColor : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(Icons.psychology, color: primary, size: 30),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "AI Insights đang tắt",
+                style: TextStyle(
+                  color: text,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "App sẽ tạm dừng phân tích thông minh, cảnh báo chi tiêu và chat AI cho đến khi bạn bật lại.",
+                style: TextStyle(color: subText, height: 1.4),
+              ),
+              const SizedBox(height: 18),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primary,
+                  foregroundColor: Colors.white,
+                  iconColor: Colors.white,
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: () => _setAiInsightsEnabled(true),
+                icon: const Icon(Icons.auto_awesome),
+                label: const Text(
+                  "Bật AI Insights",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -552,6 +658,15 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 }
 
                 final insights = snapshot.data!;
+                if (!insights.aiEnabled) {
+                  return _disabledInsightsView(
+                    theme: theme,
+                    isDark: isDark,
+                    text: text,
+                    subText: subText,
+                  );
+                }
+
                 final visual = _categoryVisual(insights.topCategoryName);
                 final warningTitle = _buildSpendingWarningTitle(insights);
                 final maxWeek = insights.weeklySpend.fold<double>(0, math.max);
@@ -1272,6 +1387,7 @@ class _InsightsData {
   final List<double> weeklySpend;
   final Map<String, double> categoryTotals;
   final String insightText;
+  final bool aiEnabled;
 
   const _InsightsData({
     required this.currentSpent,
@@ -1285,5 +1401,23 @@ class _InsightsData {
     required this.weeklySpend,
     required this.categoryTotals,
     required this.insightText,
+    required this.aiEnabled,
   });
+
+  factory _InsightsData.disabled() {
+    return const _InsightsData(
+      currentSpent: 0,
+      previousSpent: 0,
+      predictedSpend: 0,
+      topCategoryName: 'AI Insights',
+      topCategorySpend: 0,
+      previousTopCategorySpend: 0,
+      topCategoryChange: 0,
+      suggestedCut: 0,
+      weeklySpend: [0, 0, 0, 0],
+      categoryTotals: {},
+      insightText: '',
+      aiEnabled: false,
+    );
+  }
 }

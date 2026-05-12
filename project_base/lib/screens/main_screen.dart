@@ -15,7 +15,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-
   int _selectedIndex = 0;
 
   late List<Widget> _screens;
@@ -35,6 +34,9 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onItemTapped(int index) {
     setState(() {
+      if (index == 3) {
+        _screens[3] = InsightsScreen(key: UniqueKey());
+      }
       _selectedIndex = index;
     });
   }
@@ -58,8 +60,14 @@ class _MainScreenState extends State<MainScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: "History"),
-          BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: "Budget"),
-          BottomNavigationBarItem(icon: Icon(Icons.insights), label: "Insights"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_balance_wallet),
+            label: "Budget",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.insights),
+            label: "Insights",
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
       ),
