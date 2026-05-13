@@ -297,6 +297,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   Future<void> _sendMessage([String? preset]) async {
     final text = (preset ?? messageController.text).trim();
     if (text.isEmpty || currentInsights == null || isSending) return;
+    final t = context.read<LanguageController>().text;
 
     setState(() {
       isSending = true;
@@ -325,6 +326,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           userMessage: text,
           history: history,
           transactions: currentTransactions,
+          offTopicReply: t('financial_scope_reply'),
         );
         reply = aiResponse.text;
       } else {
@@ -339,9 +341,22 @@ class _InsightsScreenState extends State<InsightsScreen> {
     if (!mounted) return;
 
     setState(() {
-      messages.add(
-        _ChatMessage(text: reply, isUser: false, action: aiResponse?.action),
-      );
+      final actions = aiResponse?.actions ?? const <AiAssistantAction>[];
+      if (actions.isEmpty) {
+        messages.add(_ChatMessage(text: reply, isUser: false));
+      } else {
+        for (var index = 0; index < actions.length; index++) {
+          messages.add(
+            _ChatMessage(
+              text: actions.length == 1
+                  ? reply
+                  : '$reply\n${index + 1}/${actions.length}',
+              isUser: false,
+              action: actions[index],
+            ),
+          );
+        }
+      }
       isSending = false;
     });
 

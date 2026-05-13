@@ -284,6 +284,8 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'action': 'Action',
     'set_budget': 'Set budget',
     'add_saving_goal': 'Add saving goal',
+    'financial_scope_reply':
+        'I only help with personal finance topics like spending, income, budget, savings, transactions, forecasts, or financial goals. Please ask me something in that area.',
   },
   AppLanguage.vietnamese: {
     'home': 'Trang chủ',
@@ -515,6 +517,8 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'action': 'Thao tác',
     'set_budget': 'Đặt ngân sách',
     'add_saving_goal': 'Thêm mục tiêu tiết kiệm',
+    'financial_scope_reply':
+        'Mình chỉ hỗ trợ các câu hỏi liên quan đến quản lý tài chính cá nhân như chi tiêu, thu nhập, ngân sách, tiết kiệm, giao dịch, dự đoán chi tiêu hoặc mục tiêu tài chính. Bạn hỏi mình theo hướng đó nhé.',
   },
   AppLanguage.japanese: {
     'home': 'ホーム',
@@ -736,5 +740,7 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'action': '操作',
     'set_budget': '予算を設定',
     'add_saving_goal': '貯蓄目標を追加',
+    'financial_scope_reply':
+        '個人の家計管理に関する内容のみサポートします。支出、収入、予算、貯蓄、取引、予測、目標について質問してください。',
   },
 };
