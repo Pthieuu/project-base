@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeController>(context);
     final language = Provider.of<LanguageController>(context);
-    const primary = Color(0xFF1132D4);
+    final primary = theme.accentColor;
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -38,6 +38,10 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         cardColor: Colors.white,
         primaryColor: primary,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: primary,
+          brightness: Brightness.light,
+        ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
           foregroundColor: Color(0xFF0F172A),
@@ -62,6 +66,16 @@ class MyApp extends StatelessWidget {
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(foregroundColor: primary),
         ),
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+        ),
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          selectedItemColor: primary,
+          unselectedItemColor: Colors.grey,
+          backgroundColor: Colors.white,
+          type: BottomNavigationBarType.fixed,
+        ),
         switchTheme: SwitchThemeData(
           thumbColor: WidgetStateProperty.resolveWith((states) {
             return states.contains(WidgetState.selected)
@@ -80,6 +94,10 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.black,
         cardColor: const Color(0xFF111111),
         primaryColor: primary,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: primary,
+          brightness: Brightness.dark,
+        ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,
@@ -103,6 +121,16 @@ class MyApp extends StatelessWidget {
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(foregroundColor: Colors.white),
+        ),
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+        ),
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          selectedItemColor: primary,
+          unselectedItemColor: Colors.white60,
+          backgroundColor: const Color(0xFF111111),
+          type: BottomNavigationBarType.fixed,
         ),
         switchTheme: SwitchThemeData(
           thumbColor: WidgetStateProperty.resolveWith((states) {

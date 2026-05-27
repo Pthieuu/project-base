@@ -14,7 +14,7 @@ class SavingGoalsScreen extends StatefulWidget {
 }
 
 class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
-  static const Color _primary = Color(0xFF1132D4);
+  Color get _primary => Theme.of(context).primaryColor;
   static const Color _ink = Color(0xFF0F172A);
   static const Color _secondaryBlue = Color(0xFF1D4ED8);
   static const List<Color> _goalPalette = [
@@ -777,7 +777,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.event, color: _primary),
+            Icon(Icons.event, color: _primary),
             const SizedBox(width: 12),
             Expanded(
               child: Text(

@@ -80,6 +80,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final t = context.watch<LanguageController>().text;
+    final primary = theme.primaryColor;
 
     return Scaffold(
       backgroundColor: isDark
@@ -188,7 +189,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   children: [
                     Checkbox(
                       value: agreeTerms,
-                      activeColor: const Color(0xFF1132D4),
+                      activeColor: primary,
                       onChanged: (value) {
                         setState(() {
                           agreeTerms = value!;
@@ -211,7 +212,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1132D4),
+                      backgroundColor: primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
@@ -248,9 +249,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           width: 20,
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: isDark
-                              ? Colors.white
-                              : const Color(0xFF1132D4),
+                          foregroundColor: isDark ? Colors.white : primary,
                         ),
                         label: const Text("Google"),
                       ),
@@ -263,9 +262,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         onPressed: () {},
                         icon: const Icon(Icons.apple),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: isDark
-                              ? Colors.white
-                              : const Color(0xFF1132D4),
+                          foregroundColor: isDark ? Colors.white : primary,
                         ),
                         label: const Text("Apple"),
                       ),
@@ -280,8 +277,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onPressed: () => Navigator.pop(context),
                     child: Text(
                       t('already_account_login'),
-                      style: const TextStyle(
-                        color: Color(0xFF1132D4),
+                      style: TextStyle(
+                        color: primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

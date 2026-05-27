@@ -16,7 +16,7 @@ class BudgetScreen extends StatefulWidget {
 }
 
 class _BudgetScreenState extends State<BudgetScreen> {
-  static const Color _primary = Color(0xFF1132D4);
+  Color get _primary => Theme.of(context).primaryColor;
   late Future<_BudgetSummary> futureBudget;
 
   final currencyFormat = NumberFormat.currency(
@@ -122,7 +122,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     );
   }
 
-  static Color _statusColor(double percent, double limit) {
+  Color _statusColor(double percent, double limit) {
     if (limit <= 0) return _primary;
     if (percent >= 1) return const Color(0xFFDC2626);
     if (percent >= 0.8) return Colors.orange;

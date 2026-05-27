@@ -6,7 +6,7 @@ Future<DateTime?> showAppDatePicker({
   required DateTime firstDate,
   required DateTime lastDate,
 }) {
-  const primary = Color(0xFF1132D4);
+  final primary = Theme.of(context).primaryColor;
 
   return showDatePicker(
     context: context,

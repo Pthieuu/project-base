@@ -10,6 +10,7 @@ class AccountCreatedScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final t = context.watch<LanguageController>().text;
+    final primary = Theme.of(context).primaryColor;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F9FF),
@@ -57,8 +58,8 @@ class AccountCreatedScreen extends StatelessWidget {
                         Text(
                           t('account_created'),
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFF1132D4),
+                          style: TextStyle(
+                            color: primary,
                             fontSize: 32,
                             fontWeight: FontWeight.w800,
                           ),
@@ -105,6 +106,8 @@ class AccountCreatedScreen extends StatelessWidget {
 
   /// 🔵 Icon
   Widget _buildIcon(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -112,7 +115,7 @@ class AccountCreatedScreen extends StatelessWidget {
           width: 160,
           height: 160,
           decoration: BoxDecoration(
-            color: const Color(0xFF3D5AFE).withValues(alpha: 0.1),
+            color: primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(999),
           ),
         ),
@@ -130,13 +133,15 @@ class AccountCreatedScreen extends StatelessWidget {
               ),
             ],
           ),
-          child: const Icon(Icons.check, size: 48, color: Color(0xFF1132D4)),
+          child: Icon(Icons.check, size: 48, color: primary),
         ),
       ],
     );
   }
 
   Widget _buildButton(BuildContext context, String Function(String) t) {
+    final primary = Theme.of(context).primaryColor;
+
     return GestureDetector(
       onTap: () {
         Navigator.pushAndRemoveUntil(
@@ -149,17 +154,17 @@ class AccountCreatedScreen extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFF1132D4),
+          color: primary,
           borderRadius: BorderRadius.circular(999),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Color(0x333D5AFE),
+              color: primary.withValues(alpha: 0.2),
               blurRadius: 10,
               offset: Offset(0, 8),
               spreadRadius: -6,
             ),
             BoxShadow(
-              color: Color(0x333D5AFE),
+              color: primary.withValues(alpha: 0.2),
               blurRadius: 25,
               offset: Offset(0, 20),
               spreadRadius: -5,
