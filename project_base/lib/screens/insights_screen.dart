@@ -297,7 +297,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
   Future<void> _sendMessage([String? preset]) async {
     final text = (preset ?? messageController.text).trim();
     if (text.isEmpty || currentInsights == null || isSending) return;
-    final t = context.read<LanguageController>().text;
+    final languageController = context.read<LanguageController>();
+    final t = languageController.text;
 
     setState(() {
       isSending = true;
@@ -327,6 +328,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           history: history,
           transactions: currentTransactions,
           offTopicReply: t('financial_scope_reply'),
+          responseLanguageCode: languageController.language.code,
         );
         reply = aiResponse.text;
       } else {

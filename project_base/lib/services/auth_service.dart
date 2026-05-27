@@ -22,6 +22,16 @@ class AuthService {
     });
   }
 
+  static Future<Map<String, dynamic>> resetPassword(
+    String email,
+    String newPassword,
+  ) async {
+    return _postForm("reset_password.php", {
+      "email": email,
+      "password": newPassword,
+    });
+  }
+
   static Future<Map<String, dynamic>> _postForm(
     String endpoint,
     Map<String, String> body,

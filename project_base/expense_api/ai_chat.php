@@ -27,6 +27,7 @@ if (!is_array($input)) {
 }
 
 $message = trim((string)($input["message"] ?? ""));
+$language = normalizeLanguage((string)($input["language"] ?? "vi"));
 $history = is_array($input["history"] ?? null) ? $input["history"] : [];
 $transactions = is_array($input["transactions"] ?? null) ? $input["transactions"] : [];
 
@@ -40,7 +41,7 @@ if ($message === "") {
 
 $model = getenv("OLLAMA_MODEL") ?: "llama3.2";
 $baseUrl = rtrim(getenv("OLLAMA_BASE_URL") ?: "http://127.0.0.1:11434", "/");
-$messages = buildOllamaMessages(buildInstructions($transactions), $history, $message);
+$messages = buildOllamaMessages(buildInstructions($transactions, $language), $history, $message);
 $result = callOllama($baseUrl, $model, $messages);
 
 if ($result["status_code"] !== 200) {
@@ -176,7 +177,52 @@ function extractOllamaText(?array $data): string
     return is_string($content) ? trim($content) : "";
 }
 
-function buildInstructions(array $transactions): string
+function normalizeLanguage(string $language): string
+{
+    $language = strtolower(trim($language));
+    if (in_array($language, ["en", "english"], true)) {
+        return "en";
+    }
+    if (in_array($language, ["ja", "jp", "japanese"], true)) {
+        return "ja";
+    }
+    return "vi";
+}
+
+function languageName(string $language): string
+{
+    if ($language === "en") {
+        return "English";
+    }
+    if ($language === "ja") {
+        return "Japanese";
+    }
+    return "Vietnamese";
+}
+
+function localizedActionMessage(string $language): string
+{
+    if ($language === "en") {
+        return "I separated the items below. Please review and confirm to save.";
+    }
+    if ($language === "ja") {
+        return "下の項目に分けました。内容を確認して保存してください。";
+    }
+    return "Mình đã tách thành các mục bên dưới, bạn kiểm tra rồi xác nhận để lưu.";
+}
+
+function localizedScopeReply(string $language): string
+{
+    if ($language === "en") {
+        return "I only help with personal finance topics. Please ask me about spending, income, budget, savings, or transactions.";
+    }
+    if ($language === "ja") {
+        return "個人の家計管理に関する内容のみサポートします。支出、収入、予算、貯蓄、取引について質問してください。";
+    }
+    return "Mình chỉ hỗ trợ các câu hỏi liên quan đến quản lý tài chính cá nhân. Bạn hỏi mình về chi tiêu, thu nhập, ngân sách, tiết kiệm hoặc giao dịch nhé.";
+}
+
+function buildInstructions(array $transactions, string $language): string
 {
     date_default_timezone_set("Asia/Ho_Chi_Minh");
 
@@ -249,12 +295,15 @@ function buildInstructions(array $transactions): string
     $categoryText = empty($topCategories) ? "- Chưa có dữ liệu" : implode("\n", $topCategories);
     $recentText = empty($recentRows) ? "- Chưa có giao dịch" : implode("\n", $recentRows);
     $monthText = $now->format("m/Y");
+    $languageName = languageName($language);
+    $scopeReply = localizedScopeReply($language);
+    $actionMessage = localizedActionMessage($language);
 
     return <<<PROMPT
 Bạn là trợ lý AI trong app quản lý chi tiêu cá nhân.
-Luôn trả lời bằng tiếng Việt, tự nhiên như đang chat thật với người dùng.
+Luôn trả lời bằng {$languageName}, tự nhiên như đang chat thật với người dùng.
 Chỉ trả lời các nội dung liên quan đến quản lý tài chính cá nhân: chi tiêu, thu nhập, giao dịch, ngân sách, tiết kiệm, mục tiêu tài chính, dự đoán chi tiêu, hóa đơn, nợ/vay hoặc nhập dữ liệu tài chính vào app.
-Nếu người dùng hỏi ngoài phạm vi tài chính cá nhân, hãy từ chối ngắn gọn bằng đúng câu: "Mình chỉ hỗ trợ các câu hỏi liên quan đến quản lý tài chính cá nhân. Bạn hỏi mình về chi tiêu, thu nhập, ngân sách, tiết kiệm hoặc giao dịch nhé."
+Nếu người dùng hỏi ngoài phạm vi tài chính cá nhân, hãy từ chối ngắn gọn bằng đúng câu: "{$scopeReply}"
 Khi câu hỏi liên quan đến tài chính, hãy dùng dữ liệu tài chính bên dưới để phân tích.
 Trả lời đúng câu hỏi trước, sau đó mới giải thích bằng dữ liệu nếu cần.
 Giữ mạch hội thoại từ lịch sử chat; đừng trả lời theo mẫu cố định.
@@ -267,7 +316,7 @@ Schema chung:
 {
   "type": "action",
   "action": "add_transaction|add_saving_goal|set_budget|add_recurring_transaction",
-  "message": "Câu xác nhận ngắn bằng tiếng Việt",
+  "message": "Câu xác nhận ngắn bằng {$languageName}",
   "payload": {}
 }
 
@@ -276,7 +325,7 @@ KHÔNG gộp nhiều khoản chi vào một payload, KHÔNG tạo một mô tả
 Trả về schema nhiều hành động:
 {
   "type": "actions",
-  "message": "Mình đã tách thành các mục bên dưới, bạn kiểm tra rồi xác nhận để lưu.",
+  "message": "{$actionMessage}",
   "actions": [
     {
       "action": "add_transaction",

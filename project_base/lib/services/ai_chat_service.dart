@@ -24,12 +24,16 @@ class AiChatService {
     required List<AiChatTurn> history,
     required List<TransactionModel> transactions,
     String? offTopicReply,
+    String responseLanguageCode = 'vi',
   }) async {
     if (!_isFinancialQuestion(userMessage)) {
       return AiAssistantResponse(text: offTopicReply ?? _offTopicReply);
     }
 
-    final localActionResponse = _tryBuildLocalTransactionActions(userMessage);
+    final localActionResponse = _tryBuildLocalTransactionActions(
+      userMessage,
+      responseLanguageCode,
+    );
     if (localActionResponse != null) {
       return localActionResponse;
     }
@@ -49,6 +53,7 @@ class AiChatService {
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'message': userMessage,
+            'language': responseLanguageCode,
             'history': history.map((turn) => turn.toJson()).toList(),
             'transactions': transactions.map((tx) => tx.toJson()).toList(),
           }),
@@ -266,7 +271,10 @@ class AiChatService {
         categoryWords.any(message.contains);
   }
 
-  AiAssistantResponse? _tryBuildLocalTransactionActions(String rawMessage) {
+  AiAssistantResponse? _tryBuildLocalTransactionActions(
+    String rawMessage,
+    String languageCode,
+  ) {
     final message = rawMessage.trim();
     final lower = message.toLowerCase();
     final wantsDataEntry = [
@@ -330,11 +338,25 @@ class AiChatService {
     if (actions.isEmpty) return null;
 
     return AiAssistantResponse(
-      text: actions.length == 1
-          ? 'Mình đã tách được giao dịch bên dưới, bạn kiểm tra rồi xác nhận để lưu.'
-          : 'Mình đã tách thành ${actions.length} giao dịch bên dưới, bạn kiểm tra rồi xác nhận để lưu.',
+      text: _localActionMessage(actions.length, languageCode),
       actions: actions,
     );
+  }
+
+  String _localActionMessage(int count, String languageCode) {
+    if (languageCode == 'en') {
+      return count == 1
+          ? 'I separated the transaction below. Please review and confirm to save it.'
+          : 'I separated this into $count transactions below. Please review and confirm each one to save.';
+    }
+    if (languageCode == 'ja') {
+      return count == 1
+          ? '下の取引に分けました。内容を確認して保存してください。'
+          : '$count 件の取引に分けました。内容を確認して保存してください。';
+    }
+    return count == 1
+        ? 'Mình đã tách được giao dịch bên dưới, bạn kiểm tra rồi xác nhận để lưu.'
+        : 'Mình đã tách thành $count giao dịch bên dưới, bạn kiểm tra rồi xác nhận để lưu.';
   }
 
   String _cleanTransactionDescription(String rawPhrase) {
