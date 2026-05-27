@@ -515,7 +515,19 @@ class _InsightsScreenState extends State<InsightsScreen> {
   }
 
   DateTime _dateValue(dynamic value) {
-    final parsed = DateTime.tryParse(value?.toString() ?? '');
+    final raw = value?.toString().trim() ?? '';
+    final parsed = DateTime.tryParse(raw);
+    if (parsed != null && RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(raw)) {
+      final now = DateTime.now();
+      return DateTime(
+        parsed.year,
+        parsed.month,
+        parsed.day,
+        now.hour,
+        now.minute,
+        now.second,
+      );
+    }
     return parsed ?? DateTime.now();
   }
 

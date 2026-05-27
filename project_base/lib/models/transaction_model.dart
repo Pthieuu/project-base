@@ -27,10 +27,17 @@ class TransactionModel {
       category: json['category'] ?? "",
       account: json['account'] ?? "",
       amount: double.tryParse(json['amount'].toString()) ?? 0.0,
-      isExpense: json['is_expense'] == 1, // convert int -> bool
+      isExpense: _parseBool(json['is_expense']),
       notes: json['notes'] ?? "",
       date: json['date'] ?? "",
     );
+  }
+
+  static bool _parseBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    final text = value?.toString().trim().toLowerCase();
+    return text == '1' || text == 'true' || text == 'expense';
   }
 
   /// 🔹 Object -> JSON
