@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'addtransaction_screen.dart';
@@ -17,9 +19,8 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
-  static const double _chartMaxBarHeight = 95;
-
+class _DashboardScreenState extends State<DashboardScreen>
+    with SingleTickerProviderStateMixin {
   List<TransactionModel> transactions = [];
 
   double totalIncome = 0;
@@ -34,10 +35,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     decimalDigits: 0,
   );
 
+  late final AnimationController _chartAnimationController;
+  late final Animation<double> _chartAnimation;
+
   @override
   void initState() {
     super.initState();
+    _chartAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 850),
+    );
+    _chartAnimation = CurvedAnimation(
+      parent: _chartAnimationController,
+      curve: Curves.easeOutCubic,
+    );
     loadTransactions();
+  }
+
+  @override
+  void dispose() {
+    _chartAnimationController.dispose();
+    super.dispose();
   }
 
   Future loadTransactions() async {
@@ -75,6 +93,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
 
+    if (!mounted) return;
     setState(() {
       transactions = txList;
       totalIncome = income;
@@ -83,6 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       monthlyIncome = currentMonthIncome;
       monthlyExpense = currentMonthExpense;
     });
+    _chartAnimationController.forward(from: 0);
   }
 
   _CategoryStyle _categoryStyle(String category) {
@@ -112,45 +132,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return null;
   }
 
-  List<_ChartDayData> _buildWeeklyExpenseData() {
+  List<_SpendingCategoryData> _buildCategoryExpenseData() {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final startDay = today.subtract(const Duration(days: 6));
-    final expenseByDay = <DateTime, double>{};
-
-    for (var i = 0; i < 7; i++) {
-      final day = startDay.add(Duration(days: i));
-      expenseByDay[day] = 0;
-    }
+    final totals = <String, double>{};
 
     for (final tx in transactions) {
       if (!tx.isExpense) continue;
 
       final parsedDate = _parseTransactionDate(tx.date);
       if (parsedDate == null) continue;
+      if (parsedDate.year != now.year || parsedDate.month != now.month) {
+        continue;
+      }
 
-      final txDay = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
-      if (txDay.isBefore(startDay) || txDay.isAfter(today)) continue;
-
-      expenseByDay.update(txDay, (value) => value + tx.amount);
+      final label = _categoryStyle(tx.category).title;
+      totals.update(
+        label,
+        (value) => value + tx.amount,
+        ifAbsent: () => tx.amount,
+      );
     }
 
-    final maxAmount = expenseByDay.values.fold<double>(
+    final entries = totals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final visibleEntries = entries.take(5).toList();
+    final otherTotal = entries
+        .skip(5)
+        .fold<double>(0, (sum, item) => sum + item.value);
+    if (otherTotal > 0) {
+      visibleEntries.add(MapEntry('Other', otherTotal));
+    }
+
+    final total = visibleEntries.fold<double>(
       0,
-      (current, value) => value > current ? value : current,
+      (sum, entry) => sum + entry.value,
     );
-
-    return expenseByDay.entries.map((entry) {
-      final normalizedHeight = maxAmount == 0
-          ? 8.0
-          : (entry.value / maxAmount) * _chartMaxBarHeight;
-
-      return _ChartDayData(
-        label: DateFormat('E', 'en_US').format(entry.key),
+    return visibleEntries.map((entry) {
+      final style = _categoryStyle(entry.key);
+      return _SpendingCategoryData(
+        label: entry.key,
         amount: entry.value,
-        height: normalizedHeight.clamp(8.0, _chartMaxBarHeight).toDouble(),
+        percent: total <= 0 ? 0 : entry.value / total,
+        color: _chartColorFor(style.title),
+        icon: style.icon,
       );
     }).toList();
+  }
+
+  Color _chartColorFor(String category) {
+    final key = category.toLowerCase();
+    if (key.contains('food') || key.contains('dining')) {
+      return const Color(0xFF5B7CFA);
+    }
+    if (key.contains('coffee')) {
+      return const Color(0xFF6F8DE8);
+    }
+    if (key.contains('transport')) {
+      return const Color(0xFF4AA6B5);
+    }
+    if (key.contains('sport')) {
+      return const Color(0xFF3F66D6);
+    }
+    if (key.contains('shopping')) {
+      return const Color(0xFF7E68D8);
+    }
+    if (key.contains('housing')) {
+      return const Color(0xFF1132D4);
+    }
+    if (key.contains('entertainment')) {
+      return const Color(0xFF8068C9);
+    }
+    if (key.contains('health')) {
+      return const Color(0xFF49A98C);
+    }
+    if (key.contains('education')) {
+      return const Color(0xFF4C9BCB);
+    }
+    return const Color(0xFF7B8BA8);
   }
 
   double _monthlyTotal({required bool expense}) {
@@ -325,7 +384,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final theme = Theme.of(context);
     final t = context.watch<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
-    final weeklyExpenseData = _buildWeeklyExpenseData();
+    final categoryExpenseData = _buildCategoryExpenseData();
 
     /// 🎯 COLOR SYSTEM (match Tailwind)
     const primary = Color(0xFF1132D4);
@@ -542,7 +601,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              t('last_7_days'),
+                              t('this_month'),
                               style: const TextStyle(
                                 fontSize: 10,
                                 color: primary,
@@ -554,19 +613,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       const SizedBox(height: 20),
 
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: weeklyExpenseData
-                            .map(
-                              (day) => chartBar(
-                                height: day.height,
-                                label: day.label,
-                                amount: currencyFormat.format(day.amount),
-                                textColor: subText,
-                              ),
-                            )
-                            .toList(),
-                      ),
+                      if (categoryExpenseData.isEmpty)
+                        _emptySpendingChart(context, subText)
+                      else
+                        _categorySpendingChart(
+                          data: categoryExpenseData,
+                          total: monthlyExpense,
+                          text: text,
+                          subText: subText,
+                        ),
                     ],
                   ),
                 ),
@@ -612,6 +667,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       final categoryLabel = categoryStyle.title.isEmpty
                           ? tx.category
                           : categoryStyle.title;
+                      final date = _parseTransactionDate(tx.date);
+                      final timeLabel = date == null
+                          ? tx.date
+                          : DateFormat('dd/MM/yyyy HH:mm').format(date);
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 10),
@@ -647,7 +706,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                   Text(
-                                    categoryLabel,
+                                    "$categoryLabel • $timeLabel",
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: subText,
@@ -776,50 +835,213 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  static Widget chartBar({
-    required double height,
-    required String label,
-    required String amount,
-    required Color textColor,
+  Widget _emptySpendingChart(BuildContext context, Color subText) {
+    final t = context.watch<LanguageController>().text;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      child: Column(
+        children: [
+          Icon(Icons.pie_chart_outline, size: 42, color: subText),
+          const SizedBox(height: 10),
+          Text(
+            t('no_month_activity'),
+            textAlign: TextAlign.center,
+            style: TextStyle(color: subText),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _categorySpendingChart({
+    required List<_SpendingCategoryData> data,
+    required double total,
+    required Color text,
+    required Color subText,
   }) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 3),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              amount,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 9, color: textColor),
-            ),
-            const SizedBox(height: 6),
-            Container(
-              height: height,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1132D4),
-                borderRadius: BorderRadius.circular(4),
+            Expanded(
+              child: SizedBox(
+                height: 190,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    AnimatedBuilder(
+                      animation: _chartAnimation,
+                      builder: (context, _) {
+                        return Transform.scale(
+                          scale: 0.96 + (_chartAnimation.value * 0.04),
+                          child: CustomPaint(
+                            size: const Size(170, 170),
+                            painter: _DonutChartPainter(
+                              data,
+                              progress: _chartAnimation.value,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          currencyFormat.format(total),
+                          style: TextStyle(
+                            color: text,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          DateFormat('MMM yyyy').format(DateTime.now()),
+                          style: TextStyle(color: subText, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 8),
-            Text(label, style: TextStyle(fontSize: 11, color: textColor)),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 118,
+              child: AnimatedBuilder(
+                animation: _chartAnimation,
+                builder: (context, _) {
+                  final opacity = _chartAnimation.value.clamp(0.0, 1.0);
+                  return Opacity(
+                    opacity: opacity,
+                    child: Transform.translate(
+                      offset: Offset(16 * (1 - _chartAnimation.value), 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: data.take(5).map((item) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 9,
+                                  height: 9,
+                                  decoration: BoxDecoration(
+                                    color: item.color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 7),
+                                Expanded(
+                                  child: Text(
+                                    item.label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: text,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${(item.percent * 100).round()}%',
+                                  style: TextStyle(
+                                    color: subText,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
-      ),
+        if (data.length > 5)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                '+${data.length - 5}',
+                style: TextStyle(
+                  color: subText,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
 
-class _ChartDayData {
+class _DonutChartPainter extends CustomPainter {
+  final List<_SpendingCategoryData> data;
+  final double progress;
+
+  const _DonutChartPainter(this.data, {required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    const strokeWidth = 18.0;
+
+    final backgroundPaint = Paint()
+      ..color = const Color(0xFFDDE5F5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(rect, -math.pi / 2, math.pi * 2, false, backgroundPaint);
+
+    var start = -math.pi / 2;
+    for (final item in data) {
+      final sweep = math.max(item.percent * math.pi * 2 * progress, 0.0);
+      if (sweep <= 0) continue;
+      final paint = Paint()
+        ..color = item.color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round;
+
+      canvas.drawArc(rect, start, sweep, false, paint);
+      start += sweep + 0.035;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DonutChartPainter oldDelegate) {
+    return oldDelegate.data != data || oldDelegate.progress != progress;
+  }
+}
+
+class _SpendingCategoryData {
   final String label;
   final double amount;
-  final double height;
+  final double percent;
+  final Color color;
+  final IconData icon;
 
-  const _ChartDayData({
+  const _SpendingCategoryData({
     required this.label,
     required this.amount,
-    required this.height,
+    required this.percent,
+    required this.color,
+    required this.icon,
   });
 }
 

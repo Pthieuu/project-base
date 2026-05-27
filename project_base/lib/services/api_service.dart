@@ -29,6 +29,11 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception("HTTP ERROR: ${response.statusCode}");
     }
+
+    final responseData = jsonDecode(response.body);
+    if (responseData is! Map || responseData['status'] != 'success') {
+      throw Exception(responseData['message'] ?? "Add transaction failed");
+    }
   }
 
   Future<void> updateTransaction(Map<String, dynamic> data) async {
