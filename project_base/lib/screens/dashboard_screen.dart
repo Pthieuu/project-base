@@ -9,6 +9,7 @@ import '../services/user_session.dart';
 import 'package:intl/intl.dart';
 import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/controller/theme_controller.dart';
+import 'package:project_base/models/category_budget_model.dart';
 import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/utils/category_visuals.dart';
 
@@ -29,6 +30,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   double totalBalance = 0;
   double monthlyIncome = 0;
   double monthlyExpense = 0;
+  List<_BudgetOverrun> budgetOverruns = [];
+  bool _budgetAlertShown = false;
 
   final currencyFormat = NumberFormat.currency(
     locale: 'vi_VN',
@@ -60,7 +63,9 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future loadTransactions() async {
-    final txList = await ApiService().getTransactions(UserSession.user_id!);
+    final api = ApiService();
+    final txList = await api.getTransactions(UserSession.user_id!);
+    final budgets = await _loadCurrentMonthBudgets(api);
     txList.sort((a, b) {
       final dateA = _parseTransactionDate(a.date);
       final dateB = _parseTransactionDate(b.date);
@@ -76,6 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     double currentMonthIncome = 0;
     double currentMonthExpense = 0;
     final now = DateTime.now();
+    final monthlyExpenseByCategory = <String, double>{};
 
     for (var tx in txList) {
       if (tx.isExpense) {
@@ -88,6 +94,9 @@ class _DashboardScreenState extends State<DashboardScreen>
       if (date != null && date.year == now.year && date.month == now.month) {
         if (tx.isExpense) {
           currentMonthExpense += tx.amount;
+          final label = _displayCategory(tx.category);
+          monthlyExpenseByCategory[label] =
+              (monthlyExpenseByCategory[label] ?? 0) + tx.amount;
         } else {
           currentMonthIncome += tx.amount;
         }
@@ -102,8 +111,79 @@ class _DashboardScreenState extends State<DashboardScreen>
       totalBalance = income - expense;
       monthlyIncome = currentMonthIncome;
       monthlyExpense = currentMonthExpense;
+      budgetOverruns = _buildBudgetOverruns(budgets, monthlyExpenseByCategory);
     });
     _chartAnimationController.forward(from: 0);
+    _showBudgetOverrunAlertIfNeeded();
+  }
+
+  Future<List<CategoryBudgetModel>> _loadCurrentMonthBudgets(
+    ApiService api,
+  ) async {
+    try {
+      return await api.getBudgets(DateFormat('yyyy-MM').format(DateTime.now()));
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  String _displayCategory(String category) => categoryVisual(category).label;
+
+  List<_BudgetOverrun> _buildBudgetOverruns(
+    List<CategoryBudgetModel> budgets,
+    Map<String, double> spentByCategory,
+  ) {
+    final items = <_BudgetOverrun>[];
+
+    for (final budget in budgets) {
+      if (budget.monthlyLimit <= 0) continue;
+      final label = _displayCategory(budget.category);
+      final spent = spentByCategory[label] ?? 0;
+      if (spent <= budget.monthlyLimit) continue;
+
+      items.add(
+        _BudgetOverrun(
+          category: label,
+          spent: spent,
+          limit: budget.monthlyLimit,
+        ),
+      );
+    }
+
+    items.sort((a, b) => b.exceededBy.compareTo(a.exceededBy));
+    return items;
+  }
+
+  void _showBudgetOverrunAlertIfNeeded() {
+    if (_budgetAlertShown || budgetOverruns.isEmpty || !mounted) return;
+    _budgetAlertShown = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || budgetOverruns.isEmpty) return;
+      final t = context.read<LanguageController>().text;
+      final item = budgetOverruns.first;
+      final message = budgetOverruns.length == 1
+          ? t('budget_overrun_snackbar')
+                .replaceAll('{category}', item.category)
+                .replaceAll('{amount}', currencyFormat.format(item.exceededBy))
+          : t(
+              'budget_overrun_multi_snackbar',
+            ).replaceAll('{count}', budgetOverruns.length.toString());
+
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFFB91C1C),
+          content: Text(message),
+          action: SnackBarAction(
+            label: t('view'),
+            textColor: Colors.white,
+            onPressed: _showNotifications,
+          ),
+        ),
+      );
+    });
   }
 
   _CategoryStyle _categoryStyle(String category) {
@@ -411,6 +491,26 @@ class _DashboardScreenState extends State<DashboardScreen>
       return items;
     }
 
+    for (final overrun in budgetOverruns.take(3)) {
+      items.add(
+        _DashboardNotification(
+          icon: Icons.priority_high_rounded,
+          color: const Color(0xFFDC2626),
+          title: t(
+            'budget_overrun_title',
+          ).replaceAll('{category}', overrun.category),
+          message: t('budget_overrun_body')
+              .replaceAll('{spent}', currencyFormat.format(overrun.spent))
+              .replaceAll('{limit}', currencyFormat.format(overrun.limit))
+              .replaceAll(
+                '{amount}',
+                currencyFormat.format(overrun.exceededBy),
+              ),
+          time: DateFormat('MMM yyyy').format(DateTime.now()),
+        ),
+      );
+    }
+
     final monthlyBalance = monthlyIncome - monthlyExpense;
     if (monthlyExpense > monthlyIncome && monthlyIncome > 0) {
       items.add(
@@ -702,6 +802,16 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ),
                 ),
               ),
+
+              if (budgetOverruns.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: _BudgetWarningList(
+                    items: budgetOverruns,
+                    currencyFormat: currencyFormat,
+                    onTap: _showNotifications,
+                  ),
+                ),
 
               /// ================= STATS =================
               Padding(
@@ -1284,6 +1394,158 @@ class _DashboardNotification {
     required this.message,
     required this.time,
   });
+}
+
+class _BudgetOverrun {
+  final String category;
+  final double spent;
+  final double limit;
+
+  const _BudgetOverrun({
+    required this.category,
+    required this.spent,
+    required this.limit,
+  });
+
+  double get exceededBy => spent - limit;
+  double get percent => limit <= 0 ? 0 : spent / limit;
+}
+
+class _BudgetWarningList extends StatelessWidget {
+  final List<_BudgetOverrun> items;
+  final NumberFormat currencyFormat;
+  final VoidCallback onTap;
+
+  const _BudgetWarningList({
+    required this.items,
+    required this.currencyFormat,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.watch<LanguageController>().text;
+    final visibleItems = items.take(3).toList();
+    final hiddenCount = items.length - visibleItems.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var index = 0; index < visibleItems.length; index++) ...[
+          _BudgetWarningCard(
+            item: visibleItems[index],
+            currencyFormat: currencyFormat,
+            onTap: onTap,
+          ),
+          if (index != visibleItems.length - 1) const SizedBox(height: 10),
+        ],
+        if (hiddenCount > 0) ...[
+          const SizedBox(height: 10),
+          TextButton.icon(
+            onPressed: onTap,
+            icon: const Icon(Icons.notifications_active_outlined),
+            label: Text(
+              t(
+                'more_budget_overruns',
+              ).replaceAll('{count}', hiddenCount.toString()),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _BudgetWarningCard extends StatelessWidget {
+  final _BudgetOverrun item;
+  final NumberFormat currencyFormat;
+  final VoidCallback onTap;
+
+  const _BudgetWarningCard({
+    required this.item,
+    required this.currencyFormat,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.watch<LanguageController>().text;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final progress = item.percent.clamp(0.0, 1.0);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2A1212) : const Color(0xFFFFF1F2),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFECACA),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFFDC2626).withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.warning_amber_rounded,
+                color: Color(0xFFDC2626),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t(
+                      'budget_overrun_title',
+                    ).replaceAll('{category}', item.category),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF7F1D1D),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    t('budget_overrun_short').replaceAll(
+                      '{amount}',
+                      currencyFormat.format(item.exceededBy),
+                    ),
+                    style: TextStyle(
+                      color: isDark ? Colors.white70 : const Color(0xFF991B1B),
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 7,
+                      backgroundColor: isDark
+                          ? Colors.white12
+                          : const Color(0xFFFECACA),
+                      color: const Color(0xFFDC2626),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right, color: Color(0xFFDC2626)),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _CategoryStyle {

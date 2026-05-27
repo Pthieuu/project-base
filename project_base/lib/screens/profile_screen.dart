@@ -558,6 +558,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await themeController.setAccent(selected);
   }
 
+  Future<void> _showLogoIconSheet() async {
+    final themeController = context.read<ThemeController>();
+    final t = context.read<LanguageController>().text;
+    final selected = await showModalBottomSheet<AppLogoIcon>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.75,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _SheetHeader(
+                    icon: Icons.apps_outlined,
+                    title: t('app_icon'),
+                    subtitle: t('choose_app_icon'),
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: AppLogoIcon.values.map((item) {
+                      final isSelected = item == themeController.logoIcon;
+                      return _LogoIconOption(
+                        item: item,
+                        selected: isSelected,
+                        onTap: () => Navigator.pop(sheetContext, item),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected == null) return;
+    await themeController.setLogoIcon(selected);
+  }
+
   Future<void> _showAiInsightsSheet() async {
     final t = context.read<LanguageController>().text;
     await showModalBottomSheet<void>(
@@ -881,6 +929,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: _showAccentSheet,
                   ),
                   ProfileItem(
+                    icon: themeController.logoIcon.icon,
+                    title: t('app_icon'),
+                    subtitle: themeController.logoIcon.label,
+                    onTap: _showLogoIconSheet,
+                  ),
+                  ProfileItem(
                     icon: Icons.psychology,
                     title: t('ai_insights'),
                     subtitle: _aiInsightsEnabled ? t('enabled') : t('disabled'),
@@ -1080,6 +1134,87 @@ class _SelectionTile extends StatelessWidget {
               ),
             ),
             if (selected) Icon(Icons.check_circle, color: primary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LogoIconOption extends StatelessWidget {
+  final AppLogoIcon item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _LogoIconOption({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = context.watch<ThemeController>().accentColor;
+    final isDark = theme.brightness == Brightness.dark;
+    final tileColor = isDark ? theme.cardColor : Colors.white;
+    final textColor = theme.textTheme.bodyLarge?.color;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: 112,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: tileColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected ? primary : Colors.transparent,
+            width: 1.5,
+          ),
+          boxShadow: [
+            if (selected)
+              BoxShadow(
+                color: primary.withValues(alpha: 0.16),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: primary,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(item.icon, color: Colors.white, size: 28),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              item.label,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Icon(
+              selected
+                  ? Icons.check_circle
+                  : Icons.radio_button_unchecked_outlined,
+              size: 18,
+              color: selected ? primary : Colors.grey,
+            ),
           ],
         ),
       ),
