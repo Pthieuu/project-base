@@ -120,8 +120,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final t = context.watch<LanguageController>().text;
+    final primary = theme.primaryColor;
 
     return Scaffold(
       backgroundColor: isDark
@@ -232,7 +234,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 t('expense'),
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: isExpense ? Colors.blue : Colors.grey,
+                                  color: isExpense ? primary : Colors.grey,
                                 ),
                               ),
                             ),
@@ -383,7 +385,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           icon: const Icon(Icons.add),
                           label: Text(t('add')),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1132D4),
+                            backgroundColor: primary,
                             foregroundColor: Colors.white,
                             iconColor: Colors.white,
                             shape: RoundedRectangleBorder(
@@ -588,7 +590,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           : const Color(0xFFE0E7FF),
       backgroundColor: isDark ? Colors.grey[800] : const Color(0xFFF3F4F6),
       labelStyle: TextStyle(
-        color: active ? const Color(0xFF1132D4) : Colors.grey,
+        color: active ? Theme.of(context).primaryColor : Colors.grey,
         fontWeight: FontWeight.w500,
       ),
       shape: RoundedRectangleBorder(

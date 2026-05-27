@@ -14,11 +14,12 @@ class AppLogo extends StatelessWidget {
     this.withShadow = false,
   }) : iconSize = iconSize ?? size * 0.5;
 
-  static const Color color = Color(0xFF1132D4);
   static const IconData icon = Icons.shield;
 
   @override
   Widget build(BuildContext context) {
+    final color = Theme.of(context).primaryColor;
+
     return Container(
       width: size,
       height: size,

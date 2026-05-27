@@ -389,7 +389,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             final theme = Theme.of(context);
             final isDark = theme.brightness == Brightness.dark;
             final visual = categoryVisual(categoryController.text);
-            final primary = const Color(0xFF1132D4);
+            final primary = theme.primaryColor;
             final sheetColor = isDark ? theme.cardColor : Colors.white;
 
             return SafeArea(
@@ -687,7 +687,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: const Color(0xFF1132D4)),
+          prefixIcon: Icon(icon, color: Theme.of(context).primaryColor),
           filled: true,
           fillColor: isDark ? const Color(0xFF151827) : const Color(0xFFF8FAFC),
           border: OutlineInputBorder(
@@ -704,7 +704,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF1132D4), width: 1.4),
+            borderSide: BorderSide(
+              color: Theme.of(context).primaryColor,
+              width: 1.4,
+            ),
           ),
         ),
       ),
@@ -778,7 +781,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1132D4),
+        color: Theme.of(context).primaryColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -806,7 +809,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   child: CardStat(
                     title: t('income'),
                     value: formatter.format(monthlyIncome),
-                    color: Colors.green,
+                    color: const Color(0xFF047857),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -814,7 +817,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   child: CardStat(
                     title: t('expense'),
                     value: formatter.format(monthlyExpense),
-                    color: Colors.red,
+                    color: const Color(0xFFDC2626),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -822,7 +825,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   child: CardStat(
                     title: t('carried'),
                     value: formatter.format(carriedBalance),
-                    color: Colors.white,
+                    color: const Color(0xFF0F172A),
                   ),
                 ),
               ],
@@ -868,8 +871,9 @@ class CardStat extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white24,
+        color: Colors.white.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.65)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -879,7 +883,10 @@ class CardStat extends StatelessWidget {
             child: Text(
               title,
               maxLines: 1,
-              style: const TextStyle(color: Colors.white70),
+              style: const TextStyle(
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           const SizedBox(height: 4),
@@ -888,7 +895,11 @@ class CardStat extends StatelessWidget {
             child: Text(
               value,
               maxLines: 1,
-              style: TextStyle(fontWeight: FontWeight.bold, color: color),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: color,
+                fontSize: 13,
+              ),
             ),
           ),
         ],

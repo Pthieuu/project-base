@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import '../services/user_session.dart';
 import 'package:intl/intl.dart';
 import 'package:project_base/controller/language_controller.dart';
+import 'package:project_base/controller/theme_controller.dart';
 import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/utils/category_visuals.dart';
 
@@ -198,7 +199,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       return const Color(0xFF7E68D8);
     }
     if (key.contains('housing')) {
-      return const Color(0xFF1132D4);
+      return Theme.of(context).primaryColor;
     }
     if (key.contains('entertainment')) {
       return const Color(0xFF8068C9);
@@ -228,7 +229,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final theme = Theme.of(context);
     final t = context.read<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
-    const primary = Color(0xFF1132D4);
+    final primary = context.read<ThemeController>().accentColor;
     final monthlyIncome = _monthlyTotal(expense: false);
     final monthlyExpense = _monthlyTotal(expense: true);
     final monthlyBalance = monthlyIncome - monthlyExpense;
@@ -264,7 +265,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           color: primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.account_balance_wallet,
                           color: primary,
                         ),
@@ -327,7 +328,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           : t(
                               'keeping_income',
                             ).replaceAll('{rate}', savedRate.toString()),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: primary,
                         fontWeight: FontWeight.w600,
                       ),
@@ -379,6 +380,172 @@ class _DashboardScreenState extends State<DashboardScreen>
     ).replaceAll('{amount}', currencyFormat.format(balance.abs()));
   }
 
+  List<_DashboardNotification> _buildNotifications() {
+    final t = context.read<LanguageController>().text;
+    final primary = context.read<ThemeController>().accentColor;
+    final items = <_DashboardNotification>[
+      _DashboardNotification(
+        icon: Icons.login,
+        color: primary,
+        title: t('login_notification_title'),
+        message: t('login_notification_body').replaceAll(
+          '{name}',
+          widget.userName.isEmpty
+              ? (UserSession.email ?? 'User')
+              : widget.userName,
+        ),
+        time: t('current_session'),
+      ),
+    ];
+
+    if (transactions.isEmpty) {
+      items.add(
+        _DashboardNotification(
+          icon: Icons.receipt_long_outlined,
+          color: const Color(0xFF64748B),
+          title: t('no_transactions'),
+          message: t('notification_add_transaction_hint'),
+          time: t('now'),
+        ),
+      );
+      return items;
+    }
+
+    final monthlyBalance = monthlyIncome - monthlyExpense;
+    if (monthlyExpense > monthlyIncome && monthlyIncome > 0) {
+      items.add(
+        _DashboardNotification(
+          icon: Icons.warning_amber_rounded,
+          color: const Color(0xFFB45309),
+          title: t('spending_warning_title'),
+          message: t(
+            'spending_warning_body',
+          ).replaceAll('{amount}', currencyFormat.format(monthlyBalance.abs())),
+          time: DateFormat('MMM yyyy').format(DateTime.now()),
+        ),
+      );
+    } else if (monthlyIncome > 0) {
+      items.add(
+        _DashboardNotification(
+          icon: Icons.savings_outlined,
+          color: const Color(0xFF059669),
+          title: t('month_balance'),
+          message: t('month_left').replaceAll(
+            '{amount}',
+            currencyFormat.format(monthlyBalance.clamp(0, double.infinity)),
+          ),
+          time: DateFormat('MMM yyyy').format(DateTime.now()),
+        ),
+      );
+    }
+
+    for (final tx in transactions.take(5)) {
+      final isExpense = tx.isExpense;
+      final categoryStyle = _categoryStyle(tx.category);
+      final date = _parseTransactionDate(tx.date);
+      items.add(
+        _DashboardNotification(
+          icon: isExpense ? Icons.arrow_upward : Icons.arrow_downward,
+          color: isExpense ? const Color(0xFFDC2626) : const Color(0xFF059669),
+          title: isExpense ? t('expense_recorded') : t('income_recorded'),
+          message:
+              '${tx.description.isEmpty ? categoryStyle.title : tx.description} • ${currencyFormat.format(tx.amount)}',
+          time: date == null
+              ? tx.date
+              : DateFormat('dd/MM/yyyy HH:mm').format(date),
+        ),
+      );
+    }
+
+    return items;
+  }
+
+  void _showNotifications() {
+    final theme = Theme.of(context);
+    final t = context.read<LanguageController>().text;
+    final isDark = theme.brightness == Brightness.dark;
+    final primary = context.read<ThemeController>().accentColor;
+    final notifications = _buildNotifications();
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 18),
+            child: Container(
+              constraints: const BoxConstraints(maxHeight: 560),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: isDark ? theme.cardColor : Colors.white,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Icon(Icons.notifications_active, color: primary),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              t('notifications'),
+                              style: TextStyle(
+                                color: theme.textTheme.bodyLarge?.color,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              t('notifications_dashboard_subtitle'),
+                              style: TextStyle(
+                                color: isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: notifications.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final item = notifications[index];
+                        return _notificationTile(item, isDark);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -387,7 +554,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final categoryExpenseData = _buildCategoryExpenseData();
 
     /// 🎯 COLOR SYSTEM (match Tailwind)
-    const primary = Color(0xFF1132D4);
+    final primary = context.watch<ThemeController>().accentColor;
     final bg = isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF6F6F8);
     final card = isDark ? theme.cardColor : Colors.white;
     final border = isDark ? Colors.white10 : const Color(0xFFE5E7EB);
@@ -453,7 +620,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                       ),
                     ),
 
-                    Icon(Icons.notifications, color: text),
+                    IconButton(
+                      tooltip: t('notifications'),
+                      onPressed: _showNotifications,
+                      icon: Icon(Icons.notifications, color: text),
+                    ),
                   ],
                 ),
               ),
@@ -602,10 +773,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             ),
                             child: Text(
                               t('this_month'),
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: primary,
-                              ),
+                              style: TextStyle(fontSize: 10, color: primary),
                             ),
                           ),
                         ],
@@ -835,6 +1003,63 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
+  Widget _notificationTile(_DashboardNotification item, bool isDark) {
+    final tileBg = isDark ? const Color(0xFF151827) : const Color(0xFFF8FAFC);
+    final text = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subText = isDark ? Colors.white70 : const Color(0xFF64748B);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: tileBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: item.color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(item.icon, color: item.color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  style: TextStyle(color: text, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  item.message,
+                  style: TextStyle(color: subText, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            item.time,
+            style: TextStyle(
+              color: subText,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _emptySpendingChart(BuildContext context, Color subText) {
     final t = context.watch<LanguageController>().text;
     return Container(
@@ -1042,6 +1267,22 @@ class _SpendingCategoryData {
     required this.percent,
     required this.color,
     required this.icon,
+  });
+}
+
+class _DashboardNotification {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String message;
+  final String time;
+
+  const _DashboardNotification({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.message,
+    required this.time,
   });
 }
 

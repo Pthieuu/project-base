@@ -101,7 +101,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final t = context.watch<LanguageController>().text;
 
-    const primaryColor = Color(0xFF1132D4);
+    final primaryColor = Theme.of(context).primaryColor;
 
     final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9);
     final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
@@ -326,7 +326,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF1132D4)),
+          borderSide: BorderSide(color: Theme.of(context).primaryColor),
         ),
       ),
     );

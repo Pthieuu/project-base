@@ -12,6 +12,7 @@ class OnboardingScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final t = context.watch<LanguageController>().text;
+    final primary = theme.primaryColor;
 
     return Scaffold(
       backgroundColor: isDark
@@ -42,13 +43,13 @@ class OnboardingScreen extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1132D4).withValues(alpha: 0.1),
+                      color: primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       t('skip'),
-                      style: const TextStyle(
-                        color: Color(0xFF1132D4),
+                      style: TextStyle(
+                        color: primary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -141,7 +142,7 @@ class OnboardingScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   _bar(24, const Color(0xFF93C5FD)),
-                                  _bar(36, const Color(0xFF1132D4)),
+                                  _bar(36, primary),
                                   _bar(48, const Color(0xFF7C3AED)),
                                   _bar(30, const Color(0xFFF59E0B)),
                                 ],
@@ -149,15 +150,10 @@ class OnboardingScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF1132D4,
-                                  ).withValues(alpha: 0.1),
+                                  color: primary.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
-                                child: const Icon(
-                                  Icons.insights,
-                                  color: Color(0xFF1132D4),
-                                ),
+                                child: Icon(Icons.insights, color: primary),
                               ),
                             ],
                           ),
@@ -226,7 +222,11 @@ class OnboardingScreen extends StatelessWidget {
                   /// DOTS
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [_dot(active: true), _dot(), _dot()],
+                    children: [
+                      _dot(primary, active: true),
+                      _dot(primary),
+                      _dot(primary),
+                    ],
                   ),
 
                   const SizedBox(height: 30),
@@ -245,13 +245,11 @@ class OnboardingScreen extends StatelessWidget {
                       width: double.infinity,
                       height: 55,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1132D4),
+                        color: primary,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(
-                              0xFF1132D4,
-                            ).withValues(alpha: 0.4),
+                            color: primary.withValues(alpha: 0.4),
                             blurRadius: 10,
                             offset: const Offset(0, 5),
                           ),
@@ -303,13 +301,13 @@ class OnboardingScreen extends StatelessWidget {
   }
 
   /// dot indicator
-  static Widget _dot({bool active = false}) {
+  static Widget _dot(Color primary, {bool active = false}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       width: active ? 20 : 8,
       height: 8,
       decoration: BoxDecoration(
-        color: active ? const Color(0xFF1132D4) : Colors.grey,
+        color: active ? primary : Colors.grey,
         borderRadius: BorderRadius.circular(10),
       ),
     );

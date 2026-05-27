@@ -67,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ? const Color(0xFF0B1220)
         : const Color(0xFFF8FAFC);
     final borderColor = isDark ? Colors.white10 : const Color(0xFFE2E8F0);
-    const primaryColor = Color(0xFF1132D4);
+    final primaryColor = Theme.of(context).primaryColor;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -180,10 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           },
                           child: Text(
                             t('forgot_password'),
-                            style: const TextStyle(
-                              color: primaryColor,
-                              fontSize: 12,
-                            ),
+                            style: TextStyle(color: primaryColor, fontSize: 12),
                           ),
                         ),
                       ],
@@ -308,7 +305,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                       child: Text(
                         t('register_now'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: primaryColor,
                           fontWeight: FontWeight.bold,
                         ),

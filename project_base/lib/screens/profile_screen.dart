@@ -252,7 +252,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: isSelected
-                                  ? const Color(0xFF1132D4)
+                                  ? context.read<ThemeController>().accentColor
                                   : Colors.transparent,
                               width: 3,
                             ),
@@ -510,6 +510,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await languageController.setLanguage(selected);
   }
 
+  Future<void> _showAccentSheet() async {
+    final themeController = context.read<ThemeController>();
+    final t = context.read<LanguageController>().text;
+    final selected = await showModalBottomSheet<AppAccent>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.75,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _SheetHeader(
+                    icon: Icons.palette_outlined,
+                    title: t('accent_color'),
+                    subtitle: t('choose_accent_color'),
+                  ),
+                  const SizedBox(height: 14),
+                  ...AppAccent.values.map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _SelectionTile(
+                        title: item.label,
+                        icon: item.icon,
+                        selected: item == themeController.accent,
+                        color: item.color,
+                        onTap: () => Navigator.pop(sheetContext, item),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected == null) return;
+    await themeController.setAccent(selected);
+  }
+
   Future<void> _showAiInsightsSheet() async {
     final t = context.read<LanguageController>().text;
     await showModalBottomSheet<void>(
@@ -656,8 +704,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final language = context.watch<LanguageController>();
+    final themeController = context.watch<ThemeController>();
     final t = language.text;
     final isDark = theme.brightness == Brightness.dark;
+    final primary = themeController.accentColor;
     final bg = isDark ? Colors.black : const Color(0xFFF6F6F8);
     final card = isDark ? theme.cardColor : Colors.white;
     final text = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -710,8 +760,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onTap: _showAvatarPicker,
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF1132D4),
+                            decoration: BoxDecoration(
+                              color: primary,
                               shape: BoxShape.circle,
                             ),
                             padding: const EdgeInsets.all(6),
@@ -748,13 +798,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1132D4).withValues(alpha: 0.1),
+                      color: primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
+                    child: Text(
                       "LOCAL ACCOUNT",
                       style: TextStyle(
-                        color: Color(0xFF1132D4),
+                        color: primary,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -825,6 +875,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: _showLanguageSheet,
                   ),
                   ProfileItem(
+                    icon: Icons.palette_outlined,
+                    title: t('accent_color'),
+                    subtitle: themeController.accent.label,
+                    onTap: _showAccentSheet,
+                  ),
+                  ProfileItem(
                     icon: Icons.psychology,
                     title: t('ai_insights'),
                     subtitle: _aiInsightsEnabled ? t('enabled') : t('disabled'),
@@ -891,6 +947,7 @@ class ProfileItem extends StatelessWidget {
     final card = isDark ? const Color(0xFF111111) : Colors.white;
     final text = isDark ? Colors.white : const Color(0xFF0F172A);
     final border = isDark ? Colors.white10 : const Color(0xFFE2E8F0);
+    final primary = context.watch<ThemeController>().accentColor;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -902,8 +959,8 @@ class ProfileItem extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFF1132D4).withValues(alpha: 0.1),
-          child: Icon(icon, color: const Color(0xFF1132D4)),
+          backgroundColor: primary.withValues(alpha: 0.1),
+          child: Icon(icon, color: primary),
         ),
         title: Text(title, style: TextStyle(color: text)),
         subtitle: subtitle != null
@@ -920,22 +977,23 @@ class _SheetHeader extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final Color color;
+  final Color? color;
 
   const _SheetHeader({
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.color = const Color(0xFF1132D4),
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final headerColor = color ?? context.watch<ThemeController>().accentColor;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: color,
+        color: headerColor,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
@@ -976,18 +1034,21 @@ class _SelectionTile extends StatelessWidget {
   final IconData icon;
   final bool selected;
   final VoidCallback onTap;
+  final Color? color;
 
   const _SelectionTile({
     required this.title,
     this.icon = Icons.payments,
     required this.selected,
     required this.onTap,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final primary = color ?? context.watch<ThemeController>().accentColor;
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -998,15 +1059,15 @@ class _SelectionTile extends StatelessWidget {
           color: isDark ? theme.cardColor : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? const Color(0xFF1132D4) : Colors.transparent,
+            color: selected ? primary : Colors.transparent,
             width: 1.4,
           ),
         ),
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: const Color(0xFF1132D4).withValues(alpha: 0.1),
-              child: Icon(icon, color: const Color(0xFF1132D4)),
+              backgroundColor: primary.withValues(alpha: 0.1),
+              child: Icon(icon, color: primary),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1018,8 +1079,7 @@ class _SelectionTile extends StatelessWidget {
                 ),
               ),
             ),
-            if (selected)
-              const Icon(Icons.check_circle, color: Color(0xFF1132D4)),
+            if (selected) Icon(Icons.check_circle, color: primary),
           ],
         ),
       ),
@@ -1042,6 +1102,7 @@ class _InfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final primary = context.watch<ThemeController>().accentColor;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1052,8 +1113,8 @@ class _InfoCard extends StatelessWidget {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: const Color(0xFF1132D4).withValues(alpha: 0.1),
-            child: Icon(icon, color: const Color(0xFF1132D4)),
+            backgroundColor: primary.withValues(alpha: 0.1),
+            child: Icon(icon, color: primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1098,6 +1159,7 @@ class _AvatarActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = context.watch<ThemeController>().accentColor;
 
     return InkWell(
       onTap: onTap,
@@ -1114,7 +1176,7 @@ class _AvatarActionButton extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: const Color(0xFF1132D4)),
+            Icon(icon, color: primary),
             const SizedBox(height: 6),
             Text(
               label,

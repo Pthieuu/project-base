@@ -579,7 +579,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     required Color text,
     required Color subText,
   }) {
-    const primary = Color(0xFF1132D4);
+    final primary = theme.primaryColor;
     final t = context.watch<LanguageController>().text;
 
     return ListView(
@@ -601,7 +601,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   color: primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: const Icon(Icons.psychology, color: primary, size: 30),
+                child: Icon(Icons.psychology, color: primary, size: 30),
               ),
               const SizedBox(height: 16),
               Text(
@@ -645,6 +645,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final primary = theme.primaryColor;
     final t = context.watch<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
     final text = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -785,9 +786,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                           Expanded(
                                             child: ElevatedButton(
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(
-                                                  0xFF1132D4,
-                                                ),
+                                                backgroundColor: primary,
                                                 foregroundColor: Colors.white,
                                               ),
                                               onPressed: () => _sendMessage(
@@ -864,7 +863,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                     backgroundColor: isDark
                                         ? Colors.grey[800]
                                         : Colors.grey.shade300,
-                                    color: const Color(0xFF1132D4),
+                                    color: primary,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
@@ -872,7 +871,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                   width: double.infinity,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF1132D4),
+                                      backgroundColor: primary,
                                       foregroundColor: Colors.white,
                                     ),
                                     onPressed: () => _sendMessage(
@@ -951,9 +950,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                           currencyFormat.format(
                                             insights.predictedSpend,
                                           ),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 18,
-                                            color: Color(0xFF1132D4),
+                                            color: primary,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -965,17 +964,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF1132D4,
-                                    ).withValues(alpha: 0.1),
+                                    color: primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Row(
                                     children: [
-                                      const Icon(
-                                        Icons.info,
-                                        color: Color(0xFF1132D4),
-                                      ),
+                                      Icon(Icons.info, color: primary),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
@@ -1001,10 +995,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(
-                                      Icons.smart_toy,
-                                      color: Color(0xFF1132D4),
-                                    ),
+                                    Icon(Icons.smart_toy, color: primary),
                                     const SizedBox(width: 8),
                                     Text(
                                       t('ai_assistant'),
@@ -1066,7 +1057,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: message.isUser
-                                            ? const Color(0xFF1132D4)
+                                            ? primary
                                             : (isDark
                                                   ? const Color(0xFF1A1A1A)
                                                   : const Color(0xFFF1F5F9)),
@@ -1128,7 +1119,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 padding: EdgeInsets.zero,
-                                backgroundColor: const Color(0xFF1132D4),
+                                backgroundColor: primary,
                                 foregroundColor: Colors.white,
                                 iconColor: Colors.white,
                                 shape: RoundedRectangleBorder(
@@ -1174,6 +1165,7 @@ class ForecastBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final primary = theme.primaryColor;
 
     return Column(
       children: [
@@ -1181,9 +1173,7 @@ class ForecastBar extends StatelessWidget {
           width: 40,
           height: height,
           decoration: BoxDecoration(
-            color: active
-                ? const Color(0xFF1132D4)
-                : const Color(0xFF1132D4).withValues(alpha: 0.3),
+            color: active ? primary : primary.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(6),
           ),
         ),
@@ -1208,14 +1198,13 @@ class _PromptChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+
     return ActionChip(
       label: Text(label),
       onPressed: onTap,
-      backgroundColor: const Color(0xFF1132D4).withValues(alpha: 0.08),
-      labelStyle: const TextStyle(
-        color: Color(0xFF1132D4),
-        fontWeight: FontWeight.w600,
-      ),
+      backgroundColor: primary.withValues(alpha: 0.08),
+      labelStyle: TextStyle(color: primary, fontWeight: FontWeight.w600),
       side: BorderSide.none,
     );
   }
@@ -1248,6 +1237,7 @@ class _AiActionMessageCard extends StatelessWidget {
     final theme = Theme.of(context);
     final t = context.watch<LanguageController>().text;
     final isDark = theme.brightness == Brightness.dark;
+    final primary = theme.primaryColor;
     final action = message.action!;
     final payload = action.payload;
 
@@ -1260,9 +1250,7 @@ class _AiActionMessageCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFF1132D4).withValues(alpha: 0.2),
-          ),
+          border: Border.all(color: primary.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1284,8 +1272,9 @@ class _AiActionMessageCard extends StatelessWidget {
                     Icons.bolt,
                     t('action'),
                     _actionLabel(action.action, t),
+                    primary,
                   ),
-                  ..._payloadRows(payload, t),
+                  ..._payloadRows(payload, t, primary),
                 ],
               ),
             ),
@@ -1321,6 +1310,7 @@ class _AiActionMessageCard extends StatelessWidget {
   List<Widget> _payloadRows(
     Map<String, dynamic> payload,
     String Function(String) t,
+    Color primary,
   ) {
     final rows = <Widget>[];
     for (final entry in payload.entries) {
@@ -1331,6 +1321,7 @@ class _AiActionMessageCard extends StatelessWidget {
           Icons.circle,
           _fieldLabel(entry.key, t),
           _formatValue(entry.key, value, t),
+          primary,
           smallIcon: true,
         ),
       );
@@ -1341,7 +1332,8 @@ class _AiActionMessageCard extends StatelessWidget {
   Widget _actionRow(
     IconData icon,
     String label,
-    String value, {
+    String value,
+    Color primary, {
     bool smallIcon = false,
   }) {
     return Padding(
@@ -1349,7 +1341,7 @@ class _AiActionMessageCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: smallIcon ? 8 : 16, color: const Color(0xFF1132D4)),
+          Icon(icon, size: smallIcon ? 8 : 16, color: primary),
           SizedBox(width: smallIcon ? 12 : 8),
           SizedBox(
             width: 92,

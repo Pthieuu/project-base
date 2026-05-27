@@ -17,7 +17,7 @@ class RecurringTransactionsScreen extends StatefulWidget {
 
 class _RecurringTransactionsScreenState
     extends State<RecurringTransactionsScreen> {
-  static const Color _primary = Color(0xFF1132D4);
+  Color get _primary => Theme.of(context).primaryColor;
   late Future<List<RecurringTransactionModel>> futureItems;
 
   final currencyFormat = NumberFormat.currency(
@@ -274,7 +274,7 @@ class _RecurringTransactionsScreenState
                       CircleAvatar(
                         radius: 28,
                         backgroundColor: _primary.withValues(alpha: 0.1),
-                        child: const Icon(Icons.event_repeat, color: _primary),
+                        child: Icon(Icons.event_repeat, color: _primary),
                       ),
                       const SizedBox(height: 12),
                       Text(
