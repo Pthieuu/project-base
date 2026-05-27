@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../controller/theme_controller.dart';
 
 class AppLogo extends StatelessWidget {
   final double size;
@@ -14,11 +17,11 @@ class AppLogo extends StatelessWidget {
     this.withShadow = false,
   }) : iconSize = iconSize ?? size * 0.5;
 
-  static const IconData icon = Icons.shield;
-
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).primaryColor;
+    final themeController = context.watch<ThemeController>();
+    final color = themeController.accentColor;
+    final icon = themeController.logoIcon.icon;
 
     return Container(
       width: size,
