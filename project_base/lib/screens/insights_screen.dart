@@ -847,8 +847,27 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  "If you reduce ${insights.topCategoryName} by about 10%, you could keep ${currencyFormat.format(insights.suggestedCut)} this month.",
+                                  t('saving_suggestion_detail')
+                                      .replaceAll(
+                                        '{category}',
+                                        insights.topCategoryName,
+                                      )
+                                      .replaceAll(
+                                        '{amount}',
+                                        currencyFormat.format(
+                                          insights.suggestedCut,
+                                        ),
+                                      ),
                                   style: TextStyle(color: subText),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  t('saving_suggestion_basis'),
+                                  style: TextStyle(
+                                    color: subText,
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                  ),
                                 ),
                                 const SizedBox(height: 16),
                                 ClipRRect(
@@ -874,9 +893,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                       backgroundColor: primary,
                                       foregroundColor: Colors.white,
                                     ),
-                                    onPressed: () => _sendMessage(
-                                      "Suggest a saving plan for me.",
-                                    ),
+                                    onPressed: () =>
+                                        _sendMessage(t('saving_plan_prompt')),
                                     child: Text(t('create_saving_plan')),
                                   ),
                                 ),
@@ -925,7 +943,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                     Column(
                                       children: [
                                         Text(
-                                          t('spent'),
+                                          t('spent_this_month'),
                                           style: TextStyle(color: subText),
                                         ),
                                         Text(

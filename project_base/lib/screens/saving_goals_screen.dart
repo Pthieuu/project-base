@@ -3,7 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/models/saving_goal_model.dart';
+import 'package:project_base/screens/main_screen.dart';
 import 'package:project_base/services/api_service.dart';
+import 'package:project_base/services/user_session.dart';
 import 'package:project_base/utils/app_date_picker.dart';
 
 class SavingGoalsScreen extends StatefulWidget {
@@ -47,6 +49,21 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
     setState(() {
       futureGoals = ApiService().getGoals();
     });
+  }
+
+  void _goBackToBudget() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+
+    navigator.pushReplacement(
+      MaterialPageRoute(
+        builder: (_) =>
+            MainScreen(userName: UserSession.name ?? '', initialIndex: 2),
+      ),
+    );
   }
 
   static double _parseAmount(String value) {
@@ -323,6 +340,11 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
         elevation: 0,
         backgroundColor: card,
         iconTheme: IconThemeData(color: text),
+        leading: IconButton(
+          tooltip: t('back'),
+          onPressed: _goBackToBudget,
+          icon: const Icon(Icons.arrow_back),
+        ),
         title: Text(
           t('saving_goals'),
           style: TextStyle(color: text, fontWeight: FontWeight.bold),

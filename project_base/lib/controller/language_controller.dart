@@ -52,6 +52,7 @@ class LanguageController extends ChangeNotifier {
 const Map<AppLanguage, Map<String, String>> _localizedText = {
   AppLanguage.english: {
     'home': 'Home',
+    'back': 'Back',
     'history': 'History',
     'budget': 'Budget',
     'insights': 'Insights',
@@ -247,6 +248,12 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'ask_ai': 'Ask AI',
     'saving_suggestion': 'Saving Suggestion',
     'create_saving_plan': 'Create Saving Plan',
+    'saving_plan_prompt':
+        'Suggest a saving plan for me based on my financial data.',
+    'saving_suggestion_detail':
+        'Your highest spending category this month is {category}. Reducing it by 10% would save about {amount}.',
+    'saving_suggestion_basis':
+        'Based on your recorded transactions for the current month.',
     'this_month_forecast': 'This Month Forecast',
     'spent': 'Spent',
     'forecast': 'Forecast',
@@ -322,6 +329,7 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
   },
   AppLanguage.vietnamese: {
     'home': 'Trang chủ',
+    'back': 'Quay về',
     'history': 'Lịch sử',
     'budget': 'Ngân sách',
     'insights': 'Phân tích',
@@ -513,6 +521,12 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'ask_ai': 'Hỏi AI',
     'saving_suggestion': 'Gợi ý tiết kiệm',
     'create_saving_plan': 'Tạo kế hoạch tiết kiệm',
+    'saving_plan_prompt':
+        'Hãy đề xuất kế hoạch tiết kiệm dựa trên dữ liệu tài chính của tôi.',
+    'saving_suggestion_detail':
+        '{category} là danh mục chi nhiều nhất tháng này. Nếu giảm 10%, bạn có thể tiết kiệm khoảng {amount}.',
+    'saving_suggestion_basis':
+        'Căn cứ trên các giao dịch bạn đã ghi nhận trong tháng hiện tại.',
     'this_month_forecast': 'Dự đoán tháng này',
     'spent': 'Đã chi',
     'forecast': 'Dự đoán',
@@ -587,6 +601,7 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
   },
   AppLanguage.japanese: {
     'home': 'ホーム',
+    'back': '戻る',
     'history': '履歴',
     'budget': '予算',
     'insights': '分析',
@@ -768,6 +783,10 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'ask_ai': 'AIに聞く',
     'saving_suggestion': '貯蓄提案',
     'create_saving_plan': '貯蓄計画を作成',
+    'saving_plan_prompt': '私の財務データに基づいて貯蓄計画を提案してください。',
+    'saving_suggestion_detail':
+        '今月最も支出が多いカテゴリは{category}です。10%減らすと、約{amount}節約できます。',
+    'saving_suggestion_basis': '今月記録された取引データに基づいています。',
     'this_month_forecast': '今月の予測',
     'spent': '支出済み',
     'forecast': '予測',

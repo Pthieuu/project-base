@@ -9,21 +9,23 @@ import 'profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final String userName;
+  final int initialIndex;
 
-  const MainScreen({super.key, required this.userName});
+  const MainScreen({super.key, required this.userName, this.initialIndex = 0});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
 
   late List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialIndex;
 
     _screens = [
       DashboardScreen(userName: widget.userName),
@@ -36,6 +38,12 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onItemTapped(int index) {
     setState(() {
+      if (index == 0) {
+        _screens[0] = DashboardScreen(
+          key: UniqueKey(),
+          userName: widget.userName,
+        );
+      }
       if (index == 3) {
         _screens[3] = InsightsScreen(key: UniqueKey());
       }

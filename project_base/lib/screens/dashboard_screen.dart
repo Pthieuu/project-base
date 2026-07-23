@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'addtransaction_screen.dart';
 import 'transaction_history.dart';
 import '../services/api_service.dart';
@@ -31,6 +32,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   double monthlyIncome = 0;
   double monthlyExpense = 0;
   List<_BudgetOverrun> budgetOverruns = [];
+  bool _notificationsEnabled = true;
   bool _budgetAlertShown = false;
 
   final currencyFormat = NumberFormat.currency(
@@ -66,6 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final api = ApiService();
     final txList = await api.getTransactions(UserSession.user_id!);
     final budgets = await _loadCurrentMonthBudgets(api);
+    final notificationsEnabled = await _loadNotificationsEnabled();
     txList.sort((a, b) {
       final dateA = _parseTransactionDate(a.date);
       final dateB = _parseTransactionDate(b.date);
@@ -112,6 +115,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       monthlyIncome = currentMonthIncome;
       monthlyExpense = currentMonthExpense;
       budgetOverruns = _buildBudgetOverruns(budgets, monthlyExpenseByCategory);
+      _notificationsEnabled = notificationsEnabled;
     });
     _chartAnimationController.forward(from: 0);
     _showBudgetOverrunAlertIfNeeded();
@@ -125,6 +129,14 @@ class _DashboardScreenState extends State<DashboardScreen>
     } catch (_) {
       return const [];
     }
+  }
+
+  String get _notificationsKey =>
+      'profile_notifications_${UserSession.user_id ?? 'local'}';
+
+  Future<bool> _loadNotificationsEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_notificationsKey) ?? true;
   }
 
   String _displayCategory(String category) => categoryVisual(category).label;
@@ -155,11 +167,16 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   void _showBudgetOverrunAlertIfNeeded() {
-    if (_budgetAlertShown || budgetOverruns.isEmpty || !mounted) return;
+    if (_budgetAlertShown ||
+        !_notificationsEnabled ||
+        budgetOverruns.isEmpty ||
+        !mounted) {
+      return;
+    }
     _budgetAlertShown = true;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || budgetOverruns.isEmpty) return;
+      if (!mounted || !_notificationsEnabled || budgetOverruns.isEmpty) return;
       final t = context.read<LanguageController>().text;
       final item = budgetOverruns.first;
       final message = budgetOverruns.length == 1
@@ -491,6 +508,10 @@ class _DashboardScreenState extends State<DashboardScreen>
       return items;
     }
 
+    if (!_notificationsEnabled) {
+      return items;
+    }
+
     for (final overrun in budgetOverruns.take(3)) {
       items.add(
         _DashboardNotification(
@@ -803,7 +824,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
               ),
 
-              if (budgetOverruns.isNotEmpty)
+              if (_notificationsEnabled && budgetOverruns.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: _BudgetWarningList(
