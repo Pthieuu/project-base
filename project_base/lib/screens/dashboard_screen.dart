@@ -713,10 +713,18 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 child: Row(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 20,
-                      backgroundImage: NetworkImage(
-                        "https://i.pravatar.cc/150",
+                      backgroundColor: primary.withValues(alpha: 0.14),
+                      child: Text(
+                        widget.userName.trim().isEmpty
+                            ? '?'
+                            : widget.userName.trim()[0].toUpperCase(),
+                        style: TextStyle(
+                          color: primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                        ),
                       ),
                     ),
 
