@@ -26,7 +26,8 @@ class AiChatService {
     String? offTopicReply,
     String responseLanguageCode = 'vi',
   }) async {
-    if (!_isFinancialQuestion(userMessage)) {
+    final isConversationFollowUp = history.any((turn) => turn.isUser);
+    if (!_isFinancialQuestion(userMessage) && !isConversationFollowUp) {
       return AiAssistantResponse(text: offTopicReply ?? _offTopicReply);
     }
 

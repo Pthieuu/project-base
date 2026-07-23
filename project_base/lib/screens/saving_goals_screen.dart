@@ -77,6 +77,189 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
     return _goalPalette[(seed + index) % _goalPalette.length];
   }
 
+  Future<void> _deleteGoal(SavingGoalModel goal) async {
+    final goalId = goal.id;
+    if (goalId == null) return;
+
+    final t = context.read<LanguageController>().text;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
+        final isDark = theme.brightness == Brightness.dark;
+        final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+        final surfaceColor = isDark
+            ? const Color(0xFF0F172A)
+            : const Color(0xFFF8FAFC);
+        final textColor = isDark ? Colors.white : _ink;
+        final secondaryText = isDark ? Colors.white70 : Colors.grey[600];
+        const dangerColor = Color(0xFFDC2626);
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+                  blurRadius: 28,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    color: dangerColor.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: dangerColor,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  t('delete_goal'),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  t('delete_goal_warning').replaceAll('{goal}', goal.title),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: secondaryText,
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: surfaceColor,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: _primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(Icons.flag_outlined, color: _primary),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              goal.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: textColor,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${t('target')}: ${currencyFormat.format(goal.targetAmount)}',
+                              style: TextStyle(
+                                color: secondaryText,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: textColor,
+                          side: BorderSide(
+                            color: isDark
+                                ? Colors.white24
+                                : const Color(0xFFCBD5E1),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        child: Text(t('cancel')),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: dangerColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        icon: const Icon(Icons.delete_outline, size: 19),
+                        label: Text(t('delete')),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ApiService().deleteGoal(goalId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t('goal_deleted'))));
+      _reload();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${t('delete_goal_failed')}: $error')),
+      );
+    }
+  }
+
   Future<void> _showGoalForm({SavingGoalModel? goal}) async {
     final t = context.read<LanguageController>().text;
     final titleController = TextEditingController(text: goal?.title ?? '');
@@ -599,6 +782,14 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                           tooltip: t('edit'),
                           onPressed: () => _showGoalForm(goal: goal),
                           icon: const Icon(Icons.edit_outlined),
+                        ),
+                        IconButton(
+                          tooltip: t('delete'),
+                          onPressed: goal.id == null
+                              ? null
+                              : () => _deleteGoal(goal),
+                          color: Colors.red,
+                          icon: const Icon(Icons.delete_outline),
                         ),
                       ],
                     ),

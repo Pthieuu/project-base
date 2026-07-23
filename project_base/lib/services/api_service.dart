@@ -294,6 +294,26 @@ class ApiService {
     }
   }
 
+  Future<void> deleteGoal(int goalId) async {
+    final userId = UserSession.user_id;
+    if (userId == null) throw Exception("User not logged in");
+
+    final response = await http.post(
+      Uri.parse("${baseUrl}delete_goal.php"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"id": goalId, "user_id": userId}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("HTTP ERROR: ${response.statusCode}");
+    }
+
+    final data = jsonDecode(response.body);
+    if (data is! Map || data['status'] != 'success') {
+      throw Exception(data['message'] ?? "Cannot delete goal");
+    }
+  }
+
   Future<List<RecurringTransactionModel>> getRecurringTransactions() async {
     final userId = UserSession.user_id;
     if (userId == null) throw Exception("User not logged in");
