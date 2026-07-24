@@ -13,6 +13,7 @@ import 'package:project_base/controller/theme_controller.dart';
 import 'package:project_base/models/category_budget_model.dart';
 import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/utils/category_visuals.dart';
+import 'social_streak_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String userName;
@@ -841,6 +842,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                     onTap: _showNotifications,
                   ),
                 ),
+
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: SocialStreakCard(),
+              ),
 
               /// ================= STATS =================
               Padding(
