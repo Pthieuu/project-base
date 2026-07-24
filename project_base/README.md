@@ -25,7 +25,13 @@ values in the local `.env` file.
 Required variables:
 
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
-- `OLLAMA_BASE_URL`, `OLLAMA_MODEL`
+- `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_VISION_MODEL`
+
+Install the configured vision model once before scanning receipts:
+
+```bash
+ollama pull gemma3:4b
+```
 
 Run the session migration once before signing in:
 
