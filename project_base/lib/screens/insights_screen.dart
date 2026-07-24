@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/models/transaction_model.dart';
+import 'package:project_base/screens/weekly_recap_screen.dart';
 import 'package:project_base/services/ai_chat_service.dart';
 import 'package:project_base/services/api_service.dart';
 import 'package:project_base/services/user_session.dart';
@@ -558,6 +559,18 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
+  Future<void> _openWeeklyRecap() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => WeeklyRecapScreen(
+          transactions: List<TransactionModel>.from(currentTransactions),
+        ),
+      ),
+    );
+  }
+
   Future<void> _sendMessage([String? preset]) async {
     final text = (preset ?? messageController.text).trim();
     if (text.isEmpty || currentInsights == null || isSending) return;
@@ -1015,6 +1028,77 @@ class _InsightsScreenState extends State<InsightsScreen> {
                         controller: scrollController,
                         padding: const EdgeInsets.all(16),
                         children: [
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF4F46E5,
+                                  ).withValues(alpha: 0.22),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 54,
+                                  height: 54,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.16),
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  child: const Icon(
+                                    Icons.auto_stories_outlined,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        t('weekly_recap'),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        t('weekly_recap_subtitle'),
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                          height: 1.35,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton.filled(
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: const Color(0xFF4F46E5),
+                                  ),
+                                  tooltip: t('view_recap'),
+                                  onPressed: _openWeeklyRecap,
+                                  icon: const Icon(Icons.arrow_forward),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
                           Container(
                             decoration: BoxDecoration(
                               color: isDark ? theme.cardColor : Colors.white,

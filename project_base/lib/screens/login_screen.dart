@@ -71,7 +71,10 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => MainScreen(userName: result["name"] ?? ""),
+          builder: (context) => MainScreen(
+            userName: result["name"] ?? "",
+            showWeeklyRecapOnStart: true,
+          ),
         ),
       );
     } else {

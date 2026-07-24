@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:project_base/services/api_service.dart';
 import '../controller/language_controller.dart';
 import 'dashboard_screen.dart';
 import 'transaction_history.dart';
 import 'budget_screen.dart';
 import 'insights_screen.dart';
 import 'profile_screen.dart';
+import 'weekly_recap_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final String userName;
   final int initialIndex;
+  final bool showWeeklyRecapOnStart;
 
-  const MainScreen({super.key, required this.userName, this.initialIndex = 0});
+  const MainScreen({
+    super.key,
+    required this.userName,
+    this.initialIndex = 0,
+    this.showWeeklyRecapOnStart = false,
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -19,6 +27,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   late int _selectedIndex;
+  bool _didOpenWeeklyRecap = false;
 
   late List<Widget> _screens;
 
@@ -34,6 +43,34 @@ class _MainScreenState extends State<MainScreen> {
       const InsightsScreen(),
       ProfileScreen(userName: widget.userName),
     ];
+
+    if (widget.showWeeklyRecapOnStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _openWeeklyRecapAfterLogin();
+      });
+    }
+  }
+
+  Future<void> _openWeeklyRecapAfterLogin() async {
+    if (_didOpenWeeklyRecap) return;
+    _didOpenWeeklyRecap = true;
+
+    try {
+      // Let the login replacement transition finish before opening the story.
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      if (!mounted) return;
+      final transactions = await ApiService().getTransactions();
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => WeeklyRecapScreen(transactions: transactions),
+        ),
+      );
+    } catch (_) {
+      // The dashboard remains usable if recap data cannot be loaded.
+    }
   }
 
   void _onItemTapped(int index) {
