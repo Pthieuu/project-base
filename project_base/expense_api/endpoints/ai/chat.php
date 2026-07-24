@@ -17,8 +17,8 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     ]);
 }
 
-require_once "db.php";
-require_once "auth.php";
+require_once dirname(__DIR__, 2) . "/bootstrap/db.php";
+require_once dirname(__DIR__, 2) . "/bootstrap/auth.php";
 requireAuthenticatedUser($conn);
 
 $input = json_decode(file_get_contents("php://input"), true);

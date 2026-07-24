@@ -2,8 +2,8 @@
 
 header("Content-Type: application/json");
 
-include "db.php";
-require_once "auth.php";
+require_once dirname(__DIR__, 2) . "/bootstrap/db.php";
+require_once dirname(__DIR__, 2) . "/bootstrap/auth.php";
 
 if ($conn->connect_error) {
     die(json_encode(["status"=>"db_error"]));

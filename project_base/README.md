@@ -41,7 +41,7 @@ Run the session migration once before signing in:
   -P "$DB_PORT" \
   -u "$DB_USER" \
   "$DB_NAME" \
-  < expense_api/session_migration.sql
+  < expense_api/database/session_migration.sql
 ```
 
 ## PWA

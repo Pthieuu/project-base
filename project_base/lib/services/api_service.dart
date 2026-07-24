@@ -26,7 +26,7 @@ class ApiService {
 
   Future<int> addTransaction(Map<String, dynamic> data) async {
     final response = await http.post(
-      Uri.parse("${baseUrl}add_transaction.php"),
+      Uri.parse("${baseUrl}endpoints/transactions/add.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode(data),
     );
@@ -51,7 +51,7 @@ class ApiService {
 
   Future<void> updateTransaction(Map<String, dynamic> data) async {
     final response = await http.post(
-      Uri.parse("${baseUrl}update_transaction.php"),
+      Uri.parse("${baseUrl}endpoints/transactions/update.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode(data),
     );
@@ -68,7 +68,7 @@ class ApiService {
 
   Future<void> deleteTransaction(int transactionId) async {
     final response = await http.post(
-      Uri.parse("${baseUrl}delete_transaction.php"),
+      Uri.parse("${baseUrl}endpoints/transactions/delete.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode({"id": transactionId}),
     );
@@ -85,7 +85,7 @@ class ApiService {
 
   Future<List<TransactionModel>> getTransactions() async {
     final response = await http.post(
-      Uri.parse("${baseUrl}get_transaction.php"),
+      Uri.parse("${baseUrl}endpoints/transactions/list.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode({}),
     );
@@ -111,7 +111,7 @@ class ApiService {
     required String email,
   }) async {
     final response = await http.post(
-      Uri.parse("${baseUrl}update_profile.php"),
+      Uri.parse("${baseUrl}endpoints/auth/update_profile.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode({"name": name, "email": email}),
     );
@@ -130,7 +130,7 @@ class ApiService {
 
   Future<List<CategoryModel>> getCategories() async {
     final response = await http.post(
-      Uri.parse("${baseUrl}get_categories.php"),
+      Uri.parse("${baseUrl}endpoints/categories/list.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode({}),
     );
@@ -155,7 +155,7 @@ class ApiService {
     String color = '#1132D4',
   }) async {
     final response = await http.post(
-      Uri.parse("${baseUrl}save_category.php"),
+      Uri.parse("${baseUrl}endpoints/categories/save.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode({
         "name": name,
@@ -177,7 +177,7 @@ class ApiService {
 
   Future<List<CategoryBudgetModel>> getBudgets(String month) async {
     final response = await http.post(
-      Uri.parse("${baseUrl}get_budgets.php"),
+      Uri.parse("${baseUrl}endpoints/budgets/list.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode({"month": month}),
     );
@@ -201,7 +201,7 @@ class ApiService {
     required double monthlyLimit,
   }) async {
     final response = await http.post(
-      Uri.parse("${baseUrl}save_budget.php"),
+      Uri.parse("${baseUrl}endpoints/budgets/save.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode({
         "category": category,
@@ -222,7 +222,7 @@ class ApiService {
 
   Future<List<SavingGoalModel>> getGoals() async {
     final response = await http.post(
-      Uri.parse("${baseUrl}get_goals.php"),
+      Uri.parse("${baseUrl}endpoints/goals/list.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode({}),
     );
@@ -250,7 +250,7 @@ class ApiService {
     bool isCompleted = false,
   }) async {
     final response = await http.post(
-      Uri.parse("${baseUrl}save_goal.php"),
+      Uri.parse("${baseUrl}endpoints/goals/save.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode({
         if (id != null) "id": id,
@@ -275,7 +275,7 @@ class ApiService {
 
   Future<void> deleteGoal(int goalId) async {
     final response = await http.post(
-      Uri.parse("${baseUrl}delete_goal.php"),
+      Uri.parse("${baseUrl}endpoints/goals/delete.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode({"id": goalId}),
     );
@@ -292,7 +292,7 @@ class ApiService {
 
   Future<List<RecurringTransactionModel>> getRecurringTransactions() async {
     final response = await http.post(
-      Uri.parse("${baseUrl}get_recurring_transactions.php"),
+      Uri.parse("${baseUrl}endpoints/recurring/list.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode({}),
     );
@@ -325,7 +325,7 @@ class ApiService {
     bool isActive = true,
   }) async {
     final response = await http.post(
-      Uri.parse("${baseUrl}save_recurring_transaction.php"),
+      Uri.parse("${baseUrl}endpoints/recurring/save.php"),
       headers: authorizedJsonHeaders,
       body: jsonEncode({
         if (id != null) "id": id,

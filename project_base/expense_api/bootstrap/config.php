@@ -1,6 +1,6 @@
 <?php
 
-loadEnvironmentFile(__DIR__ . "/.env");
+loadEnvironmentFile(dirname(__DIR__) . "/.env");
 
 function loadEnvironmentFile(string $path): void
 {

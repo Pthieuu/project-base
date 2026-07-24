@@ -85,7 +85,7 @@ class ReceiptOcrService {
 
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('${ApiService.baseUrl}receipt_ocr.php'),
+      Uri.parse('${ApiService.baseUrl}endpoints/ai/receipt_ocr.php'),
     );
     request.headers['Authorization'] = 'Bearer $token';
     // On Flutter Web, XFile.path is a browser blob URL rather than a readable

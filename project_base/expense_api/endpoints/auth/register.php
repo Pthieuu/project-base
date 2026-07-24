@@ -3,7 +3,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-include "db.php";
+require_once dirname(__DIR__, 2) . "/bootstrap/db.php";
 
 $name = $_POST['name'];
 $email = $_POST['email'];

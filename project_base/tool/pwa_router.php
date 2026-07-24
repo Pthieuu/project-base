@@ -9,13 +9,24 @@ $requestPath = rawurldecode(
     parse_url($_SERVER["REQUEST_URI"] ?? "/", PHP_URL_PATH) ?: "/"
 );
 
-// Expose only PHP API entrypoints under /api. Files such as .env, SQL dumps,
-// and configuration sources are deliberately unreachable.
+// Expose only PHP files below endpoints/ through /api. Files such as .env,
+// database migrations, bootstrap code, and legacy assets are unreachable.
 if (str_starts_with($requestPath, "/api/")) {
     $endpoint = substr($requestPath, strlen("/api/"));
+    $endpointPath = realpath($apiRoot . "/" . $endpoint);
+    $publicApiRoot = realpath($apiRoot . "/endpoints");
     if (
-        !preg_match('/^[A-Za-z0-9_-]+\.php$/', $endpoint) ||
-        !is_file($apiRoot . "/" . $endpoint)
+        !preg_match(
+            '/^endpoints(?:\/[A-Za-z0-9_-]+)+\.php$/',
+            $endpoint
+        ) ||
+        $endpointPath === false ||
+        $publicApiRoot === false ||
+        !str_starts_with(
+            $endpointPath,
+            $publicApiRoot . DIRECTORY_SEPARATOR
+        ) ||
+        !is_file($endpointPath)
     ) {
         http_response_code(404);
         header("Content-Type: application/json; charset=utf-8");
@@ -23,8 +34,8 @@ if (str_starts_with($requestPath, "/api/")) {
         return;
     }
 
-    chdir($apiRoot);
-    require $apiRoot . "/" . $endpoint;
+    chdir(dirname($endpointPath));
+    require $endpointPath;
     return;
 }
 

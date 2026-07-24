@@ -2,8 +2,8 @@
 
 header("Content-Type: application/json; charset=utf-8");
 
-include "db.php";
-require_once "auth.php";
+require_once dirname(__DIR__, 2) . "/bootstrap/db.php";
+require_once dirname(__DIR__, 2) . "/bootstrap/auth.php";
 
 $email = trim($_POST["email"] ?? "");
 $password = (string)($_POST["password"] ?? "");

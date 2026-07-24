@@ -2,8 +2,8 @@
 
 header("Content-Type: application/json");
 
-require_once "db.php";
-require_once "auth.php";
+require_once dirname(__DIR__, 2) . "/bootstrap/db.php";
+require_once dirname(__DIR__, 2) . "/bootstrap/auth.php";
 $userId = requireAuthenticatedUser($conn);
 
 $data = json_decode(file_get_contents("php://input"), true);

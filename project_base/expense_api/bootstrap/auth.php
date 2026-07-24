@@ -17,7 +17,7 @@ function issueAccessToken(mysqli $conn, int $userId): array
     );
     if (!$stmt) {
         throw new RuntimeException(
-            "Session storage is not ready. Run expense_api/session_migration.sql."
+            "Session storage is not ready. Run expense_api/database/session_migration.sql."
         );
     }
     $stmt->bind_param("iss", $userId, $tokenHash, $expiresAt);

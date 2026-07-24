@@ -8,7 +8,10 @@ class AuthService {
     String email,
     String password,
   ) async {
-    return _postForm("login.php", {"email": email, "password": password});
+    return _postForm("endpoints/auth/login.php", {
+      "email": email,
+      "password": password,
+    });
   }
 
   static Future<Map<String, dynamic>> register(
@@ -16,7 +19,7 @@ class AuthService {
     String email,
     String password,
   ) async {
-    return _postForm("register.php", {
+    return _postForm("endpoints/auth/register.php", {
       "name": name,
       "email": email,
       "password": password,
@@ -27,7 +30,7 @@ class AuthService {
     String email,
     String newPassword,
   ) async {
-    return _postForm("reset_password.php", {
+    return _postForm("endpoints/auth/reset_password.php", {
       "email": email,
       "password": newPassword,
     });
@@ -39,7 +42,7 @@ class AuthService {
 
     try {
       await http.post(
-        Uri.parse("${ApiService.baseUrl}logout.php"),
+        Uri.parse("${ApiService.baseUrl}endpoints/auth/logout.php"),
         headers: {"Authorization": "Bearer $token"},
       );
     } catch (_) {
