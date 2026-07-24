@@ -48,7 +48,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     }
 
     final api = ApiService();
-    final transactions = await api.getTransactions(UserSession.user_id!);
+    final transactions = await api.getTransactions();
     final categories = await api.getCategories();
     final budgets = await api.getBudgets(_currentMonthKey);
     final now = DateTime.now();

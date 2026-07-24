@@ -2,13 +2,14 @@
 
 header("Content-Type: application/json");
 require_once "db.php";
+require_once "auth.php";
 
 $data = json_decode(file_get_contents("php://input"), true) ?: [];
-$userId = intval($data["user_id"] ?? 0);
+$userId = requireAuthenticatedUser($conn);
 $name = trim($data["name"] ?? "");
 $email = trim($data["email"] ?? "");
 
-if ($userId <= 0 || $name === "" || $email === "") {
+if ($name === "" || $email === "") {
     echo json_encode(["status" => "error", "message" => "Missing profile data"]);
     exit();
 }
@@ -36,4 +37,3 @@ if ($stmt->execute()) {
 } else {
     echo json_encode(["status" => "error", "message" => $stmt->error]);
 }
-

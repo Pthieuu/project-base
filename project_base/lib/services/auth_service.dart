@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:project_base/services/api_service.dart';
+import 'package:project_base/services/user_session.dart';
 
 class AuthService {
   static Future<Map<String, dynamic>> login(
@@ -32,6 +33,20 @@ class AuthService {
     });
   }
 
+  static Future<void> logout() async {
+    final token = UserSession.accessToken;
+    if (token == null || token.isEmpty) return;
+
+    try {
+      await http.post(
+        Uri.parse("${ApiService.baseUrl}logout.php"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+    } catch (_) {
+      // Local logout must still succeed if the server is unavailable.
+    }
+  }
+
   static Future<Map<String, dynamic>> _postForm(
     String endpoint,
     Map<String, String> body,
@@ -39,21 +54,30 @@ class AuthService {
     final uri = Uri.parse("${ApiService.baseUrl}$endpoint");
     final response = await http.post(uri, body: body);
 
+    Map<String, dynamic>? data;
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map) {
+        data = Map<String, dynamic>.from(decoded);
+      }
+    } on FormatException {
+      // The status handling below provides a readable fallback.
+    }
+
     if (response.statusCode != 200) {
+      final message = data?["message"];
       throw Exception(
-        "API ${response.statusCode}: could not find $uri. Check the PHP server/API_BASE_URL.",
+        message is String && message.isNotEmpty
+            ? message
+            : "API ${response.statusCode}: server error at $uri.",
       );
     }
 
-    try {
-      final data = jsonDecode(response.body);
-      if (data is Map<String, dynamic>) return data;
-      if (data is Map) return Map<String, dynamic>.from(data);
-      throw const FormatException("Response is not a JSON object");
-    } on FormatException {
+    if (data == null) {
       throw Exception(
         "API did not return JSON. The PHP server may be pointing to the wrong folder: $uri",
       );
     }
+    return data;
   }
 }

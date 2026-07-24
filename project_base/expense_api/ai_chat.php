@@ -2,7 +2,7 @@
 
 header("Content-Type: application/json; charset=utf-8");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
@@ -16,6 +16,10 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
         "status_code" => 405
     ]);
 }
+
+require_once "db.php";
+require_once "auth.php";
+requireAuthenticatedUser($conn);
 
 $input = json_decode(file_get_contents("php://input"), true);
 if (!is_array($input)) {

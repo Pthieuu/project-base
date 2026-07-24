@@ -2,9 +2,10 @@
 
 header("Content-Type: application/json");
 require_once "db.php";
+require_once "auth.php";
 
 $data = json_decode(file_get_contents("php://input"), true) ?: [];
-$userId = intval($data["user_id"] ?? 0);
+$userId = requireAuthenticatedUser($conn);
 $id = intval($data["id"] ?? 0);
 $title = trim($data["title"] ?? "");
 $targetAmount = floatval($data["target_amount"] ?? 0);
@@ -14,7 +15,7 @@ $note = trim($data["note"] ?? "");
 $isCompleted = intval($data["is_completed"] ?? 0);
 $targetDateValue = $targetDate === "" ? null : $targetDate;
 
-if ($userId <= 0 || $title === "" || $targetAmount <= 0) {
+if ($title === "" || $targetAmount <= 0) {
     echo json_encode(["status" => "error", "message" => "Missing goal data"]);
     exit();
 }
@@ -62,4 +63,3 @@ if ($stmt->execute()) {
 } else {
     echo json_encode(["status" => "error", "message" => $stmt->error]);
 }
-

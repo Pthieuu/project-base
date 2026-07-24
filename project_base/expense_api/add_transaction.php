@@ -3,6 +3,7 @@
 header("Content-Type: application/json");
 
 include "db.php";
+require_once "auth.php";
 
 if ($conn->connect_error) {
     die(json_encode(["status"=>"db_error"]));
@@ -15,12 +16,6 @@ if(!$data){
     exit();
 }
 
-// 🔥 bắt buộc có user_id
-if(!isset($data['user_id'])){
-    echo json_encode(["status"=>"no_user_id"]);
-    exit();
-}
-
 $required = ["description", "category", "account", "amount", "is_expense", "date"];
 foreach ($required as $key) {
     if (!array_key_exists($key, $data)) {
@@ -29,7 +24,7 @@ foreach ($required as $key) {
     }
 }
 
-$user_id = intval($data['user_id']);
+$user_id = requireAuthenticatedUser($conn);
 $description = trim((string)$data['description']);
 $category = trim((string)$data['category']);
 $account = trim((string)$data['account']);
@@ -38,7 +33,7 @@ $is_expense = intval($data['is_expense']);
 $notes = trim((string)($data['notes'] ?? ""));
 $date = trim((string)$data['date']);
 
-if ($user_id <= 0 || $description === "" || $category === "" || $amount <= 0 || $date === "") {
+if ($description === "" || $category === "" || $amount <= 0 || $date === "") {
     echo json_encode(["status" => "invalid_data", "message" => "Invalid transaction data"]);
     exit();
 }

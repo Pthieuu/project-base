@@ -13,17 +13,22 @@ class ApiService {
     defaultValue: 'http://127.0.0.1:8000/',
   );
 
-  Future<void> addTransaction(Map<String, dynamic> data) async {
-    if (UserSession.user_id == null) {
-      throw Exception("User not logged in");
+  static Map<String, String> get authorizedJsonHeaders {
+    final token = UserSession.accessToken;
+    if (token == null || token.isEmpty) {
+      throw Exception("User not authenticated");
     }
+    return {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer $token",
+    };
+  }
 
-    final body = {...data, "user_id": UserSession.user_id};
-
+  Future<void> addTransaction(Map<String, dynamic> data) async {
     final response = await http.post(
       Uri.parse("${baseUrl}add_transaction.php"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(body),
+      headers: authorizedJsonHeaders,
+      body: jsonEncode(data),
     );
 
     if (response.statusCode != 200) {
@@ -37,16 +42,10 @@ class ApiService {
   }
 
   Future<void> updateTransaction(Map<String, dynamic> data) async {
-    if (UserSession.user_id == null) {
-      throw Exception("User not logged in");
-    }
-
-    final body = {...data, "user_id": UserSession.user_id};
-
     final response = await http.post(
       Uri.parse("${baseUrl}update_transaction.php"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(body),
+      headers: authorizedJsonHeaders,
+      body: jsonEncode(data),
     );
 
     if (response.statusCode != 200) {
@@ -60,14 +59,10 @@ class ApiService {
   }
 
   Future<void> deleteTransaction(int transactionId) async {
-    if (UserSession.user_id == null) {
-      throw Exception("User not logged in");
-    }
-
     final response = await http.post(
       Uri.parse("${baseUrl}delete_transaction.php"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"id": transactionId, "user_id": UserSession.user_id}),
+      headers: authorizedJsonHeaders,
+      body: jsonEncode({"id": transactionId}),
     );
 
     if (response.statusCode != 200) {
@@ -80,11 +75,11 @@ class ApiService {
     }
   }
 
-  Future<List<TransactionModel>> getTransactions(int userId) async {
+  Future<List<TransactionModel>> getTransactions() async {
     final response = await http.post(
       Uri.parse("${baseUrl}get_transaction.php"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"user_id": userId}),
+      headers: authorizedJsonHeaders,
+      body: jsonEncode({}),
     );
 
     if (response.statusCode == 200) {
@@ -107,13 +102,10 @@ class ApiService {
     required String name,
     required String email,
   }) async {
-    final userId = UserSession.user_id;
-    if (userId == null) throw Exception("User not logged in");
-
     final response = await http.post(
       Uri.parse("${baseUrl}update_profile.php"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"user_id": userId, "name": name, "email": email}),
+      headers: authorizedJsonHeaders,
+      body: jsonEncode({"name": name, "email": email}),
     );
 
     if (response.statusCode != 200) {
@@ -129,13 +121,10 @@ class ApiService {
   }
 
   Future<List<CategoryModel>> getCategories() async {
-    final userId = UserSession.user_id;
-    if (userId == null) throw Exception("User not logged in");
-
     final response = await http.post(
       Uri.parse("${baseUrl}get_categories.php"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"user_id": userId}),
+      headers: authorizedJsonHeaders,
+      body: jsonEncode({}),
     );
 
     if (response.statusCode != 200) {
@@ -157,14 +146,10 @@ class ApiService {
     String icon = 'wallet',
     String color = '#1132D4',
   }) async {
-    final userId = UserSession.user_id;
-    if (userId == null) throw Exception("User not logged in");
-
     final response = await http.post(
       Uri.parse("${baseUrl}save_category.php"),
-      headers: {"Content-Type": "application/json"},
+      headers: authorizedJsonHeaders,
       body: jsonEncode({
-        "user_id": userId,
         "name": name,
         "type": type,
         "icon": icon,
@@ -183,13 +168,10 @@ class ApiService {
   }
 
   Future<List<CategoryBudgetModel>> getBudgets(String month) async {
-    final userId = UserSession.user_id;
-    if (userId == null) throw Exception("User not logged in");
-
     final response = await http.post(
       Uri.parse("${baseUrl}get_budgets.php"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"user_id": userId, "month": month}),
+      headers: authorizedJsonHeaders,
+      body: jsonEncode({"month": month}),
     );
 
     if (response.statusCode != 200) {
@@ -210,14 +192,10 @@ class ApiService {
     required String month,
     required double monthlyLimit,
   }) async {
-    final userId = UserSession.user_id;
-    if (userId == null) throw Exception("User not logged in");
-
     final response = await http.post(
       Uri.parse("${baseUrl}save_budget.php"),
-      headers: {"Content-Type": "application/json"},
+      headers: authorizedJsonHeaders,
       body: jsonEncode({
-        "user_id": userId,
         "category": category,
         "month": month,
         "monthly_limit": monthlyLimit,
@@ -235,13 +213,10 @@ class ApiService {
   }
 
   Future<List<SavingGoalModel>> getGoals() async {
-    final userId = UserSession.user_id;
-    if (userId == null) throw Exception("User not logged in");
-
     final response = await http.post(
       Uri.parse("${baseUrl}get_goals.php"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"user_id": userId}),
+      headers: authorizedJsonHeaders,
+      body: jsonEncode({}),
     );
 
     if (response.statusCode != 200) {
@@ -266,14 +241,10 @@ class ApiService {
     String note = '',
     bool isCompleted = false,
   }) async {
-    final userId = UserSession.user_id;
-    if (userId == null) throw Exception("User not logged in");
-
     final response = await http.post(
       Uri.parse("${baseUrl}save_goal.php"),
-      headers: {"Content-Type": "application/json"},
+      headers: authorizedJsonHeaders,
       body: jsonEncode({
-        "user_id": userId,
         if (id != null) "id": id,
         "title": title,
         "target_amount": targetAmount,
@@ -295,13 +266,10 @@ class ApiService {
   }
 
   Future<void> deleteGoal(int goalId) async {
-    final userId = UserSession.user_id;
-    if (userId == null) throw Exception("User not logged in");
-
     final response = await http.post(
       Uri.parse("${baseUrl}delete_goal.php"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"id": goalId, "user_id": userId}),
+      headers: authorizedJsonHeaders,
+      body: jsonEncode({"id": goalId}),
     );
 
     if (response.statusCode != 200) {
@@ -315,13 +283,10 @@ class ApiService {
   }
 
   Future<List<RecurringTransactionModel>> getRecurringTransactions() async {
-    final userId = UserSession.user_id;
-    if (userId == null) throw Exception("User not logged in");
-
     final response = await http.post(
       Uri.parse("${baseUrl}get_recurring_transactions.php"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"user_id": userId}),
+      headers: authorizedJsonHeaders,
+      body: jsonEncode({}),
     );
 
     if (response.statusCode != 200) {
@@ -351,14 +316,10 @@ class ApiService {
     String notes = '',
     bool isActive = true,
   }) async {
-    final userId = UserSession.user_id;
-    if (userId == null) throw Exception("User not logged in");
-
     final response = await http.post(
       Uri.parse("${baseUrl}save_recurring_transaction.php"),
-      headers: {"Content-Type": "application/json"},
+      headers: authorizedJsonHeaders,
       body: jsonEncode({
-        "user_id": userId,
         if (id != null) "id": id,
         "description": description,
         "category": category,

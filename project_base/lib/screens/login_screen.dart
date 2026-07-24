@@ -30,17 +30,43 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    var result = await AuthService.login(
-      emailController.text.trim(),
-      passwordController.text.trim(),
-    );
+    Map<String, dynamic> result;
+    try {
+      result = await AuthService.login(
+        emailController.text.trim(),
+        passwordController.text.trim(),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t('login_server_error').replaceAll(
+              '{error}',
+              error.toString().replaceFirst('Exception: ', ''),
+            ),
+          ),
+        ),
+      );
+      return;
+    }
 
     if (!mounted) return;
 
     if (result["status"] == "success") {
+      final accessToken = result["access_token"];
+      if (accessToken is! String || accessToken.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Server did not return an access token."),
+          ),
+        );
+        return;
+      }
       UserSession.user_id = result["user_id"];
       UserSession.name = result["name"];
       UserSession.email = result["email"];
+      UserSession.accessToken = accessToken;
 
       Navigator.pushReplacement(
         context,

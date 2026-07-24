@@ -86,9 +86,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       return _InsightsData.disabled();
     }
 
-    final transactions = await ApiService().getTransactions(
-      UserSession.user_id!,
-    );
+    final transactions = await ApiService().getTransactions();
     currentTransactions = transactions;
     final data = _buildInsights(transactions);
 
