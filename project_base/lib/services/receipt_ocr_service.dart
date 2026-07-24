@@ -14,6 +14,7 @@ class ReceiptOcrResult {
   final String notes;
   final double confidence;
   final String rawText;
+  final List<ReceiptLineItem> lineItems;
 
   const ReceiptOcrResult({
     required this.merchant,
@@ -23,6 +24,7 @@ class ReceiptOcrResult {
     required this.notes,
     required this.confidence,
     required this.rawText,
+    required this.lineItems,
   });
 
   factory ReceiptOcrResult.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,39 @@ class ReceiptOcrResult {
       confidence: (double.tryParse(json['confidence']?.toString() ?? '') ?? 0)
           .clamp(0, 1),
       rawText: json['raw_text']?.toString().trim() ?? '',
+      lineItems: (json['line_items'] is List)
+          ? (json['line_items'] as List)
+                .whereType<Map>()
+                .map(
+                  (item) =>
+                      ReceiptLineItem.fromJson(Map<String, dynamic>.from(item)),
+                )
+                .where((item) => item.name.isNotEmpty)
+                .toList()
+          : const [],
+    );
+  }
+}
+
+class ReceiptLineItem {
+  final String name;
+  final double quantity;
+  final double unitPrice;
+  final double total;
+
+  const ReceiptLineItem({
+    required this.name,
+    required this.quantity,
+    required this.unitPrice,
+    required this.total,
+  });
+
+  factory ReceiptLineItem.fromJson(Map<String, dynamic> json) {
+    return ReceiptLineItem(
+      name: json['name']?.toString().trim() ?? '',
+      quantity: double.tryParse(json['quantity']?.toString() ?? '') ?? 0,
+      unitPrice: double.tryParse(json['unit_price']?.toString() ?? '') ?? 0,
+      total: double.tryParse(json['total']?.toString() ?? '') ?? 0,
     );
   }
 }
@@ -53,7 +88,15 @@ class ReceiptOcrService {
       Uri.parse('${ApiService.baseUrl}receipt_ocr.php'),
     );
     request.headers['Authorization'] = 'Bearer $token';
-    request.files.add(await http.MultipartFile.fromPath('receipt', image.path));
+    // On Flutter Web, XFile.path is a browser blob URL rather than a readable
+    // local path. Uploading bytes works consistently across all platforms.
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'receipt',
+        await image.readAsBytes(),
+        filename: image.name.isEmpty ? 'receipt.jpg' : image.name,
+      ),
+    );
 
     final streamedResponse = await request.send().timeout(_timeout);
     final response = await http.Response.fromStream(streamedResponse);

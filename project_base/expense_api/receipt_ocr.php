@@ -60,7 +60,20 @@ $schema = [
         ],
         "notes" => ["type" => "string"],
         "confidence" => ["type" => "number"],
-        "raw_text" => ["type" => "string"]
+        "raw_text" => ["type" => "string"],
+        "line_items" => [
+            "type" => "array",
+            "items" => [
+                "type" => "object",
+                "properties" => [
+                    "name" => ["type" => "string"],
+                    "quantity" => ["type" => "number"],
+                    "unit_price" => ["type" => "number"],
+                    "total" => ["type" => "number"]
+                ],
+                "required" => ["name", "quantity", "unit_price", "total"]
+            ]
+        ]
     ],
     "required" => [
         "merchant",
@@ -69,7 +82,8 @@ $schema = [
         "category",
         "notes",
         "confidence",
-        "raw_text"
+        "raw_text",
+        "line_items"
     ]
 ];
 
@@ -77,12 +91,22 @@ $prompt = <<<PROMPT
 Extract transaction data from this receipt.
 Return only data matching the supplied JSON schema.
 - merchant: store or merchant name.
-- amount: final amount actually paid. Use the numeric VND value without currency symbols or separators.
+- amount: final amount actually paid, taken from labels such as TỔNG CỘNG,
+  THÀNH TIỀN, TỔNG TIỀN, TOTAL, or PAYMENT. Do not use a product price,
+  subtotal, discount, cash received, or change.
+- Vietnamese receipts commonly use dots or spaces as thousands separators.
+  For example: "4.899.000", "4 899 000", and "4,899,000" all mean 4899000,
+  never 48900. Return amount as a numeric VND value without separators.
 - date: receipt date in YYYY-MM-DD. Today is {$today}. Use an empty string if unreadable.
 - category: choose the closest allowed category.
 - notes: a short useful receipt summary, without repeating merchant or total.
 - confidence: a number from 0 to 1 reflecting overall extraction confidence.
 - raw_text: important visible receipt text, maximum 500 characters.
+- line_items: every readable purchased product. Preserve the complete product
+  name. Return quantity, unit_price, and line total as numbers without
+  separators. Use an empty array only when no product line is readable.
+Before responding, verify the final amount against the printed total and check
+that it is plausible relative to the sum of line_items.
 Never invent unreadable values. For unreadable amount use 0 and unreadable text fields use an empty string.
 PROMPT;
 
@@ -148,6 +172,7 @@ $rawTextValue = trim((string)($receipt["raw_text"] ?? ""));
 $rawText = function_exists("mb_substr")
     ? mb_substr($rawTextValue, 0, 500)
     : substr($rawTextValue, 0, 500);
+$lineItems = normalizeReceiptLineItems($receipt["line_items"] ?? []);
 
 if (!in_array($category, $allowedCategories, true)) {
     $category = "Other";
@@ -162,7 +187,8 @@ echo json_encode([
         "category" => $category,
         "notes" => $notes,
         "confidence" => $confidence,
-        "raw_text" => $rawText
+        "raw_text" => $rawText,
+        "line_items" => $lineItems
     ],
     "model" => $model
 ], JSON_UNESCAPED_UNICODE);
@@ -176,6 +202,34 @@ function normalizeReceiptDate(string $value): string
 
     [$year, $month, $day] = array_map("intval", explode("-", $value));
     return checkdate($month, $day, $year) ? $value : "";
+}
+
+function normalizeReceiptLineItems(mixed $value): array
+{
+    if (!is_array($value)) {
+        return [];
+    }
+
+    $items = [];
+    foreach ($value as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+
+        $name = trim((string)($item["name"] ?? ""));
+        if ($name === "") {
+            continue;
+        }
+
+        $items[] = [
+            "name" => $name,
+            "quantity" => max(0, floatval($item["quantity"] ?? 0)),
+            "unit_price" => max(0, floatval($item["unit_price"] ?? 0)),
+            "total" => max(0, floatval($item["total"] ?? 0))
+        ];
+    }
+
+    return $items;
 }
 
 function respondReceiptOcr(

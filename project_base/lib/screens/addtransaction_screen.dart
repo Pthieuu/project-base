@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -22,6 +22,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   bool isScanningReceipt = false;
   DateTime selectedDate = DateTime.now();
   XFile? receiptImage;
+  Uint8List? receiptImageBytes;
   ReceiptOcrResult? receiptResult;
   final ImagePicker imagePicker = ImagePicker();
   final ReceiptOcrService receiptOcrService = ReceiptOcrService();
@@ -193,9 +194,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         maxWidth: 2000,
       );
       if (image == null || !mounted) return;
+      final imageBytes = await image.readAsBytes();
 
       setState(() {
         receiptImage = image;
+        receiptImageBytes = imageBytes;
         receiptResult = null;
         isScanningReceipt = true;
       });
@@ -221,8 +224,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         if (result.merchant.isNotEmpty) {
           descriptionController.text = result.merchant;
         }
-        if (result.notes.isNotEmpty) {
-          notesController.text = result.notes;
+        final productNames = result.lineItems
+            .map((item) => item.name)
+            .where((name) => name.isNotEmpty)
+            .join(', ');
+        final noteParts = [
+          if (productNames.isNotEmpty) 'Sản phẩm: $productNames',
+          if (result.notes.isNotEmpty) result.notes,
+        ];
+        if (noteParts.isNotEmpty) {
+          notesController.text = noteParts.join('\n');
         }
         if (parsedDate != null) {
           selectedDate = parsedDate;
@@ -243,8 +254,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       setState(() => isScanningReceipt = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: const Duration(seconds: 10),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
           content: Text(
             t('receipt_scan_failed').replaceAll('{error}', error.toString()),
+            style: TextStyle(color: Theme.of(context).colorScheme.onError),
           ),
         ),
       );
@@ -358,15 +373,15 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             ),
                           ],
                         ),
-                        if (receiptImage != null) ...[
+                        if (receiptImageBytes != null) ...[
                           const SizedBox(height: 12),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(14),
                             child: SizedBox(
                               height: 120,
                               width: double.infinity,
-                              child: Image.file(
-                                File(receiptImage!.path),
+                              child: Image.memory(
+                                receiptImageBytes!,
                                 fit: BoxFit.cover,
                               ),
                             ),
