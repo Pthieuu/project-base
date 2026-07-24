@@ -67,7 +67,10 @@ $stmt->bind_param(
 );
 
 if($stmt->execute()){
-    echo json_encode(["status"=>"success"]);
+    echo json_encode([
+        "status" => "success",
+        "transaction_id" => $conn->insert_id
+    ]);
 }else{
     echo json_encode([
         "status"=>"error",

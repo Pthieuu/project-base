@@ -376,7 +376,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     if (action == null || message.actionCompleted) return;
 
     try {
-      await _executeAiAction(action);
+      final transactionId = await _executeAiAction(action);
       if (!mounted) return;
       setState(() {
         message.actionCompleted = true;
@@ -384,6 +384,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           _ChatMessage(
             text: context.read<LanguageController>().text('saved_to_app'),
             isUser: false,
+            undoTransactionId: transactionId,
           ),
         );
         futureInsights = _loadInsights();
@@ -409,14 +410,50 @@ class _InsightsScreenState extends State<InsightsScreen> {
     });
   }
 
-  Future<void> _executeAiAction(AiAssistantAction action) async {
+  Future<void> _undoAiTransaction(_ChatMessage message) async {
+    final transactionId = message.undoTransactionId;
+    if (transactionId == null ||
+        message.undoCompleted ||
+        message.undoInProgress) {
+      return;
+    }
+
+    setState(() => message.undoInProgress = true);
+    try {
+      await ApiService().deleteTransaction(transactionId);
+      if (!mounted) return;
+      setState(() {
+        message.undoInProgress = false;
+        message.undoCompleted = true;
+        messages.add(
+          _ChatMessage(
+            text: context.read<LanguageController>().text('transaction_undone'),
+            isUser: false,
+          ),
+        );
+        futureInsights = _loadInsights();
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => message.undoInProgress = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${context.read<LanguageController>().text('undo_failed')}: $error',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<int?> _executeAiAction(AiAssistantAction action) async {
     final payload = action.payload;
     final api = ApiService();
 
     switch (action.action) {
       case 'add_transaction':
         final amount = _positiveAmount(payload['amount'], 'Transaction amount');
-        await api.addTransaction({
+        return api.addTransaction({
           "description": _stringValue(
             payload['description'],
             fallback: 'AI entry',
@@ -430,7 +467,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
           "notes": _stringValue(payload['notes']),
           "date": _dateValue(payload['date']).toString(),
         });
-        break;
       case 'add_saving_goal':
         final targetAmount = _positiveAmount(
           payload['target_amount'],
@@ -447,7 +483,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           targetDate: _dateOnlyValue(payload['target_date']),
           note: _stringValue(payload['note']),
         );
-        break;
+        return null;
       case 'set_budget':
         final monthlyLimit = _positiveAmount(
           payload['monthly_limit'],
@@ -458,7 +494,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           month: _monthValue(payload['month']),
           monthlyLimit: monthlyLimit,
         );
-        break;
+        return null;
       case 'add_recurring_transaction':
         final amount = _positiveAmount(payload['amount'], 'Recurring amount');
         await api.saveRecurringTransaction(
@@ -474,7 +510,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           nextRunDate: _dateOnlyValue(payload['next_run_date'])!,
           notes: _stringValue(payload['notes']),
         );
-        break;
+        return null;
       default:
         throw Exception('Unsupported action: ${action.action}');
     }
@@ -1079,13 +1115,61 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                                   : const Color(0xFFF1F5F9)),
                                         borderRadius: BorderRadius.circular(14),
                                       ),
-                                      child: Text(
-                                        message.text,
-                                        style: TextStyle(
-                                          color: message.isUser
-                                              ? Colors.white
-                                              : text,
-                                        ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            message.text,
+                                            style: TextStyle(
+                                              color: message.isUser
+                                                  ? Colors.white
+                                                  : text,
+                                            ),
+                                          ),
+                                          if (message.undoTransactionId !=
+                                              null) ...[
+                                            const SizedBox(height: 8),
+                                            OutlinedButton.icon(
+                                              style: OutlinedButton.styleFrom(
+                                                visualDensity:
+                                                    VisualDensity.compact,
+                                                foregroundColor:
+                                                    message.undoCompleted
+                                                    ? Colors.grey
+                                                    : primary,
+                                              ),
+                                              onPressed:
+                                                  message.undoCompleted ||
+                                                      message.undoInProgress
+                                                  ? null
+                                                  : () => _undoAiTransaction(
+                                                      message,
+                                                    ),
+                                              icon: message.undoInProgress
+                                                  ? const SizedBox(
+                                                      width: 16,
+                                                      height: 16,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                          ),
+                                                    )
+                                                  : Icon(
+                                                      message.undoCompleted
+                                                          ? Icons.check
+                                                          : Icons.undo,
+                                                      size: 18,
+                                                    ),
+                                              label: Text(
+                                                message.undoCompleted
+                                                    ? t('undone')
+                                                    : t('undo'),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                     ),
                                   );
@@ -1230,9 +1314,17 @@ class _ChatMessage {
   final String text;
   final bool isUser;
   final AiAssistantAction? action;
+  final int? undoTransactionId;
   bool actionCompleted = false;
+  bool undoCompleted = false;
+  bool undoInProgress = false;
 
-  _ChatMessage({required this.text, required this.isUser, this.action});
+  _ChatMessage({
+    required this.text,
+    required this.isUser,
+    this.action,
+    this.undoTransactionId,
+  });
 }
 
 class _AiActionMessageCard extends StatelessWidget {

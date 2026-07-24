@@ -24,7 +24,7 @@ class ApiService {
     };
   }
 
-  Future<void> addTransaction(Map<String, dynamic> data) async {
+  Future<int> addTransaction(Map<String, dynamic> data) async {
     final response = await http.post(
       Uri.parse("${baseUrl}add_transaction.php"),
       headers: authorizedJsonHeaders,
@@ -39,6 +39,14 @@ class ApiService {
     if (responseData is! Map || responseData['status'] != 'success') {
       throw Exception(responseData['message'] ?? "Add transaction failed");
     }
+
+    final transactionId = int.tryParse(
+      responseData['transaction_id']?.toString() ?? '',
+    );
+    if (transactionId == null || transactionId <= 0) {
+      throw Exception("API did not return the new transaction ID");
+    }
+    return transactionId;
   }
 
   Future<void> updateTransaction(Map<String, dynamic> data) async {
