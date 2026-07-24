@@ -1,6 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:project_base/controller/language_controller.dart';
+import 'package:project_base/services/receipt_ocr_service.dart';
 import 'package:project_base/utils/app_date_picker.dart';
 import 'package:project_base/utils/category_visuals.dart';
 import '../services/api_service.dart';
@@ -15,7 +19,13 @@ class AddTransactionScreen extends StatefulWidget {
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
   bool isExpense = true;
+  bool isScanningReceipt = false;
   DateTime selectedDate = DateTime.now();
+  XFile? receiptImage;
+  Uint8List? receiptImageBytes;
+  ReceiptOcrResult? receiptResult;
+  final ImagePicker imagePicker = ImagePicker();
+  final ReceiptOcrService receiptOcrService = ReceiptOcrService();
 
   Future<void> pickDate() async {
     final picked = await showAppDatePicker(
@@ -118,6 +128,144 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     });
   }
 
+  Future<void> _showReceiptSourcePicker() async {
+    if (isScanningReceipt) return;
+    final t = context.read<LanguageController>().text;
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  t('receipt_ocr'),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(t('receipt_source_hint')),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () =>
+                            Navigator.pop(sheetContext, ImageSource.camera),
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        label: Text(t('take_photo')),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () =>
+                            Navigator.pop(sheetContext, ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: Text(t('choose_gallery')),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (source == null || !mounted) return;
+    await _pickAndScanReceipt(source);
+  }
+
+  Future<void> _pickAndScanReceipt(ImageSource source) async {
+    final t = context.read<LanguageController>().text;
+    try {
+      final image = await imagePicker.pickImage(
+        source: source,
+        imageQuality: 82,
+        maxWidth: 2000,
+      );
+      if (image == null || !mounted) return;
+      final imageBytes = await image.readAsBytes();
+
+      setState(() {
+        receiptImage = image;
+        receiptImageBytes = imageBytes;
+        receiptResult = null;
+        isScanningReceipt = true;
+      });
+
+      final result = await receiptOcrService.scan(image);
+      if (!mounted) return;
+
+      final parsedDate = DateTime.tryParse(result.date);
+      final detectedCategory = result.category.trim().isEmpty
+          ? 'Other'
+          : result.category.trim();
+
+      setState(() {
+        receiptResult = result;
+        isScanningReceipt = false;
+        isExpense = true;
+
+        if (result.amount > 0) {
+          amountController.text = NumberFormat.decimalPattern(
+            'vi',
+          ).format(result.amount.round());
+        }
+        if (result.merchant.isNotEmpty) {
+          descriptionController.text = result.merchant;
+        }
+        final productNames = result.lineItems
+            .map((item) => item.name)
+            .where((name) => name.isNotEmpty)
+            .join(', ');
+        final noteParts = [
+          if (productNames.isNotEmpty) 'Sản phẩm: $productNames',
+          if (result.notes.isNotEmpty) result.notes,
+        ];
+        if (noteParts.isNotEmpty) {
+          notesController.text = noteParts.join('\n');
+        }
+        if (parsedDate != null) {
+          selectedDate = parsedDate;
+        }
+
+        _addCategoryIfMissing(detectedCategory);
+        category = categories.firstWhere(
+          (item) => item.toLowerCase() == detectedCategory.toLowerCase(),
+          orElse: () => detectedCategory,
+        );
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t('receipt_scan_success'))));
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => isScanningReceipt = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 10),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+          content: Text(
+            t('receipt_scan_failed').replaceAll('{error}', error.toString()),
+            style: TextStyle(color: Theme.of(context).colorScheme.onError),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -152,6 +300,125 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          primary.withValues(alpha: 0.14),
+                          primary.withValues(alpha: 0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: primary.withValues(alpha: 0.22),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: primary.withValues(alpha: 0.13),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(
+                                Icons.document_scanner_outlined,
+                                color: primary,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    t('receipt_ocr'),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  Text(
+                                    t('receipt_ocr_subtitle'),
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: isScanningReceipt
+                                  ? null
+                                  : _showReceiptSourcePicker,
+                              icon: isScanningReceipt
+                                  ? const SizedBox(
+                                      width: 17,
+                                      height: 17,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.camera_alt_outlined),
+                              label: Text(
+                                isScanningReceipt ? t('scanning') : t('scan'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (receiptImageBytes != null) ...[
+                          const SizedBox(height: 12),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: SizedBox(
+                              height: 120,
+                              width: double.infinity,
+                              child: Image.memory(
+                                receiptImageBytes!,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (receiptResult != null) ...[
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.auto_awesome,
+                                size: 18,
+                                color: primary,
+                              ),
+                              const SizedBox(width: 7),
+                              Expanded(
+                                child: Text(
+                                  t('receipt_review_hint').replaceAll(
+                                    '{confidence}',
+                                    '${(receiptResult!.confidence * 100).round()}%',
+                                  ),
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? Colors.white70
+                                        : Colors.grey[700],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
                   /// 💰 AMOUNT
                   Center(
                     child: Column(
