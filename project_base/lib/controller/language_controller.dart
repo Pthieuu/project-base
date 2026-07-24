@@ -258,6 +258,39 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
         'Your highest spending category this month is {category}. Reducing it by 10% would save about {amount}.',
     'saving_suggestion_basis':
         'Based on your recorded transactions for the current month.',
+    'why_ai_suggestion': 'Why did AI suggest this?',
+    'why_ai_title': 'Why this suggestion?',
+    'why_ai_subtitle': 'Transparent calculation from your recorded data',
+    'data_used': 'Data used',
+    'calculation_formula': 'Calculation',
+    'data_period': 'Data period',
+    'confidence_level': 'Confidence',
+    'missing_data': 'Data not included',
+    'confidence_high': 'High',
+    'confidence_medium': 'Medium',
+    'confidence_low': 'Low',
+    'explanation_period_value':
+        'Transactions recorded in {month}, through {date}.',
+    'spending_explanation_data':
+        '{count} expense transactions; {category}: {current} this month and {previous} last month.',
+    'spending_explanation_formula':
+        'Category change = (this month − last month) ÷ last month × 100%.',
+    'spending_missing_previous':
+        'There is no comparable spending for this category last month. Income, budgets, and unrecorded transactions are not included.',
+    'common_missing_data':
+        'Unrecorded transactions and changes to income or future bills are not included.',
+    'saving_explanation_data':
+        '{count} expense transactions. {category} is currently the largest category at {amount}.',
+    'saving_explanation_formula':
+        'Suggested reduction = {amount} × 10% = {result}. The 10% is a moderate heuristic, not a mandatory target.',
+    'saving_missing_data':
+        'The app does not yet know whether this category is essential or fixed, nor your upcoming bills and desired safety balance.',
+    'forecast_explanation_data':
+        '{count} expense transactions totaling {spent} through day {day} of the month.',
+    'forecast_explanation_formula':
+        'Forecast = {spent} ÷ {day} elapsed days × {days} days in month = {result}.',
+    'forecast_missing_data':
+        'Future one-off purchases, unrecorded bills, income changes, and seasonal spending are not included.',
     'this_month_forecast': 'This Month Forecast',
     'spent': 'Spent',
     'forecast': 'Forecast',
@@ -267,6 +300,10 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'which_category_cut': 'Which category should I cut?',
     'action_canceled': 'Action canceled. Nothing was saved.',
     'saved_to_app': 'Saved to the app.',
+    'undo': 'Undo',
+    'undone': 'Undone',
+    'transaction_undone': 'The AI-added transaction was removed.',
+    'undo_failed': 'Could not undo the transaction',
     'app_name': 'AI Expense Manager',
     'smart_financial_control': 'SMART FINANCIAL CONTROL',
     'analyzing_transactions': 'Analysing transactions...',
@@ -537,6 +574,39 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
         '{category} là danh mục chi nhiều nhất tháng này. Nếu giảm 10%, bạn có thể tiết kiệm khoảng {amount}.',
     'saving_suggestion_basis':
         'Căn cứ trên các giao dịch bạn đã ghi nhận trong tháng hiện tại.',
+    'why_ai_suggestion': 'Vì sao AI đề xuất?',
+    'why_ai_title': 'Vì sao có gợi ý này?',
+    'why_ai_subtitle': 'Cách tính minh bạch từ dữ liệu bạn đã ghi nhận',
+    'data_used': 'Dữ liệu được sử dụng',
+    'calculation_formula': 'Công thức tính',
+    'data_period': 'Thời gian dữ liệu',
+    'confidence_level': 'Độ tin cậy',
+    'missing_data': 'Dữ liệu còn thiếu',
+    'confidence_high': 'Cao',
+    'confidence_medium': 'Trung bình',
+    'confidence_low': 'Thấp',
+    'explanation_period_value':
+        'Các giao dịch trong tháng {month}, cập nhật đến {date}.',
+    'spending_explanation_data':
+        '{count} giao dịch chi; {category}: tháng này {current}, tháng trước {previous}.',
+    'spending_explanation_formula':
+        'Mức thay đổi danh mục = (tháng này − tháng trước) ÷ tháng trước × 100%.',
+    'spending_missing_previous':
+        'Chưa có khoản chi cùng danh mục để so sánh ở tháng trước. Thu nhập, ngân sách và giao dịch chưa ghi nhận chưa được tính.',
+    'common_missing_data':
+        'Chưa tính các giao dịch chưa ghi nhận, thay đổi thu nhập và hóa đơn tương lai.',
+    'saving_explanation_data':
+        '{count} giao dịch chi. {category} hiện là danh mục lớn nhất với {amount}.',
+    'saving_explanation_formula':
+        'Mức giảm gợi ý = {amount} × 10% = {result}. 10% là ngưỡng tham khảo vừa phải, không phải mục tiêu bắt buộc.',
+    'saving_missing_data':
+        'App chưa biết danh mục này có thiết yếu hoặc cố định hay không, cũng chưa tính hóa đơn sắp tới và số dư an toàn bạn mong muốn.',
+    'forecast_explanation_data':
+        '{count} giao dịch chi, tổng cộng {spent} đến ngày thứ {day} của tháng.',
+    'forecast_explanation_formula':
+        'Dự báo = {spent} ÷ {day} ngày đã qua × {days} ngày trong tháng = {result}.',
+    'forecast_missing_data':
+        'Chưa tính khoản mua đột xuất, hóa đơn chưa ghi nhận, thay đổi thu nhập và chi tiêu theo mùa.',
     'this_month_forecast': 'Dự đoán tháng này',
     'spent': 'Đã chi',
     'forecast': 'Dự đoán',
@@ -546,6 +616,10 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'which_category_cut': 'Nên cắt giảm danh mục nào?',
     'action_canceled': 'Đã hủy thao tác. Không có gì được lưu.',
     'saved_to_app': 'Đã lưu vào app.',
+    'undo': 'Hoàn tác',
+    'undone': 'Đã hoàn tác',
+    'transaction_undone': 'Đã xóa giao dịch do AI vừa thêm.',
+    'undo_failed': 'Không thể hoàn tác giao dịch',
     'app_name': 'AI Expense Manager',
     'smart_financial_control': 'KIỂM SOÁT TÀI CHÍNH THÔNG MINH',
     'analyzing_transactions': 'Đang phân tích giao dịch...',
@@ -802,6 +876,32 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'saving_suggestion_detail':
         '今月最も支出が多いカテゴリは{category}です。10%減らすと、約{amount}節約できます。',
     'saving_suggestion_basis': '今月記録された取引データに基づいています。',
+    'why_ai_suggestion': 'AIが提案した理由',
+    'why_ai_title': 'この提案の理由',
+    'why_ai_subtitle': '記録されたデータに基づく透明な計算',
+    'data_used': '使用したデータ',
+    'calculation_formula': '計算式',
+    'data_period': 'データ期間',
+    'confidence_level': '信頼度',
+    'missing_data': '含まれていないデータ',
+    'confidence_high': '高',
+    'confidence_medium': '中',
+    'confidence_low': '低',
+    'explanation_period_value': '{month}の取引、{date}時点まで。',
+    'spending_explanation_data':
+        '支出取引{count}件。{category}は今月{current}、先月{previous}です。',
+    'spending_explanation_formula': 'カテゴリの変化率 =（今月 − 先月）÷ 先月 × 100%。',
+    'spending_missing_previous':
+        '先月に比較できる同カテゴリの支出がありません。収入、予算、未記録の取引は含まれていません。',
+    'common_missing_data': '未記録の取引、収入の変化、今後の請求は含まれていません。',
+    'saving_explanation_data': '支出取引{count}件。{category}が現在最大のカテゴリで、{amount}です。',
+    'saving_explanation_formula':
+        '提案削減額 = {amount} × 10% = {result}。10%は参考値であり、必須目標ではありません。',
+    'saving_missing_data': 'このカテゴリが必要・固定支出か、今後の請求や希望する安全残高はまだ考慮されていません。',
+    'forecast_explanation_data': '月の{day}日目までに支出取引{count}件、合計{spent}です。',
+    'forecast_explanation_formula':
+        '予測 = {spent} ÷ 経過{day}日 × 月{days}日 = {result}。',
+    'forecast_missing_data': '今後の臨時購入、未記録の請求、収入変化、季節的支出は含まれていません。',
     'this_month_forecast': '今月の予測',
     'spent': '支出済み',
     'forecast': '予測',
@@ -811,6 +911,10 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'which_category_cut': 'どのカテゴリを削減すべき？',
     'action_canceled': '操作をキャンセルしました。保存されていません。',
     'saved_to_app': 'アプリに保存しました。',
+    'undo': '元に戻す',
+    'undone': '元に戻しました',
+    'transaction_undone': 'AIが追加した取引を削除しました。',
+    'undo_failed': '取引を元に戻せませんでした',
     'app_name': 'AI Expense Manager',
     'smart_financial_control': 'スマートな家計管理',
     'analyzing_transactions': '取引を分析中...',
