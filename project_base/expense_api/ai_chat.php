@@ -43,8 +43,8 @@ if ($message === "") {
     ]);
 }
 
-$model = getenv("OLLAMA_MODEL") ?: "llama3.2";
-$baseUrl = rtrim(getenv("OLLAMA_BASE_URL") ?: "http://127.0.0.1:11434", "/");
+$model = envValue("OLLAMA_MODEL");
+$baseUrl = rtrim(envValue("OLLAMA_BASE_URL"), "/");
 $messages = buildOllamaMessages(buildInstructions($transactions, $language), $history, $message);
 $result = callOllama($baseUrl, $model, $messages);
 
