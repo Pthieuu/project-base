@@ -361,6 +361,24 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'forecast_missing_data':
         'Future one-off purchases, unrecorded bills, income changes, and seasonal spending are not included.',
     'weekly_recap': 'Weekly Recap',
+    'financial_coach': 'AI Financial Coach',
+    'financial_coach_subtitle':
+        'Weekly money flow, this month’s risks, and grounded next actions.',
+    'coach_weekly_summary': 'Your weekly coach summary',
+    'coach_based_on': 'Based on {count} recorded transactions.',
+    'coach_where_money_went': 'Where your money went',
+    'coach_month_risk': 'This month’s risk',
+    'coach_actions': 'Recommended actions',
+    'coach_actions_subtitle':
+        'Prioritized from your recorded transactions and budgets.',
+    'coach_evidence': 'Evidence',
+    'coach_risk_high': 'High',
+    'coach_risk_medium': 'Medium',
+    'coach_risk_low': 'Low',
+    'coach_not_enough_data': 'Not enough weekly data yet.',
+    'coach_data_limit':
+        'This assessment only uses recorded transactions and budgets. Upcoming bills, unrecorded cash spending, debts, and account balances may change the result.',
+    'coach_load_failed': 'Could not load the financial coach.',
     'weekly_recap_subtitle':
         'Your last 7 days of money, told as a quick story.',
     'view_recap': 'View recap',
@@ -782,6 +800,24 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'forecast_missing_data':
         'Chưa tính khoản mua đột xuất, hóa đơn chưa ghi nhận, thay đổi thu nhập và chi tiêu theo mùa.',
     'weekly_recap': 'Tổng kết tuần',
+    'financial_coach': 'AI Financial Coach',
+    'financial_coach_subtitle':
+        'Tổng kết dòng tiền tuần, rủi ro tháng và hành động có căn cứ.',
+    'coach_weekly_summary': 'Tổng kết tài chính tuần',
+    'coach_based_on': 'Dựa trên {count} giao dịch đã ghi nhận.',
+    'coach_where_money_went': 'Tiền đã đi đâu',
+    'coach_month_risk': 'Rủi ro tháng này',
+    'coach_actions': 'Hành động được đề xuất',
+    'coach_actions_subtitle':
+        'Được ưu tiên từ giao dịch và ngân sách bạn đã ghi nhận.',
+    'coach_evidence': 'Căn cứ',
+    'coach_risk_high': 'Cao',
+    'coach_risk_medium': 'Trung bình',
+    'coach_risk_low': 'Thấp',
+    'coach_not_enough_data': 'Chưa đủ dữ liệu giao dịch trong tuần.',
+    'coach_data_limit':
+        'Đánh giá chỉ dựa trên giao dịch và ngân sách đã ghi nhận. Hóa đơn sắp tới, tiền mặt chưa nhập, khoản nợ và số dư tài khoản có thể làm kết quả thay đổi.',
+    'coach_load_failed': 'Không thể tải Financial Coach.',
     'weekly_recap_subtitle':
         'Nhìn lại dòng tiền 7 ngày gần nhất dưới dạng story.',
     'view_recap': 'Xem tổng kết',
@@ -1171,6 +1207,22 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
         '予測 = {spent} ÷ 経過{day}日 × 月{days}日 = {result}。',
     'forecast_missing_data': '今後の臨時購入、未記録の請求、収入変化、季節的支出は含まれていません。',
     'weekly_recap': '週間まとめ',
+    'financial_coach': 'AIファイナンシャルコーチ',
+    'financial_coach_subtitle': '週間のお金の流れ、今月のリスク、根拠に基づく次の行動。',
+    'coach_weekly_summary': '週間コーチまとめ',
+    'coach_based_on': '記録された{count}件の取引に基づきます。',
+    'coach_where_money_went': 'お金の使い道',
+    'coach_month_risk': '今月のリスク',
+    'coach_actions': 'おすすめの行動',
+    'coach_actions_subtitle': '記録された取引と予算から優先順位を付けています。',
+    'coach_evidence': '根拠',
+    'coach_risk_high': '高',
+    'coach_risk_medium': '中',
+    'coach_risk_low': '低',
+    'coach_not_enough_data': '週間データがまだ不足しています。',
+    'coach_data_limit':
+        'この評価は記録済みの取引と予算のみを使用します。今後の請求、未記録の現金支出、債務、口座残高により結果は変わります。',
+    'coach_load_failed': 'ファイナンシャルコーチを読み込めません。',
     'weekly_recap_subtitle': '直近7日間のお金の流れをストーリーで振り返ります。',
     'view_recap': 'まとめを見る',
     'close': '閉じる',

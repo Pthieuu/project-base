@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/screens/weekly_recap_screen.dart';
+import 'package:project_base/screens/financial_coach_screen.dart';
 import 'package:project_base/services/ai_chat_service.dart';
 import 'package:project_base/services/api_service.dart';
 import 'package:project_base/services/user_session.dart';
@@ -571,6 +572,17 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
+  Future<void> _openFinancialCoach() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FinancialCoachScreen(
+          transactions: List<TransactionModel>.from(currentTransactions),
+        ),
+      ),
+    );
+  }
+
   Future<void> _sendMessage([String? preset]) async {
     final text = (preset ?? messageController.text).trim();
     if (text.isEmpty || currentInsights == null || isSending) return;
@@ -1093,6 +1105,69 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                   ),
                                   tooltip: t('view_recap'),
                                   onPressed: _openWeeklyRecap,
+                                  icon: const Icon(Icons.arrow_forward),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: isDark ? theme.cardColor : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: theme.primaryColor.withValues(
+                                  alpha: 0.2,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 54,
+                                  height: 54,
+                                  decoration: BoxDecoration(
+                                    color: theme.primaryColor.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  child: Icon(
+                                    Icons.psychology_alt_rounded,
+                                    color: theme.primaryColor,
+                                    size: 29,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        t('financial_coach'),
+                                        style: const TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        t('financial_coach_subtitle'),
+                                        style: TextStyle(
+                                          color: isDark
+                                              ? Colors.white60
+                                              : Colors.grey[600],
+                                          fontSize: 12,
+                                          height: 1.35,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton.filled(
+                                  onPressed: _openFinancialCoach,
                                   icon: const Icon(Icons.arrow_forward),
                                 ),
                               ],
