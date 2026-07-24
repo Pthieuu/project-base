@@ -296,7 +296,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   Future<void> _showTransactionActions(TransactionModel tx) async {
     final t = context.read<LanguageController>().text;
-    await showModalBottomSheet<void>(
+    final action = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
@@ -331,8 +331,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.pop(context);
-                          _showEditTransactionDialog(tx);
+                          Navigator.pop(context, 'edit');
                         },
                         icon: const Icon(Icons.edit),
                         label: Text(t('edit')),
@@ -347,8 +346,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           iconColor: Colors.white,
                         ),
                         onPressed: () {
-                          Navigator.pop(context);
-                          _confirmDeleteTransaction(tx);
+                          Navigator.pop(context, 'delete');
                         },
                         icon: const Icon(Icons.delete),
                         label: Text(t('delete')),
@@ -362,6 +360,20 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         );
       },
     );
+
+    if (action == null) return;
+
+    // Wait for the first bottom sheet to leave the overlay completely before
+    // opening another route. Opening both during the reverse transition can
+    // duplicate Flutter's internal GlobalKeys.
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    if (!mounted) return;
+
+    if (action == 'edit') {
+      await _showEditTransactionDialog(tx);
+    } else if (action == 'delete') {
+      await _confirmDeleteTransaction(tx);
+    }
   }
 
   Future<void> _showEditTransactionDialog(TransactionModel tx) async {
@@ -378,7 +390,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     var isExpense = tx.isExpense;
     var selectedDate = _parseDate(tx.date);
 
-    await showModalBottomSheet<void>(
+    final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
@@ -606,8 +618,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           });
 
                           if (!sheetContext.mounted) return;
-                          Navigator.pop(sheetContext);
-                          _reloadTransactions();
+                          Navigator.pop(sheetContext, true);
                         },
                         icon: const Icon(Icons.check),
                         label: Text(
@@ -625,11 +636,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       },
     );
 
+    // showModalBottomSheet completes when pop starts, while its reverse
+    // animation can still rebuild the TextFields for a few frames.
+    await Future<void>.delayed(const Duration(milliseconds: 350));
     descriptionController.dispose();
     categoryController.dispose();
     accountController.dispose();
     amountController.dispose();
     notesController.dispose();
+
+    if (saved == true && mounted) {
+      _reloadTransactions();
+    }
   }
 
   Widget _typeSegment({
