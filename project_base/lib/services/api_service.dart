@@ -4,6 +4,7 @@ import 'package:project_base/models/category_budget_model.dart';
 import 'package:project_base/models/category_model.dart';
 import 'package:project_base/models/recurring_transaction_model.dart';
 import 'package:project_base/models/saving_goal_model.dart';
+import 'package:project_base/models/social_streak_model.dart';
 import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/services/user_session.dart';
 
@@ -349,5 +350,57 @@ class ApiService {
     if (data is! Map || data['status'] != 'success') {
       throw Exception(data['message'] ?? "Cannot save recurring transaction");
     }
+  }
+
+  Future<SocialOverviewModel> getSocialStreakOverview() async {
+    final data = await _postSocial('overview.php', const {});
+    return SocialOverviewModel.fromJson(
+      Map<String, dynamic>.from(data['data'] as Map? ?? const {}),
+    );
+  }
+
+  Future<void> inviteFriend(String email) async {
+    await _postSocial('invite.php', {'email': email});
+  }
+
+  Future<void> respondToFriendInvitation(
+    int friendshipId, {
+    required bool accept,
+  }) async {
+    await _postSocial('respond.php', {
+      'friendship_id': friendshipId,
+      'action': accept ? 'accept' : 'reject',
+    });
+  }
+
+  Future<void> checkInSocialStreak(int streakId, String privateStatus) async {
+    await _postSocial('checkin.php', {
+      'streak_id': streakId,
+      'private_status': privateStatus,
+    });
+  }
+
+  Future<bool> nudgeSocialStreak(int streakId) async {
+    final data = await _postSocial('nudge.php', {'streak_id': streakId});
+    return data['sent'] == true || data['sent']?.toString() == '1';
+  }
+
+  Future<Map<String, dynamic>> _postSocial(
+    String endpoint,
+    Map<String, dynamic> body,
+  ) async {
+    final response = await http.post(
+      Uri.parse('${baseUrl}endpoints/social/$endpoint'),
+      headers: authorizedJsonHeaders,
+      body: jsonEncode(body),
+    );
+    final decoded = jsonDecode(response.body);
+    final data = decoded is Map
+        ? Map<String, dynamic>.from(decoded)
+        : <String, dynamic>{};
+    if (response.statusCode != 200 || data['status'] != 'success') {
+      throw Exception(data['message'] ?? 'Social streak request failed');
+    }
+    return data;
   }
 }
