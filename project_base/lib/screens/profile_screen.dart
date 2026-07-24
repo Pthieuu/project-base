@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../controller/language_controller.dart';
 import '../controller/theme_controller.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../services/user_session.dart';
 import 'insights_screen.dart';
 import 'login_screen.dart';
@@ -715,6 +716,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (shouldLogout != true || !mounted) return;
     InsightsScreen.clearSessionChat();
+    await AuthService.logout();
+    if (!mounted) return;
     UserSession.clear();
     Navigator.pushAndRemoveUntil(
       context,

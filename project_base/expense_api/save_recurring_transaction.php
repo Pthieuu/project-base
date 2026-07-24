@@ -2,9 +2,10 @@
 
 header("Content-Type: application/json");
 require_once "db.php";
+require_once "auth.php";
 
 $data = json_decode(file_get_contents("php://input"), true) ?: [];
-$userId = intval($data["user_id"] ?? 0);
+$userId = requireAuthenticatedUser($conn);
 $id = intval($data["id"] ?? 0);
 $description = trim($data["description"] ?? "");
 $category = trim($data["category"] ?? "");
@@ -16,7 +17,7 @@ $frequency = trim($data["frequency"] ?? "monthly");
 $nextRunDate = trim($data["next_run_date"] ?? "");
 $isActive = intval($data["is_active"] ?? 1);
 
-if ($userId <= 0 || $description === "" || $category === "" || $amount <= 0 || $nextRunDate === "") {
+if ($description === "" || $category === "" || $amount <= 0 || $nextRunDate === "") {
     echo json_encode(["status" => "error", "message" => "Missing recurring transaction data"]);
     exit();
 }
@@ -71,4 +72,3 @@ if ($stmt->execute()) {
 } else {
     echo json_encode(["status" => "error", "message" => $stmt->error]);
 }
-

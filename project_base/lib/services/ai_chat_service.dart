@@ -51,7 +51,7 @@ class AiChatService {
     final response = await http
         .post(
           Uri.parse('${ApiService.baseUrl}ai_chat.php'),
-          headers: {'Content-Type': 'application/json'},
+          headers: ApiService.authorizedJsonHeaders,
           body: jsonEncode({
             'message': userMessage,
             'language': responseLanguageCode,

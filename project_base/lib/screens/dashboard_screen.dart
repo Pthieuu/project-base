@@ -66,7 +66,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Future loadTransactions() async {
     final api = ApiService();
-    final txList = await api.getTransactions(UserSession.user_id!);
+    final txList = await api.getTransactions();
     final budgets = await _loadCurrentMonthBudgets(api);
     final notificationsEnabled = await _loadNotificationsEnabled();
     txList.sort((a, b) {

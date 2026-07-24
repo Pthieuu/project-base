@@ -2,15 +2,11 @@
 
 header("Content-Type: application/json");
 require_once "db.php";
+require_once "auth.php";
 
 $data = json_decode(file_get_contents("php://input"), true) ?: [];
-$userId = intval($data["user_id"] ?? 0);
+$userId = requireAuthenticatedUser($conn);
 $month = trim($data["month"] ?? date("Y-m"));
-
-if ($userId <= 0) {
-    echo json_encode(["status" => "error", "message" => "Missing user_id"]);
-    exit();
-}
 
 $stmt = $conn->prepare(
     "SELECT id, category, monthly_limit, month
@@ -28,4 +24,3 @@ while ($row = $result->fetch_assoc()) {
 }
 
 echo json_encode(["status" => "success", "data" => $budgets]);
-

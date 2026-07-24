@@ -2,15 +2,16 @@
 
 header("Content-Type: application/json");
 require_once "db.php";
+require_once "auth.php";
 
 $data = json_decode(file_get_contents("php://input"), true) ?: [];
-$userId = intval($data["user_id"] ?? 0);
+$userId = requireAuthenticatedUser($conn);
 $name = trim($data["name"] ?? "");
 $type = trim($data["type"] ?? "expense");
 $icon = trim($data["icon"] ?? "wallet");
 $color = trim($data["color"] ?? "#1132D4");
 
-if ($userId <= 0 || $name === "") {
+if ($name === "") {
     echo json_encode(["status" => "error", "message" => "Missing category data"]);
     exit();
 }
@@ -34,4 +35,3 @@ if ($stmt->execute()) {
 } else {
     echo json_encode(["status" => "error", "message" => $stmt->error]);
 }
-

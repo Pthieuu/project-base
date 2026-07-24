@@ -3,6 +3,7 @@
 header("Content-Type: application/json; charset=utf-8");
 
 include "db.php";
+require_once "auth.php";
 
 $email = trim($_POST["email"] ?? "");
 $password = (string)($_POST["password"] ?? "");
@@ -37,6 +38,8 @@ $stmt = $conn->prepare("UPDATE users SET password = ? WHERE email = ?");
 $stmt->bind_param("ss", $hashedPassword, $email);
 
 if ($stmt->execute()) {
+    $user = $result->fetch_assoc();
+    revokeAllUserSessions($conn, intval($user["id"]));
     echo json_encode(["status" => "success"]);
 } else {
     echo json_encode(["status" => "error", "message" => $stmt->error]);

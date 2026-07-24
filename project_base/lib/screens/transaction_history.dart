@@ -26,7 +26,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   void initState() {
     super.initState();
     if (UserSession.user_id != null) {
-      futureTransactions = ApiService().getTransactions(UserSession.user_id!);
+      futureTransactions = ApiService().getTransactions();
     }
   }
 
@@ -39,7 +39,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   void _reloadTransactions() {
     if (UserSession.user_id == null) return;
     setState(() {
-      futureTransactions = ApiService().getTransactions(UserSession.user_id!);
+      futureTransactions = ApiService().getTransactions();
     });
   }
 

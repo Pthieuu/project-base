@@ -2,15 +2,16 @@
 
 header("Content-Type: application/json; charset=utf-8");
 require_once "db.php";
+require_once "auth.php";
 
 $data = json_decode(file_get_contents("php://input"), true) ?: [];
 $goalId = intval($data["id"] ?? 0);
-$userId = intval($data["user_id"] ?? 0);
+$userId = requireAuthenticatedUser($conn);
 
-if ($goalId <= 0 || $userId <= 0) {
+if ($goalId <= 0) {
     echo json_encode([
         "status" => "error",
-        "message" => "Missing goal id or user id"
+        "message" => "Missing goal id"
     ]);
     exit();
 }

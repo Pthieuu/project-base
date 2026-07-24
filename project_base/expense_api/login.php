@@ -1,8 +1,8 @@
 <?php
 
-header("Content-Type: application/json");
-
-$conn = new mysqli("localhost","root","","ai_expense_manager");
+header("Content-Type: application/json; charset=utf-8");
+require_once "db.php";
+require_once "auth.php";
 
 $email = $_POST['email'] ?? '';
 $password = $_POST['password'] ?? '';
@@ -25,11 +25,22 @@ if($result->num_rows > 0){
     $user = $result->fetch_assoc();
 
     if(password_verify($password, $user['password'])){
+        try {
+            $session = issueAccessToken($conn, intval($user['id']));
+        } catch (Throwable $error) {
+            http_response_code(500);
+            echo json_encode([
+                "status" => "error",
+                "message" => $error->getMessage()
+            ]);
+            exit();
+        }
         echo json_encode([
             "status"=>"success",
             "user_id"=>$user['id'],
             "name"=>$user['name'],
-            "email"=>$user['email']
+            "email"=>$user['email'],
+            ...$session
         ]);
     }else{
         echo json_encode(["status"=>"wrong_password"]);
@@ -38,5 +49,3 @@ if($result->num_rows > 0){
 }else{
     echo json_encode(["status"=>"user_not_found"]);
 }
-
-?>
