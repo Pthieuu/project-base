@@ -292,6 +292,272 @@ class _InsightsScreenState extends State<InsightsScreen> {
     return "$category is ${diff >= 0 ? 'up' : 'down'} $percent%";
   }
 
+  int _currentExpenseCount() {
+    final now = DateTime.now();
+    return currentTransactions.where((tx) {
+      final date = DateTime.tryParse(tx.date);
+      return tx.isExpense &&
+          date != null &&
+          date.year == now.year &&
+          date.month == now.month;
+    }).length;
+  }
+
+  _SuggestionExplanation _buildSuggestionExplanation(
+    String type,
+    _InsightsData insights,
+    String Function(String) t,
+  ) {
+    final now = DateTime.now();
+    final expenseCount = _currentExpenseCount();
+    final period = t('explanation_period_value')
+        .replaceAll('{month}', DateFormat('MM/yyyy').format(now))
+        .replaceAll('{date}', DateFormat('dd/MM/yyyy HH:mm').format(now));
+
+    String confidence;
+    if (type == 'forecast') {
+      confidence = expenseCount >= 15 && now.day >= 15
+          ? 'high'
+          : expenseCount >= 5
+          ? 'medium'
+          : 'low';
+    } else if (type == 'spending') {
+      confidence = expenseCount >= 8 && insights.previousTopCategorySpend > 0
+          ? 'high'
+          : expenseCount >= 4
+          ? 'medium'
+          : 'low';
+    } else {
+      confidence = expenseCount >= 8 ? 'medium' : 'low';
+    }
+
+    switch (type) {
+      case 'spending':
+        return _SuggestionExplanation(
+          dataUsed: t('spending_explanation_data')
+              .replaceAll('{count}', expenseCount.toString())
+              .replaceAll('{category}', insights.topCategoryName)
+              .replaceAll(
+                '{current}',
+                currencyFormat.format(insights.topCategorySpend),
+              )
+              .replaceAll(
+                '{previous}',
+                currencyFormat.format(insights.previousTopCategorySpend),
+              ),
+          formula: t('spending_explanation_formula'),
+          period: period,
+          confidence: confidence,
+          missingData: insights.previousTopCategorySpend <= 0
+              ? t('spending_missing_previous')
+              : t('common_missing_data'),
+        );
+      case 'saving':
+        return _SuggestionExplanation(
+          dataUsed: t('saving_explanation_data')
+              .replaceAll('{count}', expenseCount.toString())
+              .replaceAll('{category}', insights.topCategoryName)
+              .replaceAll(
+                '{amount}',
+                currencyFormat.format(insights.topCategorySpend),
+              ),
+          formula: t('saving_explanation_formula')
+              .replaceAll(
+                '{amount}',
+                currencyFormat.format(insights.topCategorySpend),
+              )
+              .replaceAll(
+                '{result}',
+                currencyFormat.format(insights.suggestedCut),
+              ),
+          period: period,
+          confidence: confidence,
+          missingData: t('saving_missing_data'),
+        );
+      default:
+        return _SuggestionExplanation(
+          dataUsed: t('forecast_explanation_data')
+              .replaceAll('{count}', expenseCount.toString())
+              .replaceAll(
+                '{spent}',
+                currencyFormat.format(insights.currentSpent),
+              )
+              .replaceAll('{day}', now.day.toString()),
+          formula: t('forecast_explanation_formula')
+              .replaceAll(
+                '{spent}',
+                currencyFormat.format(insights.currentSpent),
+              )
+              .replaceAll('{day}', now.day.toString())
+              .replaceAll(
+                '{days}',
+                DateTime(now.year, now.month + 1, 0).day.toString(),
+              )
+              .replaceAll(
+                '{result}',
+                currencyFormat.format(insights.predictedSpend),
+              ),
+          period: period,
+          confidence: confidence,
+          missingData: t('forecast_missing_data'),
+        );
+    }
+  }
+
+  Future<void> _showSuggestionExplanation(
+    String type,
+    _InsightsData insights,
+  ) async {
+    final t = context.read<LanguageController>().text;
+    final explanation = _buildSuggestionExplanation(type, insights, t);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        final isDark = theme.brightness == Brightness.dark;
+        final primary = theme.primaryColor;
+        final confidenceColor = switch (explanation.confidence) {
+          'high' => const Color(0xFF059669),
+          'medium' => const Color(0xFFD97706),
+          _ => const Color(0xFFDC2626),
+        };
+
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(18, 4, 18, 22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(Icons.psychology_outlined, color: primary),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            t('why_ai_title'),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            t('why_ai_subtitle'),
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                _explanationSection(
+                  icon: Icons.dataset_outlined,
+                  title: t('data_used'),
+                  value: explanation.dataUsed,
+                  color: primary,
+                  isDark: isDark,
+                ),
+                _explanationSection(
+                  icon: Icons.calculate_outlined,
+                  title: t('calculation_formula'),
+                  value: explanation.formula,
+                  color: primary,
+                  isDark: isDark,
+                ),
+                _explanationSection(
+                  icon: Icons.schedule_outlined,
+                  title: t('data_period'),
+                  value: explanation.period,
+                  color: primary,
+                  isDark: isDark,
+                ),
+                _explanationSection(
+                  icon: Icons.verified_outlined,
+                  title: t('confidence_level'),
+                  value: t('confidence_${explanation.confidence}'),
+                  color: confidenceColor,
+                  isDark: isDark,
+                ),
+                _explanationSection(
+                  icon: Icons.warning_amber_rounded,
+                  title: t('missing_data'),
+                  value: explanation.missingData,
+                  color: const Color(0xFFD97706),
+                  isDark: isDark,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _explanationSection({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF151827) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 21),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(value, style: const TextStyle(height: 1.4)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _whyAiButton(String type, _InsightsData insights) {
+    final t = context.watch<LanguageController>().text;
+    return TextButton.icon(
+      onPressed: () => _showSuggestionExplanation(type, insights),
+      icon: const Icon(Icons.help_outline, size: 18),
+      label: Text(t('why_ai_suggestion')),
+    );
+  }
+
   Future<void> _sendMessage([String? preset]) async {
     final text = (preset ?? messageController.text).trim();
     if (text.isEmpty || currentInsights == null || isSending) return;
@@ -814,6 +1080,13 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                         insights.insightText,
                                         style: TextStyle(color: subText),
                                       ),
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: _whyAiButton(
+                                          'spending',
+                                          insights,
+                                        ),
+                                      ),
                                       const SizedBox(height: 16),
                                       Row(
                                         children: [
@@ -902,6 +1175,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                     fontSize: 12,
                                     fontStyle: FontStyle.italic,
                                   ),
+                                ),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: _whyAiButton('saving', insights),
                                 ),
                                 const SizedBox(height: 16),
                                 ClipRRect(
@@ -1031,6 +1308,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                       ),
                                     ],
                                   ),
+                                ),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: _whyAiButton('forecast', insights),
                                 ),
                               ],
                             ),
@@ -1531,6 +1812,22 @@ class _CategoryVisual {
   final Color color;
 
   const _CategoryVisual({required this.icon, required this.color});
+}
+
+class _SuggestionExplanation {
+  final String dataUsed;
+  final String formula;
+  final String period;
+  final String confidence;
+  final String missingData;
+
+  const _SuggestionExplanation({
+    required this.dataUsed,
+    required this.formula,
+    required this.period,
+    required this.confidence,
+    required this.missingData,
+  });
 }
 
 class _InsightsData {
