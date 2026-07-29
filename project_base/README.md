@@ -3,6 +3,28 @@
 Flutter personal finance app with a PHP API and an Ollama-compatible AI
 service.
 
+## Chạy toàn bộ dự án bằng Docker Desktop
+
+Docker chạy Flutter Web, PHP API, MySQL và Ollama cùng nhau. Lần đầu tiên, tại
+thư mục dự án chạy:
+
+```bash
+docker compose up --build
+```
+
+Sau khi build hoàn tất, mở <http://localhost:8080>. Từ những lần sau, có thể mở
+Docker Desktop và nhấn nút **Play** của project `expense-manager`; không cần chạy
+lệnh thủ công.
+
+Database được lưu trong Docker volume `expense_database`, vì vậy dữ liệu không
+mất khi dừng container. Các file SQL chỉ tự động khởi tạo khi volume database
+được tạo lần đầu.
+
+Docker tự tải `llama3.2` và `gemma3:4b` vào volume `ollama_models`. Lần chạy đầu
+cần chờ tải vài GB trước khi ứng dụng khởi động; những lần sau Docker dùng lại
+model đã lưu. Ollama trong Docker chạy bằng CPU trên các máy không cung cấp GPU
+cho container nên phản hồi AI có thể chậm hơn Ollama chạy trực tiếp trên máy.
+
 ## Local API configuration
 
 Copy the local XAMPP/Ollama environment template. Update any value that differs

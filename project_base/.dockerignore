@@ -1,0 +1,14 @@
+.git
+.dart_tool
+.idea
+.vscode
+build
+coverage
+android
+ios
+linux
+macos
+windows
+expense_api/.env
+**/.DS_Store
+*.log

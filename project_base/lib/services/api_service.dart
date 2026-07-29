@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:project_base/models/category_budget_model.dart';
 import 'package:project_base/models/category_model.dart';
@@ -9,10 +11,23 @@ import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/services/user_session.dart';
 
 class ApiService {
-  static const String baseUrl = String.fromEnvironment(
+  static const String _configuredBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://127.0.0.1:8000/',
+    defaultValue: '',
   );
+
+  static String get baseUrl {
+    if (_configuredBaseUrl.isNotEmpty) {
+      return _configuredBaseUrl;
+    }
+    if (kIsWeb) {
+      return '/api/';
+    }
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8080/api/';
+    }
+    return 'http://127.0.0.1:8080/api/';
+  }
 
   static Map<String, String> get authorizedJsonHeaders {
     final token = UserSession.accessToken;
