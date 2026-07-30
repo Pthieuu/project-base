@@ -47,13 +47,31 @@ class ApiService {
       body: jsonEncode(data),
     );
 
-    if (response.statusCode != 200) {
-      throw Exception("HTTP ERROR: ${response.statusCode}");
+    dynamic responseData;
+    try {
+      responseData = jsonDecode(response.body);
+    } on FormatException {
+      responseData = null;
     }
 
-    final responseData = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      final message = responseData is Map
+          ? responseData['message']?.toString()
+          : null;
+      throw Exception(
+        message?.isNotEmpty == true
+            ? message
+            : "HTTP ERROR: ${response.statusCode}",
+      );
+    }
+
     if (responseData is! Map || responseData['status'] != 'success') {
-      throw Exception(responseData['message'] ?? "Add transaction failed");
+      final message = responseData is Map
+          ? responseData['message']?.toString()
+          : null;
+      throw Exception(
+        message?.isNotEmpty == true ? message : "Add transaction failed",
+      );
     }
 
     final transactionId = int.tryParse(

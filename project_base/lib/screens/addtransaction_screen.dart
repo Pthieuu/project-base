@@ -20,6 +20,7 @@ class AddTransactionScreen extends StatefulWidget {
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
   bool isExpense = true;
   bool isScanningReceipt = false;
+  bool isSaving = false;
   DateTime selectedDate = DateTime.now();
   XFile? receiptImage;
   Uint8List? receiptImageBytes;
@@ -788,41 +789,67 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                onPressed: () async {
-                  final amount =
-                      double.tryParse(
-                        amountController.text.replaceAll(".", ""),
-                      ) ??
-                      0;
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        final amount =
+                            double.tryParse(
+                              amountController.text.replaceAll(".", ""),
+                            ) ??
+                            0;
 
-                  if (amount <= 0) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(t('amount_gt_zero'))),
-                    );
-                    return;
-                  }
+                        if (amount <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(t('amount_gt_zero'))),
+                          );
+                          return;
+                        }
 
-                  final data = {
-                    "description": descriptionController.text,
-                    "category": category,
-                    "account": account,
-                    "amount": amount,
-                    "is_expense": isExpense ? 1 : 0,
-                    "notes": notesController.text,
-                    "date": selectedDate.toString(),
-                  };
+                        final data = {
+                          "description": descriptionController.text,
+                          "category": category,
+                          "account": account,
+                          "amount": amount,
+                          "is_expense": isExpense ? 1 : 0,
+                          "notes": notesController.text,
+                          "date": selectedDate.toString(),
+                        };
 
-                  await ApiService().addTransaction(data);
-
-                  if (context.mounted) {
-                    Navigator.pop(context, true);
-                  }
-                },
+                        setState(() => isSaving = true);
+                        try {
+                          await ApiService().addTransaction(data);
+                          if (context.mounted) {
+                            Navigator.pop(context, true);
+                          }
+                        } catch (error) {
+                          if (!context.mounted) return;
+                          final message = error.toString().replaceFirst(
+                            'Exception: ',
+                            '',
+                          );
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(message)));
+                        } finally {
+                          if (mounted) {
+                            setState(() => isSaving = false);
+                          }
+                        }
+                      },
                 icon: const Icon(Icons.check_circle),
-                label: Text(
-                  t('save_transaction'),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
+                label: isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        t('save_transaction'),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
               ),
             ),
           ),
