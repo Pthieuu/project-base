@@ -5,8 +5,11 @@ import 'controller/language_controller.dart';
 import 'controller/theme_controller.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
+import 'services/user_session.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await UserSession.restore();
   runApp(
     MultiProvider(
       providers: [

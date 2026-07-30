@@ -35,5 +35,6 @@ $stmt->bind_param("ssi", $name, $email, $userId);
 if ($stmt->execute()) {
     echo json_encode(["status" => "success", "name" => $name, "email" => $email]);
 } else {
-    echo json_encode(["status" => "error", "message" => $stmt->error]);
+    error_log("Profile update failed: " . $stmt->error);
+    echo json_encode(["status" => "error", "message" => "Profile update failed"]);
 }

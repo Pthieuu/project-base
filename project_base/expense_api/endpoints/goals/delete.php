@@ -24,7 +24,7 @@ $stmt->bind_param("ii", $goalId, $userId);
 if (!$stmt->execute()) {
     echo json_encode([
         "status" => "error",
-        "message" => $stmt->error
+        "message" => "Could not delete goal"
     ]);
     exit();
 }

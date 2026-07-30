@@ -25,5 +25,6 @@ $stmt->bind_param("issd", $userId, $category, $month, $monthlyLimit);
 if ($stmt->execute()) {
     echo json_encode(["status" => "success"]);
 } else {
-    echo json_encode(["status" => "error", "message" => $stmt->error]);
+    error_log("Budget save failed: " . $stmt->error);
+    echo json_encode(["status" => "error", "message" => "Could not save budget"]);
 }

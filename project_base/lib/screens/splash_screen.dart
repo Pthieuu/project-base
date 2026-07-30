@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/widgets/app_logo.dart';
+import 'package:project_base/services/user_session.dart';
 import '../screens/onboarding_screen.dart';
+import '../screens/main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,6 +17,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  Timer? _navigationTimer;
 
   @override
   void initState() {
@@ -25,11 +28,14 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(seconds: 2),
     )..repeat();
 
-    Timer(const Duration(seconds: 3), () {
+    _navigationTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) {
+        final destination = UserSession.isAuthenticated
+            ? MainScreen(userName: UserSession.name ?? "")
+            : const OnboardingScreen();
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+          MaterialPageRoute(builder: (context) => destination),
         );
       }
     });
@@ -37,6 +43,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
+    _navigationTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

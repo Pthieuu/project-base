@@ -44,6 +44,6 @@ if ($stmt->execute() && $stmt->affected_rows > 0) {
 } else {
     echo json_encode([
         "status" => "error",
-        "message" => $stmt->error ?: "Transaction not found"
+        "message" => "Transaction not found or could not be updated"
     ]);
 }

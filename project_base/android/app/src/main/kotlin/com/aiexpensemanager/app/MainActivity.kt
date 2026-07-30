@@ -1,4 +1,4 @@
-package com.example.project_base
+package com.aiexpensemanager.app
 
 import io.flutter.embedding.android.FlutterActivity
 

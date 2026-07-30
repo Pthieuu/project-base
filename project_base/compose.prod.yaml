@@ -1,22 +1,38 @@
-name: expense-manager
+name: expense-manager-production
 
 services:
-  app:
+  web:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
+      target: web
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_started
+    restart: always
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      target: api
     environment:
-      APP_ENV: development
+      APP_ENV: production
       DB_HOST: database
       DB_PORT: "3306"
-      DB_NAME: ai_expense_manager
-      DB_USER: expense_app
-      DB_PASSWORD: expense_app_password
+      DB_NAME: "${DB_NAME:-ai_expense_manager}"
+      DB_USER: "${DB_USER:-expense_app}"
+      DB_PASSWORD: "${DB_PASSWORD:?Set DB_PASSWORD in the production environment}"
       OLLAMA_BASE_URL: http://ollama:11434
-      OLLAMA_MODEL: llama3.2
-      OLLAMA_VISION_MODEL: gemma3:4b
-    ports:
-      - "8080:8080"
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-llama3.2}"
+      OLLAMA_VISION_MODEL: "${OLLAMA_VISION_MODEL:-gemma3:4b}"
+      SMTP_HOST: "${SMTP_HOST:?Set SMTP_HOST}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_USERNAME: "${SMTP_USERNAME:?Set SMTP_USERNAME}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD:?Set SMTP_PASSWORD}"
+      PASSWORD_RESET_FROM: "${PASSWORD_RESET_FROM:?Set PASSWORD_RESET_FROM}"
     depends_on:
       database:
         condition: service_healthy
@@ -24,15 +40,15 @@ services:
         condition: service_completed_successfully
       ollama-models:
         condition: service_completed_successfully
-    restart: unless-stopped
+    restart: always
 
   database:
     image: mysql:8.4
     environment:
-      MYSQL_DATABASE: ai_expense_manager
-      MYSQL_USER: expense_app
-      MYSQL_PASSWORD: expense_app_password
-      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: "${DB_NAME:-ai_expense_manager}"
+      MYSQL_USER: "${DB_USER:-expense_app}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:?Set DB_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}"
     volumes:
       - expense_database:/var/lib/mysql
       - ./expense_api/database/00_core_schema.sql:/docker-entrypoint-initdb.d/00_core_schema.sql:ro
@@ -43,22 +59,24 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - mysqladmin ping -h localhost -u expense_app -pexpense_app_password --silent
-      interval: 5s
+        - mysqladmin ping -h localhost -u "$$MYSQL_USER" -p"$$MYSQL_PASSWORD" --silent
+      interval: 10s
       timeout: 5s
       retries: 20
-      start_period: 20s
-    restart: unless-stopped
+      start_period: 30s
+    restart: always
 
   database-migrations:
     image: mysql:8.4
     environment:
-      MYSQL_PWD: expense_app_password
+      MYSQL_PWD: "${DB_PASSWORD:?Set DB_PASSWORD}"
+      DB_NAME: "${DB_NAME:-ai_expense_manager}"
+      DB_USER: "${DB_USER:-expense_app}"
     volumes:
       - ./expense_api/database:/migrations:ro
     entrypoint: ["/bin/sh", "-c"]
     command:
-      - mysql -h database -u expense_app ai_expense_manager < /migrations/password_reset_tokens.sql && mysql -h database -u expense_app ai_expense_manager < /migrations/login_attempts.sql
+      - mysql -h database -u "$$DB_USER" "$$DB_NAME" < /migrations/password_reset_tokens.sql && mysql -h database -u "$$DB_USER" "$$DB_NAME" < /migrations/login_attempts.sql
     depends_on:
       database:
         condition: service_healthy
@@ -70,11 +88,11 @@ services:
       - ollama_models:/root/.ollama
     healthcheck:
       test: ["CMD", "ollama", "list"]
-      interval: 5s
+      interval: 10s
       timeout: 10s
       retries: 30
-      start_period: 10s
-    restart: unless-stopped
+      start_period: 20s
+    restart: always
 
   ollama-models:
     image: ollama/ollama:0.32.2
@@ -82,7 +100,7 @@ services:
       OLLAMA_HOST: http://ollama:11434
     entrypoint: ["/bin/sh", "-c"]
     command:
-      - ollama pull llama3.2 && ollama pull gemma3:4b
+      - ollama pull "$${OLLAMA_MODEL:-llama3.2}" && ollama pull "$${OLLAMA_VISION_MODEL:-gemma3:4b}"
     depends_on:
       ollama:
         condition: service_healthy

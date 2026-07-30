@@ -480,7 +480,7 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'password_reset_success': 'Password updated successfully.',
     'email_not_found': 'No account found with this email.',
     'invalid_email': 'Please enter a valid email address.',
-    'weak_password': 'Password must be at least 6 characters.',
+    'weak_password': 'Password must be at least 8 characters.',
     'reset_failed': 'Could not reset password. Please try again.',
     'account_created': 'Account Created!',
     'account_created_body':
@@ -918,7 +918,7 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'password_reset_success': 'Đổi mật khẩu thành công.',
     'email_not_found': 'Không tìm thấy tài khoản với email này.',
     'invalid_email': 'Vui lòng nhập email hợp lệ.',
-    'weak_password': 'Mật khẩu phải có ít nhất 6 ký tự.',
+    'weak_password': 'Mật khẩu phải có ít nhất 8 ký tự.',
     'reset_failed': 'Không thể đặt lại mật khẩu. Vui lòng thử lại.',
     'account_created': 'Tạo tài khoản thành công!',
     'account_created_body':
@@ -1312,7 +1312,7 @@ const Map<AppLanguage, Map<String, String>> _localizedText = {
     'password_reset_success': 'パスワードを更新しました。',
     'email_not_found': 'このメールのアカウントが見つかりません。',
     'invalid_email': '有効なメールアドレスを入力してください。',
-    'weak_password': 'パスワードは6文字以上にしてください。',
+    'weak_password': 'パスワードは8文字以上にしてください。',
     'reset_failed': 'パスワードを再設定できませんでした。もう一度お試しください。',
     'account_created': 'アカウント作成完了！',
     'account_created_body':

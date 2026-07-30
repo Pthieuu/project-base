@@ -25,6 +25,36 @@ cần chờ tải vài GB trước khi ứng dụng khởi động; những lầ
 model đã lưu. Ollama trong Docker chạy bằng CPU trên các máy không cung cấp GPU
 cho container nên phản hồi AI có thể chậm hơn Ollama chạy trực tiếp trên máy.
 
+## Production
+
+`compose.yaml` là môi trường development. Không đưa cấu hình này trực tiếp lên
+Internet. Bản production dùng PHP-FPM và Nginx, yêu cầu mật khẩu database cùng
+thông tin SMTP từ biến môi trường:
+
+```bash
+cp .env.production.example .env.production
+# Thay toàn bộ giá trị mẫu trong .env.production trước khi tiếp tục.
+docker compose --env-file .env.production -f compose.prod.yaml up --build -d
+```
+
+Đặt reverse proxy/CDN có HTTPS phía trước cổng ứng dụng. Secure session của bản
+web chỉ hoạt động trên HTTPS hoặc localhost.
+
+Compose tự chạy các migration bảo mật còn thiếu trên database đã tồn tại trước
+khi API khởi động.
+
+Email quên mật khẩu dùng SMTP qua các biến `SMTP_HOST`, `SMTP_PORT`,
+`SMTP_USERNAME`, `SMTP_PASSWORD` và `PASSWORD_RESET_FROM`. Development trả token
+trực tiếp để test; production tuyệt đối không trả token trong API.
+
+### Android signing
+
+Application ID là `com.aiexpensemanager.app`. Tạo upload keystore riêng, sao
+chép `android/key.properties.example` thành `android/key.properties`, rồi thay
+các giá trị mẫu. Keystore và `key.properties` đã được Git bỏ qua và không được
+commit. Với iOS, chọn Apple Development Team của bạn trong Xcode trước khi
+archive.
+
 ## Local API configuration
 
 Copy the local XAMPP/Ollama environment template. Update any value that differs

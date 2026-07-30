@@ -381,10 +381,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               name: name,
                               email: email,
                             );
-                            UserSession.name =
-                                result['name']?.toString() ?? name;
-                            UserSession.email =
-                                result['email']?.toString() ?? email;
+                            await UserSession.updateProfile(
+                              userName: result['name']?.toString() ?? name,
+                              userEmail: result['email']?.toString() ?? email,
+                            );
                             if (sheetContext.mounted) {
                               Navigator.pop(sheetContext, true);
                             }
@@ -718,7 +718,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     InsightsScreen.clearSessionChat();
     await AuthService.logout();
     if (!mounted) return;
-    UserSession.clear();
+    await UserSession.clear();
+    if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),

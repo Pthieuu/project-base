@@ -48,6 +48,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    if (passController.text.length < 8) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t('weak_password'))));
+      return;
+    }
+
     if (!agreeTerms) {
       ScaffoldMessenger.of(
         context,
@@ -55,11 +62,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    var result = await AuthService.register(
-      nameController.text,
-      emailController.text,
-      passController.text,
-    );
+    Map<String, dynamic> result;
+    try {
+      result = await AuthService.register(
+        nameController.text.trim(),
+        emailController.text.trim(),
+        passController.text,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t('register_failed'))));
+      return;
+    }
 
     if (!mounted) return;
 
