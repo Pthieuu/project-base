@@ -74,6 +74,6 @@ if($stmt->execute()){
 }else{
     echo json_encode([
         "status"=>"error",
-        "message"=>$stmt->error
+        "message"=>"Could not add transaction"
     ]);
 }

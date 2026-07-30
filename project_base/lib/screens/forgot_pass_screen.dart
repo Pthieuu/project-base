@@ -12,6 +12,7 @@ class ResetPasswordScreen extends StatefulWidget {
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final emailController = TextEditingController();
+  final tokenController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmController = TextEditingController();
 
@@ -19,10 +20,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool obscureConfirm = true;
   bool isLoading = false;
   bool isSuccess = false;
+  bool tokenRequested = false;
 
   @override
   void dispose() {
     emailController.dispose();
+    tokenController.dispose();
     passwordController.dispose();
     confirmController.dispose();
     super.dispose();
@@ -31,26 +34,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Future<void> resetPassword() async {
     final t = context.read<LanguageController>().text;
     final email = emailController.text.trim();
-    final password = passwordController.text.trim();
-    final confirm = confirmController.text.trim();
-
-    if (email.isEmpty || password.isEmpty || confirm.isEmpty) {
-      _showSnack(t('please_fill_all_fields'));
-      return;
-    }
-
-    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+    if (email.isEmpty ||
+        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
       _showSnack(t('invalid_email'));
-      return;
-    }
-
-    if (password.length < 6) {
-      _showSnack(t('weak_password'));
-      return;
-    }
-
-    if (password != confirm) {
-      _showSnack(t('password_mismatch'));
       return;
     }
 
@@ -60,16 +46,49 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     });
 
     try {
-      final result = await AuthService.resetPassword(email, password);
+      if (!tokenRequested) {
+        final result = await AuthService.requestPasswordReset(email);
+        if (!mounted) return;
+        final developmentToken = result['reset_token'];
+        if (developmentToken is String) {
+          tokenController.text = developmentToken;
+        }
+        setState(() => tokenRequested = true);
+        _showSnack(
+          developmentToken is String
+              ? 'Development token generated. Enter a new password.'
+              : 'If the account exists, reset instructions were sent.',
+        );
+        return;
+      }
+
+      final token = tokenController.text.trim();
+      final password = passwordController.text.trim();
+      final confirm = confirmController.text.trim();
+      if (token.isEmpty || password.isEmpty || confirm.isEmpty) {
+        _showSnack(t('please_fill_all_fields'));
+        return;
+      }
+      if (password.length < 8) {
+        _showSnack(t('weak_password'));
+        return;
+      }
+      if (password != confirm) {
+        _showSnack(t('password_mismatch'));
+        return;
+      }
+
+      final result = await AuthService.confirmPasswordReset(
+        email,
+        token,
+        password,
+      );
       if (!mounted) return;
 
       switch (result['status']) {
         case 'success':
           setState(() => isSuccess = true);
           _showSnack(t('password_reset_success'));
-          break;
-        case 'user_not_found':
-          _showSnack(t('email_not_found'));
           break;
         case 'weak_password':
           _showSnack(t('weak_password'));
@@ -186,52 +205,65 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     hintColor: hintColor,
                     keyboardType: TextInputType.emailAddress,
                   ),
-                  const SizedBox(height: 16),
-                  _inputField(
-                    controller: passwordController,
-                    hint: t('new_password'),
-                    icon: Icons.lock_outline,
-                    inputColor: inputColor,
-                    borderColor: borderColor,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    hintColor: hintColor,
-                    obscureText: obscurePassword,
-                    suffix: IconButton(
-                      icon: Icon(
-                        obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                        color: textSecondary,
-                      ),
-                      onPressed: () {
-                        setState(() => obscurePassword = !obscurePassword);
-                      },
+                  if (tokenRequested) ...[
+                    const SizedBox(height: 16),
+                    _inputField(
+                      controller: tokenController,
+                      hint: 'Reset token',
+                      icon: Icons.key,
+                      inputColor: inputColor,
+                      borderColor: borderColor,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      hintColor: hintColor,
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _inputField(
-                    controller: confirmController,
-                    hint: t('confirm_password'),
-                    icon: Icons.lock_reset,
-                    inputColor: inputColor,
-                    borderColor: borderColor,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    hintColor: hintColor,
-                    obscureText: obscureConfirm,
-                    suffix: IconButton(
-                      icon: Icon(
-                        obscureConfirm
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                        color: textSecondary,
+                    const SizedBox(height: 16),
+                    _inputField(
+                      controller: passwordController,
+                      hint: t('new_password'),
+                      icon: Icons.lock_outline,
+                      inputColor: inputColor,
+                      borderColor: borderColor,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      hintColor: hintColor,
+                      obscureText: obscurePassword,
+                      suffix: IconButton(
+                        icon: Icon(
+                          obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: textSecondary,
+                        ),
+                        onPressed: () {
+                          setState(() => obscurePassword = !obscurePassword);
+                        },
                       ),
-                      onPressed: () {
-                        setState(() => obscureConfirm = !obscureConfirm);
-                      },
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    _inputField(
+                      controller: confirmController,
+                      hint: t('confirm_password'),
+                      icon: Icons.lock_reset,
+                      inputColor: inputColor,
+                      borderColor: borderColor,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      hintColor: hintColor,
+                      obscureText: obscureConfirm,
+                      suffix: IconButton(
+                        icon: Icon(
+                          obscureConfirm
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: textSecondary,
+                        ),
+                        onPressed: () {
+                          setState(() => obscureConfirm = !obscureConfirm);
+                        },
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   SizedBox(
                     height: 56,
@@ -257,7 +289,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                               ),
                             )
                           : Text(
-                              t('update_password'),
+                              tokenRequested
+                                  ? t('update_password')
+                                  : t('reset_password'),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,

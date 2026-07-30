@@ -1,48 +1,10 @@
 <?php
 
+// Kept as a safe compatibility endpoint. Password resets must use the
+// request/confirm token flow; knowing an email address is never sufficient.
 header("Content-Type: application/json; charset=utf-8");
-
-require_once dirname(__DIR__, 2) . "/bootstrap/db.php";
-require_once dirname(__DIR__, 2) . "/bootstrap/auth.php";
-
-$email = trim($_POST["email"] ?? "");
-$password = (string)($_POST["password"] ?? "");
-
-if ($email === "" || $password === "") {
-    echo json_encode(["status" => "empty_fields"]);
-    exit();
-}
-
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(["status" => "invalid_email"]);
-    exit();
-}
-
-if (strlen($password) < 6) {
-    echo json_encode(["status" => "weak_password"]);
-    exit();
-}
-
-$check = $conn->prepare("SELECT id FROM users WHERE email = ?");
-$check->bind_param("s", $email);
-$check->execute();
-$result = $check->get_result();
-
-if ($result->num_rows === 0) {
-    echo json_encode(["status" => "user_not_found"]);
-    exit();
-}
-
-$hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-$stmt = $conn->prepare("UPDATE users SET password = ? WHERE email = ?");
-$stmt->bind_param("ss", $hashedPassword, $email);
-
-if ($stmt->execute()) {
-    $user = $result->fetch_assoc();
-    revokeAllUserSessions($conn, intval($user["id"]));
-    echo json_encode(["status" => "success"]);
-} else {
-    echo json_encode(["status" => "error", "message" => $stmt->error]);
-}
-
-?>
+http_response_code(410);
+echo json_encode([
+    "status" => "deprecated",
+    "message" => "Use the password reset token flow."
+]);

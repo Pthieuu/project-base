@@ -33,5 +33,6 @@ $stmt->bind_param("issss", $userId, $name, $icon, $color, $type);
 if ($stmt->execute()) {
     echo json_encode(["status" => "success"]);
 } else {
-    echo json_encode(["status" => "error", "message" => $stmt->error]);
+    error_log("Category save failed: " . $stmt->error);
+    echo json_encode(["status" => "error", "message" => "Could not save category"]);
 }

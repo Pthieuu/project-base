@@ -26,12 +26,20 @@ class AuthService {
     });
   }
 
-  static Future<Map<String, dynamic>> resetPassword(
+  static Future<Map<String, dynamic>> requestPasswordReset(String email) async {
+    return _postForm("endpoints/auth/request_password_reset.php", {
+      "email": email,
+    });
+  }
+
+  static Future<Map<String, dynamic>> confirmPasswordReset(
     String email,
+    String token,
     String newPassword,
   ) async {
-    return _postForm("endpoints/auth/reset_password.php", {
+    return _postForm("endpoints/auth/confirm_password_reset.php", {
       "email": email,
+      "token": token,
       "password": newPassword,
     });
   }
@@ -67,7 +75,7 @@ class AuthService {
       // The status handling below provides a readable fallback.
     }
 
-    if (response.statusCode != 200) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       final message = data?["message"];
       throw Exception(
         message is String && message.isNotEmpty

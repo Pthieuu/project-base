@@ -2,10 +2,19 @@
 
 require_once __DIR__ . "/config.php";
 
-// Flutter Web and the API run on different origins during development.
-// Authentication uses bearer tokens instead of browser cookies, so allowing
-// cross-origin API requests does not expose a credentialed session.
-header("Access-Control-Allow-Origin: *");
+$appEnvironment = getenv("APP_ENV") ?: "production";
+$requestOrigin = $_SERVER["HTTP_ORIGIN"] ?? "";
+$allowedOrigin = getenv("CORS_ALLOWED_ORIGIN") ?: "";
+if ($appEnvironment === "development") {
+    header("Access-Control-Allow-Origin: *");
+} elseif (
+    $allowedOrigin !== "" &&
+    $requestOrigin !== "" &&
+    hash_equals($allowedOrigin, $requestOrigin)
+) {
+    header("Access-Control-Allow-Origin: {$allowedOrigin}");
+    header("Vary: Origin");
+}
 header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Authorization, Content-Type, Accept");
 header("Access-Control-Max-Age: 86400");

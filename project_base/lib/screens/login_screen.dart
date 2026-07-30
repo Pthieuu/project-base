@@ -63,10 +63,20 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         return;
       }
-      UserSession.user_id = result["user_id"];
-      UserSession.name = result["name"];
-      UserSession.email = result["email"];
-      UserSession.accessToken = accessToken;
+      final userId = int.tryParse(result["user_id"].toString());
+      if (userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Server returned an invalid user.")),
+        );
+        return;
+      }
+      await UserSession.save(
+        userId: userId,
+        userName: result["name"]?.toString() ?? "",
+        userEmail: result["email"]?.toString() ?? "",
+        token: accessToken,
+      );
+      if (!mounted) return;
 
       Navigator.pushReplacement(
         context,
