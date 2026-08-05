@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:project_base/services/api_service.dart';
+import 'package:project_base/services/user_session.dart';
+import 'package:project_base/widgets/guest_access.dart';
 import '../controller/language_controller.dart';
 import 'dashboard_screen.dart';
 import 'transaction_history.dart';
@@ -95,7 +97,12 @@ class _MainScreenState extends State<MainScreen> {
     final language = context.watch<LanguageController>();
 
     return Scaffold(
-      body: _screens[_selectedIndex],
+      body: Column(
+        children: [
+          if (!UserSession.isAuthenticated) const GuestModeBanner(),
+          Expanded(child: _screens[_selectedIndex]),
+        ],
+      ),
 
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,

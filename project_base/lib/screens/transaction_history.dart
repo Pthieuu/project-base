@@ -6,6 +6,7 @@ import 'package:project_base/services/api_service.dart';
 import 'package:project_base/services/user_session.dart';
 import 'package:project_base/utils/app_date_picker.dart';
 import 'package:project_base/utils/category_visuals.dart';
+import 'package:project_base/widgets/guest_access.dart';
 import 'package:intl/intl.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
@@ -74,7 +75,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         centerTitle: true,
       ),
       body: UserSession.user_id == null
-          ? Center(child: Text(t('user_not_logged_in')))
+          ? const GuestAccessView(icon: Icons.receipt_long_outlined)
           : FutureBuilder<List<TransactionModel>>(
               future: futureTransactions,
               builder: (context, snapshot) {

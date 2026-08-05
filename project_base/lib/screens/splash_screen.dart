@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:project_base/controller/language_controller.dart';
 import 'package:project_base/widgets/app_logo.dart';
 import 'package:project_base/services/user_session.dart';
-import '../screens/onboarding_screen.dart';
 import '../screens/main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -30,12 +29,11 @@ class _SplashScreenState extends State<SplashScreen>
 
     _navigationTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) {
-        final destination = UserSession.isAuthenticated
-            ? MainScreen(userName: UserSession.name ?? "")
-            : const OnboardingScreen();
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => destination),
+          MaterialPageRoute(
+            builder: (context) => MainScreen(userName: UserSession.name ?? ""),
+          ),
         );
       }
     });

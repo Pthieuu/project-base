@@ -13,6 +13,7 @@ import 'package:project_base/controller/theme_controller.dart';
 import 'package:project_base/models/category_budget_model.dart';
 import 'package:project_base/models/transaction_model.dart';
 import 'package:project_base/utils/category_visuals.dart';
+import 'package:project_base/widgets/guest_access.dart';
 import 'social_streak_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -66,6 +67,20 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future loadTransactions() async {
+    if (!UserSession.isAuthenticated) {
+      if (mounted) {
+        setState(() {
+          transactions = [];
+          totalIncome = 0;
+          totalExpense = 0;
+          totalBalance = 0;
+          monthlyIncome = 0;
+          monthlyExpense = 0;
+          budgetOverruns = [];
+        });
+      }
+      return;
+    }
     final api = ApiService();
     final txList = await api.getTransactions();
     final budgets = await _loadCurrentMonthBudgets(api);
@@ -690,6 +705,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         backgroundColor: primary,
         foregroundColor: Colors.white,
         onPressed: () async {
+          if (!UserSession.isAuthenticated) {
+            await openGuestLogin(context);
+            return;
+          }
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
@@ -843,9 +862,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ),
                 ),
 
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: SocialStreakCard(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: UserSession.isAuthenticated
+                    ? SocialStreakCard()
+                    : GestureDetector(
+                        onTap: () => openGuestLogin(context),
+                        child: AbsorbPointer(child: SocialStreakCard()),
+                      ),
               ),
 
               /// ================= STATS =================

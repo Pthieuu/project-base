@@ -7,6 +7,7 @@ import 'package:project_base/screens/saving_goals_screen.dart';
 import 'package:project_base/services/api_service.dart';
 import 'package:project_base/services/user_session.dart';
 import 'package:project_base/utils/category_visuals.dart';
+import 'package:project_base/widgets/guest_access.dart';
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -17,7 +18,7 @@ class BudgetScreen extends StatefulWidget {
 
 class _BudgetScreenState extends State<BudgetScreen> {
   Color get _primary => Theme.of(context).primaryColor;
-  late Future<_BudgetSummary> futureBudget;
+  Future<_BudgetSummary>? futureBudget;
 
   final currencyFormat = NumberFormat.currency(
     locale: 'vi_VN',
@@ -28,7 +29,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
   @override
   void initState() {
     super.initState();
-    futureBudget = _loadBudgetSummary();
+    if (UserSession.isAuthenticated) {
+      futureBudget = _loadBudgetSummary();
+    }
   }
 
   String get _currentMonthKey {
@@ -37,16 +40,13 @@ class _BudgetScreenState extends State<BudgetScreen> {
   }
 
   void _reload() {
+    if (!UserSession.isAuthenticated) return;
     setState(() {
       futureBudget = _loadBudgetSummary();
     });
   }
 
   Future<_BudgetSummary> _loadBudgetSummary() async {
-    if (UserSession.user_id == null) {
-      throw Exception("User not logged in");
-    }
-
     final api = ApiService();
     final transactions = await api.getTransactions();
     final categories = await api.getCategories();
@@ -303,6 +303,10 @@ class _BudgetScreenState extends State<BudgetScreen> {
   }
 
   Future<void> _showBudgetTools() async {
+    if (!UserSession.isAuthenticated) {
+      await openGuestLogin(context);
+      return;
+    }
     final t = context.read<LanguageController>().text;
     await showModalBottomSheet<void>(
       context: context,
@@ -446,7 +450,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
         ],
       ),
       body: UserSession.user_id == null
-          ? Center(child: Text(t('user_not_logged_in')))
+          ? const GuestAccessView(icon: Icons.account_balance_wallet_outlined)
           : FutureBuilder<_BudgetSummary>(
               future: futureBudget,
               builder: (context, snapshot) {

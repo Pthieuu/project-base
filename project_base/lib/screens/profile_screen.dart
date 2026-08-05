@@ -11,8 +11,8 @@ import '../controller/theme_controller.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../services/user_session.dart';
+import '../widgets/guest_access.dart';
 import 'insights_screen.dart';
-import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userName;
@@ -720,11 +720,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     await UserSession.clear();
     if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
   }
 
   Widget _profileTextField(
@@ -782,7 +778,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           IconButton(
             tooltip: t('edit_profile'),
-            onPressed: _showEditProfileSheet,
+            onPressed: UserSession.isAuthenticated
+                ? _showEditProfileSheet
+                : () => openGuestLogin(context),
             icon: Icon(Icons.edit_outlined, color: text),
           ),
         ],
@@ -809,7 +807,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         bottom: 0,
                         right: 0,
                         child: InkWell(
-                          onTap: _showAvatarPicker,
+                          onTap: UserSession.isAuthenticated
+                              ? _showAvatarPicker
+                              : () => openGuestLogin(context),
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
                             decoration: BoxDecoration(
@@ -829,7 +829,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 12),
                   TextButton(
-                    onPressed: _showAvatarPicker,
+                    onPressed: UserSession.isAuthenticated
+                        ? _showAvatarPicker
+                        : () => openGuestLogin(context),
                     child: Text(t('change_avatar')),
                   ),
                   const SizedBox(height: 4),
@@ -866,7 +868,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: _showEditProfileSheet,
+                      onPressed: UserSession.isAuthenticated
+                          ? _showEditProfileSheet
+                          : () => openGuestLogin(context),
                       icon: const Icon(Icons.manage_accounts),
                       label: Text(t('edit_profile')),
                     ),
@@ -953,9 +957,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark
-                            ? const Color(0xFF7F1D1D)
-                            : const Color(0xFFDC2626),
+                        backgroundColor: UserSession.isAuthenticated
+                            ? (isDark
+                                  ? const Color(0xFF7F1D1D)
+                                  : const Color(0xFFDC2626))
+                            : primary,
                         foregroundColor: Colors.white,
                         iconColor: Colors.white,
                         elevation: 0,
@@ -964,10 +970,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      onPressed: _confirmLogout,
-                      icon: const Icon(Icons.logout),
+                      onPressed: UserSession.isAuthenticated
+                          ? _confirmLogout
+                          : () => openGuestLogin(context),
+                      icon: Icon(
+                        UserSession.isAuthenticated
+                            ? Icons.logout
+                            : Icons.login,
+                      ),
                       label: Text(
-                        t('logout'),
+                        UserSession.isAuthenticated
+                            ? t('logout')
+                            : t('login_now'),
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
