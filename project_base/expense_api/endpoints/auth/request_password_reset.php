@@ -5,6 +5,15 @@ declare(strict_types=1);
 header("Content-Type: application/json; charset=utf-8");
 require_once dirname(__DIR__, 2) . "/bootstrap/db.php";
 require_once dirname(__DIR__, 2) . "/bootstrap/mailer.php";
+require_once dirname(__DIR__, 2) . "/bootstrap/rate_limit.php";
+
+enforceRateLimit(
+    $conn,
+    "password_reset",
+    $_SERVER["REMOTE_ADDR"] ?? "unknown",
+    10,
+    900
+);
 
 $email = strtolower(trim((string)($_POST["email"] ?? "")));
 $genericResponse = [

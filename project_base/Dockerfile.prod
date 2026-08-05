@@ -32,6 +32,8 @@ COPY --from=composer-build /app/vendor ./expense_api/vendor
 
 USER www-data
 
+CMD ["/bin/sh", "-c", "php /var/www/expense_api/bin/migrate.php && exec php-fpm"]
+
 FROM nginx:1.28-alpine AS web
 
 COPY --from=flutter-build /src/build/web /usr/share/nginx/html

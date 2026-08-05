@@ -10,5 +10,6 @@ linux
 macos
 windows
 expense_api/.env
+expense_api/legacy
 **/.DS_Store
 *.log

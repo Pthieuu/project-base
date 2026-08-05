@@ -12,9 +12,8 @@ thư mục dự án chạy:
 docker compose up --build
 ```
 
-Sau khi build hoàn tất, mở <http://localhost:8080>. Từ những lần sau, có thể mở
-Docker Desktop và nhấn nút **Play** của project `expense-manager`; không cần chạy
-lệnh thủ công.
+Sau khi build hoàn tất, mở <http://localhost:8080>. Để khởi động lại hoặc deploy,
+luôn dùng `docker compose up -d`; lệnh này cũng tạo lại container bị thiếu.
 
 Database được lưu trong Docker volume `expense_database`, vì vậy dữ liệu không
 mất khi dừng container. Các file SQL chỉ tự động khởi tạo khi volume database
@@ -40,8 +39,13 @@ docker compose --env-file .env.production -f compose.prod.yaml up --build -d
 Đặt reverse proxy/CDN có HTTPS phía trước cổng ứng dụng. Secure session của bản
 web chỉ hoạt động trên HTTPS hoặc localhost.
 
-Compose tự chạy các migration bảo mật còn thiếu trên database đã tồn tại trước
-khi API khởi động.
+API tự chạy toàn bộ migration idempotent trên cả database mới và database đã tồn
+tại trước khi nhận traffic. Không còn container migration chạy một lần.
+
+Checklist release, backup và các bước ký ứng dụng nằm trong
+[`docs/RELEASE.md`](docs/RELEASE.md). Hoàn thiện
+[`docs/PRIVACY_POLICY_TEMPLATE.md`](docs/PRIVACY_POLICY_TEMPLATE.md) với thông
+tin pháp lý và hạ tầng thực tế trước khi public.
 
 Email quên mật khẩu dùng SMTP qua các biến `SMTP_HOST`, `SMTP_PORT`,
 `SMTP_USERNAME`, `SMTP_PASSWORD` và `PASSWORD_RESET_FROM`. Development trả token

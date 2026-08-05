@@ -20,8 +20,6 @@ services:
     depends_on:
       database:
         condition: service_healthy
-      database-migrations:
-        condition: service_completed_successfully
       ollama-models:
         condition: service_completed_successfully
     restart: unless-stopped
@@ -49,20 +47,6 @@ services:
       retries: 20
       start_period: 20s
     restart: unless-stopped
-
-  database-migrations:
-    image: mysql:8.4
-    environment:
-      MYSQL_PWD: expense_app_password
-    volumes:
-      - ./expense_api/database:/migrations:ro
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - mysql -h database -u expense_app ai_expense_manager < /migrations/password_reset_tokens.sql && mysql -h database -u expense_app ai_expense_manager < /migrations/login_attempts.sql
-    depends_on:
-      database:
-        condition: service_healthy
-    restart: "no"
 
   ollama:
     image: ollama/ollama:0.32.2

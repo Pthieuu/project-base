@@ -1,13 +1,6 @@
 <?php
 
 header("Content-Type: application/json; charset=utf-8");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-
-if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-    exit();
-}
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     respond(405, [
@@ -19,7 +12,9 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 
 require_once dirname(__DIR__, 2) . "/bootstrap/db.php";
 require_once dirname(__DIR__, 2) . "/bootstrap/auth.php";
-requireAuthenticatedUser($conn);
+require_once dirname(__DIR__, 2) . "/bootstrap/rate_limit.php";
+$userId = requireAuthenticatedUser($conn);
+enforceRateLimit($conn, "ai_chat", (string)$userId, 20, 900);
 
 $input = json_decode(file_get_contents("php://input"), true);
 if (!is_array($input)) {

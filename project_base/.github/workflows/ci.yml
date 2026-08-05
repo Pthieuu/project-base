@@ -1,0 +1,64 @@
+name: Release checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.6"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib test
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build web --release --dart-define=API_BASE_URL=/api/
+
+  api:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: ai_expense_manager_test
+          MYSQL_USER: expense_test
+          MYSQL_PASSWORD: expense_test_password
+          MYSQL_ROOT_PASSWORD: root_test_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u expense_test -pexpense_test_password --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      APP_ENV: test
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: ai_expense_manager_test
+      DB_USER: expense_test
+      DB_PASSWORD: expense_test_password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mysqli, curl
+      - run: composer validate --strict --working-dir=expense_api
+      - run: composer install --working-dir=expense_api --no-interaction --no-progress
+      - run: composer audit --working-dir=expense_api --locked --no-interaction
+      - run: find expense_api tool tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: php tests/release_guard.php
+      - run: php tests/database_migration_test.php
+      - run: docker compose config -q
+      - run: docker compose --env-file .env.production.example -f compose.prod.yaml config -q

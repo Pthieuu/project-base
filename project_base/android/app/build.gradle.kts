@@ -14,6 +14,16 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val isReleaseTask = gradle.startParameter.taskNames.any {
+    it.contains("release", ignoreCase = true)
+}
+if (isReleaseTask && !keystorePropertiesFile.exists()) {
+    throw GradleException(
+        "Release signing is not configured. Copy android/key.properties.example " +
+            "to android/key.properties and provide the upload keystore."
+    )
+}
+
 android {
     namespace = "com.aiexpensemanager.app"
     compileSdk = flutter.compileSdkVersion
