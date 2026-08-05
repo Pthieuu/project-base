@@ -1,4 +1,6 @@
 {
+  "name": "ai-expense-manager/api",
+  "description": "Production API for AI Expense Manager.",
   "license": "proprietary",
   "require": {
     "phpmailer/phpmailer": "^7.1.1"

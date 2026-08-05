@@ -10,7 +10,13 @@ services:
       - "${APP_PORT:-8080}:8080"
     depends_on:
       api:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     restart: always
 
   api:
@@ -33,13 +39,18 @@ services:
       SMTP_USERNAME: "${SMTP_USERNAME:?Set SMTP_USERNAME}"
       SMTP_PASSWORD: "${SMTP_PASSWORD:?Set SMTP_PASSWORD}"
       PASSWORD_RESET_FROM: "${PASSWORD_RESET_FROM:?Set PASSWORD_RESET_FROM}"
+      CORS_ALLOWED_ORIGIN: "${CORS_ALLOWED_ORIGIN:-}"
     depends_on:
       database:
         condition: service_healthy
-      database-migrations:
-        condition: service_completed_successfully
       ollama-models:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "php -r 'require \"/var/www/expense_api/bootstrap/db.php\"; exit($$conn->ping() ? 0 : 1);'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     restart: always
 
   database:
@@ -65,22 +76,6 @@ services:
       retries: 20
       start_period: 30s
     restart: always
-
-  database-migrations:
-    image: mysql:8.4
-    environment:
-      MYSQL_PWD: "${DB_PASSWORD:?Set DB_PASSWORD}"
-      DB_NAME: "${DB_NAME:-ai_expense_manager}"
-      DB_USER: "${DB_USER:-expense_app}"
-    volumes:
-      - ./expense_api/database:/migrations:ro
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - mysql -h database -u "$$DB_USER" "$$DB_NAME" < /migrations/password_reset_tokens.sql && mysql -h database -u "$$DB_USER" "$$DB_NAME" < /migrations/login_attempts.sql
-    depends_on:
-      database:
-        condition: service_healthy
-    restart: "no"
 
   ollama:
     image: ollama/ollama:0.32.2

@@ -26,4 +26,4 @@ COPY tool ./tool
 
 EXPOSE 8080
 
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "/app/build/web", "/app/tool/pwa_router.php"]
+CMD ["/bin/sh", "-c", "php /app/expense_api/bin/migrate.php && exec php -S 0.0.0.0:8080 -t /app/build/web /app/tool/pwa_router.php"]

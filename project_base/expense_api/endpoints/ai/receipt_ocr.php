@@ -3,8 +3,10 @@
 header("Content-Type: application/json; charset=utf-8");
 require_once dirname(__DIR__, 2) . "/bootstrap/db.php";
 require_once dirname(__DIR__, 2) . "/bootstrap/auth.php";
+require_once dirname(__DIR__, 2) . "/bootstrap/rate_limit.php";
 
-requireAuthenticatedUser($conn);
+$userId = requireAuthenticatedUser($conn);
+enforceRateLimit($conn, "receipt_ocr", (string)$userId, 10, 900);
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     respondReceiptOcr(405, "Method not allowed");
