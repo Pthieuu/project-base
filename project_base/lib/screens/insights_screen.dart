@@ -11,6 +11,7 @@ import 'package:project_base/services/ai_chat_service.dart';
 import 'package:project_base/services/api_service.dart';
 import 'package:project_base/services/user_session.dart';
 import 'package:project_base/utils/category_visuals.dart';
+import 'package:project_base/widgets/guest_access.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class InsightsScreen extends StatefulWidget {
@@ -29,7 +30,7 @@ class InsightsScreen extends StatefulWidget {
 }
 
 class _InsightsScreenState extends State<InsightsScreen> {
-  late Future<_InsightsData> futureInsights;
+  Future<_InsightsData>? futureInsights;
   final TextEditingController messageController = TextEditingController();
   final ScrollController scrollController = ScrollController();
   late final List<_ChatMessage> messages;
@@ -52,7 +53,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
       InsightsScreen._chatSessionMessages.clear();
     }
     messages = InsightsScreen._chatSessionMessages;
-    futureInsights = _loadInsights();
+    if (UserSession.isAuthenticated) {
+      futureInsights = _loadInsights();
+    }
   }
 
   @override
@@ -63,10 +66,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
   }
 
   Future<_InsightsData> _loadInsights() async {
-    if (UserSession.user_id == null) {
-      throw Exception("User is not logged in");
-    }
-
     final prefs = await SharedPreferences.getInstance();
     final aiEnabled =
         prefs.getBool(
@@ -1003,7 +1002,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         ],
       ),
       body: UserSession.user_id == null
-          ? Center(child: Text(t('user_not_logged_in')))
+          ? const GuestAccessView(icon: Icons.auto_awesome_outlined)
           : FutureBuilder<_InsightsData>(
               future: futureInsights,
               builder: (context, snapshot) {

@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       if (!mounted) return;
 
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
           builder: (context) => MainScreen(
@@ -86,6 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
             showWeeklyRecapOnStart: true,
           ),
         ),
+        (route) => false,
       );
     } else {
       ScaffoldMessenger.of(
