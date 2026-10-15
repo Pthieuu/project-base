@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    env_file:
+      - ./expense_api/.env.gemini
     environment:
       APP_ENV: development
       DB_HOST: database
@@ -12,16 +14,13 @@ services:
       DB_NAME: ai_expense_manager
       DB_USER: expense_app
       DB_PASSWORD: expense_app_password
-      OLLAMA_BASE_URL: http://ollama:11434
-      OLLAMA_MODEL: llama3.2
-      OLLAMA_VISION_MODEL: gemma3:4b
+      GEMINI_MODEL: "${GEMINI_MODEL:-gemini-3.5-flash-lite}"
+      GEMINI_VISION_MODEL: "${GEMINI_VISION_MODEL:-gemini-3.5-flash-lite}"
     ports:
       - "8080:8080"
     depends_on:
       database:
         condition: service_healthy
-      ollama-models:
-        condition: service_completed_successfully
     restart: unless-stopped
 
   database:
@@ -48,30 +47,6 @@ services:
       start_period: 20s
     restart: unless-stopped
 
-  ollama:
-    image: ollama/ollama:0.32.2
-    volumes:
-      - ollama_models:/root/.ollama
-    healthcheck:
-      test: ["CMD", "ollama", "list"]
-      interval: 5s
-      timeout: 10s
-      retries: 30
-      start_period: 10s
-    restart: unless-stopped
-
-  ollama-models:
-    image: ollama/ollama:0.32.2
-    environment:
-      OLLAMA_HOST: http://ollama:11434
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - ollama pull llama3.2 && ollama pull gemma3:4b
-    depends_on:
-      ollama:
-        condition: service_healthy
-    restart: "no"
 
 volumes:
   expense_database:
-  ollama_models:

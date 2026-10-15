@@ -50,3 +50,7 @@ app.*.map.json
 /android/key.properties
 *.jks
 *.keystore
+
+# Private environment variants
+**/.env.*
+!**/.env.*.example

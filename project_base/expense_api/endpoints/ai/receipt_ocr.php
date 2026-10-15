@@ -4,6 +4,7 @@ header("Content-Type: application/json; charset=utf-8");
 require_once dirname(__DIR__, 2) . "/bootstrap/db.php";
 require_once dirname(__DIR__, 2) . "/bootstrap/auth.php";
 require_once dirname(__DIR__, 2) . "/bootstrap/rate_limit.php";
+require_once dirname(__DIR__, 2) . "/bootstrap/gemini.php";
 
 $userId = requireAuthenticatedUser($conn);
 enforceRateLimit($conn, "receipt_ocr", (string)$userId, 10, 900);
@@ -38,8 +39,7 @@ if ($imageBytes === false) {
     respondReceiptOcr(400, "Could not read receipt image");
 }
 
-$model = envValue("OLLAMA_VISION_MODEL");
-$baseUrl = rtrim(envValue("OLLAMA_BASE_URL"), "/");
+$model = geminiModel(true);
 $today = date("Y-m-d");
 $schema = [
     "type" => "object",
@@ -112,52 +112,25 @@ that it is plausible relative to the sum of line_items.
 Never invent unreadable values. For unreadable amount use 0 and unreadable text fields use an empty string.
 PROMPT;
 
-$payload = [
-    "model" => $model,
-    "messages" => [[
+$result = callGemini($model, [
+    "contents" => [[
         "role" => "user",
-        "content" => $prompt,
-        "images" => [base64_encode($imageBytes)]
+        "parts" => [
+            ["text" => $prompt],
+            ["inlineData" => ["mimeType" => $mimeType, "data" => base64_encode($imageBytes)]]
+        ]
     ]],
-    "stream" => false,
-    "format" => $schema,
-    "options" => [
-        "temperature" => 0
+    "generationConfig" => [
+        "temperature" => 0,
+        "maxOutputTokens" => 16384,
+        "responseMimeType" => "application/json",
+        "responseJsonSchema" => $schema
     ]
-];
-
-$ch = curl_init($baseUrl . "/api/chat");
-curl_setopt_array($ch, [
-    CURLOPT_POST => true,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER => ["Content-Type: application/json"],
-    CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
-    CURLOPT_CONNECTTIMEOUT => 5,
-    CURLOPT_TIMEOUT => 120
 ]);
-
-$responseBody = curl_exec($ch);
-$curlError = curl_error($ch);
-$statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-
-if ($responseBody === false) {
-    respondReceiptOcr(
-        503,
-        "Could not connect to the configured AI vision service",
-        ["detail" => $curlError]
-    );
+if ($result["status_code"] !== 200) {
+    respondReceiptOcr($result["status_code"], $result["message"]);
 }
-
-$providerResponse = json_decode($responseBody, true);
-if ($statusCode !== 200) {
-    $message = is_array($providerResponse)
-        ? (string)($providerResponse["error"] ?? "AI vision service error")
-        : "AI vision service error";
-    respondReceiptOcr($statusCode > 0 ? $statusCode : 502, $message);
-}
-
-$content = $providerResponse["message"]["content"] ?? "";
+$content = $result["text"];
 $receipt = is_string($content) ? json_decode($content, true) : null;
 if (!is_array($receipt)) {
     respondReceiptOcr(502, "AI vision service returned invalid receipt data");

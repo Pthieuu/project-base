@@ -1,3 +1,29 @@
+## Gemini setup
+
+Chat and receipt OCR use Gemini. Paste your key into
+`expense_api/.env.gemini` as `GEMINI_API_KEY=your-key`.
+For a fresh checkout, copy `expense_api/.env.gemini.example` to that path first.
+This private file is ignored by Git and excluded from Docker builds. Docker
+injects it at runtime; direct PHP loads it automatically. Do not put the key
+in Flutter or compose.yaml.
+
+Then rebuild the backend from this directory:
+
+```bash
+docker compose up -d --build app
+```
+
+Changing the key later requires recreating the app container:
+`docker compose up -d --force-recreate app`.
+Old Ollama containers and volumes are not deleted automatically.
+The default model is `gemini-3.5-flash-lite` for both endpoints; override
+`GEMINI_MODEL` and `GEMINI_VISION_MODEL` in your Compose environment
+(or `expense_api/.env` for direct PHP).
+Chat context and receipt images are sent to Google. Requests require internet
+access and available Gemini API quota.
+
+Reference: https://ai.google.dev/gemini-api/docs/structured-output
+
 # project_base
 
 Flutter personal finance app with a PHP API and an Ollama-compatible AI
@@ -61,7 +87,7 @@ archive.
 
 ## Local API configuration
 
-Copy the local XAMPP/Ollama environment template. Update any value that differs
+Copy the local XAMPP/Gemini environment template. Update any value that differs
 on your machine, especially the database password:
 
 ```bash
@@ -81,13 +107,8 @@ values in the local `.env` file.
 Required variables:
 
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
-- `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_VISION_MODEL`
-
-Install the configured vision model once before scanning receipts:
-
-```bash
-ollama pull gemma3:4b
-```
+- `GEMINI_API_KEY` in `expense_api/.env.gemini`
+- Optional: `GEMINI_MODEL`, `GEMINI_VISION_MODEL`
 
 Run the session migration once before signing in:
 
@@ -150,4 +171,4 @@ ngrok http 8083
 ```
 
 Open the HTTPS forwarding URL on iPhone in Safari, then use **Share** →
-**Add to Home Screen**. MySQL and Ollama still run locally on the Mac.
+**Add to Home Screen**. MySQL runs locally on the Mac; AI requests go to Gemini.
