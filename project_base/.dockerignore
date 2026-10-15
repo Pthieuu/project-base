@@ -13,3 +13,8 @@ expense_api/.env
 expense_api/legacy
 **/.DS_Store
 *.log
+
+**/.env
+**/.env.*
+.env
+.env.*

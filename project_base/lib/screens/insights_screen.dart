@@ -876,7 +876,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   String _buildAiUnavailableReply([AiChatException? error]) {
     final message = error?.message ?? '';
 
-    if (message.contains('Ollama')) {
+    if (message.contains('Gemini')) {
       return message;
     }
 
@@ -885,11 +885,11 @@ class _InsightsScreenState extends State<InsightsScreen> {
       final retryText = retryAfter == null
           ? 'a moment'
           : '${math.max(1, retryAfter.inSeconds)} seconds';
-      return "I cannot reach the real AI right now because the local model is busy. Try again in $retryText.";
+      return "I cannot reach the real AI right now because the request limit was reached. Try again in $retryText.";
     }
 
     if (!aiChatService.isConfigured) {
-      return "The real AI is not connected. Check the PHP backend and local Ollama service.";
+      return "The real AI is not connected. Check the AI service configuration.";
     }
 
     return message.isEmpty

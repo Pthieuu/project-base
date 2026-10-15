@@ -1,5 +1,6 @@
 <?php
 
+loadEnvironmentFile(dirname(__DIR__) . "/.env.gemini");
 loadEnvironmentFile(dirname(__DIR__) . "/.env");
 
 function loadEnvironmentFile(string $path): void
